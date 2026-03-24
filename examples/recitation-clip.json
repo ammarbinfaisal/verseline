@@ -1,0 +1,25 @@
+{
+  "output": "../out/al-baqarah-2-5.mp4",
+  "audio": "audio.mp3",
+  "background": {
+    "type": "image",
+    "path": "background.jpg"
+  },
+  "font": "Aptos",
+  "meta": {
+    "surah": "Al-Baqarah",
+    "verse_range": "2-5",
+    "translation": "Sahih International"
+  },
+  "layout": {
+    "safe_margin_x": 108,
+    "translation_margin_bottom": 360,
+    "meta_margin_bottom": 540
+  },
+  "translation_source": {
+    "path": "translations.sahih.jsonl",
+    "format": "jsonl"
+  },
+  "segments_draft_file": "segments.draft.json",
+  "segments_file": "segments.json"
+}

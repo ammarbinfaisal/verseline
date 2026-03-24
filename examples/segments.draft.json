@@ -1,0 +1,37 @@
+{
+  "source_audio": "audio.mp3",
+  "generated_at": "2026-03-23T00:00:00Z",
+  "segments": [
+    {
+      "start": "00:00:00.000",
+      "end": "00:00:02.800",
+      "verse": "2:2",
+      "size": "default",
+      "status": "approved",
+      "confidence": 0.99
+    },
+    {
+      "start": "00:00:02.800",
+      "end": "00:00:05.800",
+      "text": "This is the Book about which there is no doubt,",
+      "refs": [
+        "2:2"
+      ],
+      "size": "default",
+      "status": "approved",
+      "confidence": 0.83,
+      "notes": "Split by recitation pacing."
+    },
+    {
+      "start": "00:00:05.800",
+      "end": "00:00:08.600",
+      "text": "a guidance for those conscious of Allah -",
+      "refs": [
+        "2:2"
+      ],
+      "size": "large",
+      "status": "approved",
+      "confidence": 0.8
+    }
+  ]
+}
