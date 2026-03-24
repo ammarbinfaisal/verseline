@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -24,18 +23,32 @@ type verselineResolvedBlock struct {
 }
 
 type verselineRenderPlan struct {
-	ProjectPath string
-	ProjectDir  string
-	OutputPath  string
-	ASSPath     string
-	Width       int
-	Height      int
-	FPS         int
-	AudioPath   string
-	Background  VerselineBackground
-	FontsDir    string
-	ClipEnd     Millis
-	Blocks      []verselineResolvedBlock
+	ProjectPath    string
+	ProjectDir     string
+	OutputPath     string
+	ASSPath        string
+	Width          int
+	Height         int
+	FPS            int
+	AudioPath      string
+	Background     VerselineBackground
+	FontsDir       string
+	ClipEnd        Millis
+	InputOffset    Millis
+	Duration       Millis
+	VideoCodec     string
+	AudioCodec     string
+	AudioBitrate   string
+	CRF            int
+	Preset         string
+	PixFmt         string
+	ColorPrimaries string
+	ColorTRC       string
+	ColorSpace     string
+	ColorRange     string
+	ExtraArgs      []string
+	Label          string
+	Blocks         []verselineResolvedBlock
 }
 
 func init() {
@@ -95,11 +108,11 @@ func init() {
 	}
 
 	Subcommands["verseline-render"] = Subcommand{
-		Description: "Render a Verseline project from its approved or draft timeline",
+		Description: "Render one or more approved Verseline outputs using render profiles",
 		Run: func(name string, args []string) bool {
 			subFlag := flag.NewFlagSet(name, flag.ContinueOnError)
 			projectPtr := subFlag.String("project", "examples/verseline-project.json", "Path to the Verseline project JSON file")
-			draftPtr := subFlag.Bool("draft", false, "Render from the draft timeline instead of the approved timeline")
+			profilesPtr := subFlag.String("profile", "", "Comma-separated render profile ids. Empty means all profiles")
 
 			err := subFlag.Parse(args)
 			if err == flag.ErrHelp {
@@ -110,51 +123,22 @@ func init() {
 				return false
 			}
 
-			plan, err := loadVerselineRenderPlan(*projectPtr, *draftPtr)
+			outputs, err := verselineRenderProjectProfiles(*projectPtr, verselineSplitCSV(*profilesPtr), nil)
 			if err != nil {
-				fmt.Printf("ERROR: Could not load Verseline render plan: %s\n", err)
+				fmt.Printf("ERROR: Could not render project outputs: %s\n", err)
 				return false
 			}
-			if err := writeVerselineASS(plan); err != nil {
-				fmt.Printf("ERROR: Could not generate ASS subtitles %s: %s\n", plan.ASSPath, err)
-				return false
+			for _, output := range outputs {
+				fmt.Printf("Generated %s\n", output)
+				fmt.Printf("Generated %s\n", strings.TrimSuffix(output, filepath.Ext(output))+".ass")
 			}
-			if err := renderVerseline(plan); err != nil {
-				fmt.Printf("ERROR: Could not render output %s: %s\n", plan.OutputPath, err)
-				return false
-			}
-
-			fmt.Printf("Generated %s\n", plan.OutputPath)
-			fmt.Printf("Generated %s\n", plan.ASSPath)
 			return true
 		},
 	}
 }
-
-func loadVerselineRenderPlan(projectPath string, useDraft bool) (verselineRenderPlan, error) {
+func buildVerselineRenderPlan(project VerselineProject, absProjectPath string, segments []VerselineSegment, request verselineRenderRequest) (verselineRenderPlan, error) {
 	plan := verselineRenderPlan{}
-	project, absProjectPath, err := loadVerselineProject(projectPath)
-	if err != nil {
-		return plan, err
-	}
-
 	projectDir := filepath.Dir(absProjectPath)
-	timelinePath := project.Timeline.Approved
-	if useDraft || strings.TrimSpace(timelinePath) == "" {
-		timelinePath = project.Timeline.Draft
-	}
-	if strings.TrimSpace(timelinePath) == "" {
-		return plan, fmt.Errorf("project does not define a usable timeline path")
-	}
-	resolvedTimelinePath := resolveReelPath(projectDir, timelinePath)
-	segments, err := loadVerselineTimeline(resolvedTimelinePath)
-	if err != nil {
-		return plan, err
-	}
-	if err := validateVerselineTimelineAgainstProject(project, segments); err != nil {
-		return plan, err
-	}
-
 	sourceMaps, err := loadVerselineSourceMaps(projectDir, project.Sources)
 	if err != nil {
 		return plan, err
@@ -188,18 +172,32 @@ func loadVerselineRenderPlan(projectPath string, useDraft bool) (verselineRender
 
 	plan.ProjectPath = absProjectPath
 	plan.ProjectDir = projectDir
-	plan.Width = project.Canvas.Width
-	plan.Height = project.Canvas.Height
-	plan.FPS = project.Canvas.FPS
+	plan.Width = verselineFirstPositive(request.Width, project.Canvas.Width)
+	plan.Height = verselineFirstPositive(request.Height, project.Canvas.Height)
+	plan.FPS = verselineFirstPositive(request.FPS, project.Canvas.FPS)
 	plan.AudioPath = resolveOptionalReelPath(projectDir, project.Assets.Audio)
 	plan.Background = project.Assets.Background
 	plan.Background.Path = resolveReelPath(projectDir, project.Assets.Background.Path)
 	plan.FontsDir = verselineFontsDir(projectDir, project.Fonts)
 	plan.ClipEnd = 0
+	plan.InputOffset = request.InputOffset
+	plan.Duration = request.Duration
+	plan.VideoCodec = request.VideoCodec
+	plan.AudioCodec = request.AudioCodec
+	plan.AudioBitrate = request.AudioBitrate
+	plan.CRF = request.CRF
+	plan.Preset = request.Preset
+	plan.PixFmt = request.PixFmt
+	plan.ColorPrimaries = request.ColorPrimaries
+	plan.ColorTRC = request.ColorTRC
+	plan.ColorSpace = request.ColorSpace
+	plan.ColorRange = request.ColorRange
+	plan.ExtraArgs = append([]string(nil), request.ExtraArgs...)
+	plan.Label = request.Label
 
-	outputPath := strings.TrimSpace(project.Output)
+	outputPath := strings.TrimSpace(request.OutputPath)
 	if outputPath == "" {
-		base := firstNonEmpty(project.Name, strings.TrimSuffix(filepath.Base(absProjectPath), filepath.Ext(absProjectPath)), "verseline-output")
+		base := firstNonEmpty(project.Output, project.Name, strings.TrimSuffix(filepath.Base(absProjectPath), filepath.Ext(absProjectPath)), "verseline-output")
 		outputPath = base + ".mp4"
 	}
 	plan.OutputPath = resolveReelPath(projectDir, outputPath)
@@ -241,6 +239,30 @@ func loadVerselineRenderPlan(projectPath string, useDraft bool) (verselineRender
 			}
 			plan.Blocks = append(plan.Blocks, resolved)
 		}
+	}
+
+	if plan.Duration > 0 {
+		windowStart := plan.InputOffset
+		windowEnd := plan.InputOffset + plan.Duration
+		filtered := make([]verselineResolvedBlock, 0, len(plan.Blocks))
+		for _, block := range plan.Blocks {
+			if block.End <= windowStart || block.Start >= windowEnd {
+				continue
+			}
+			if block.Start < windowStart {
+				block.Start = windowStart
+			}
+			if block.End > windowEnd {
+				block.End = windowEnd
+			}
+			block.Start -= windowStart
+			block.End -= windowStart
+			filtered = append(filtered, block)
+		}
+		plan.Blocks = filtered
+		plan.ClipEnd = plan.Duration
+	} else if plan.ClipEnd > 0 {
+		plan.Duration = plan.ClipEnd
 	}
 
 	return plan, nil
@@ -497,58 +519,7 @@ func writeVerselineASS(plan verselineRenderPlan) error {
 }
 
 func renderVerseline(plan verselineRenderPlan) error {
-	if err := os.MkdirAll(filepath.Dir(plan.OutputPath), 0755); err != nil {
-		return err
-	}
-	if err := renderVerselineBlockImages(&plan); err != nil {
-		return err
-	}
-
-	args := []string{"-y"}
-	backgroundType := strings.ToLower(plan.Background.Type)
-	backgroundLoop := reelBool(plan.Background.Loop, backgroundType != "video")
-
-	switch backgroundType {
-	case "image":
-		args = append(args, "-loop", "1", "-framerate", strconv.Itoa(plan.FPS), "-i", plan.Background.Path)
-	case "video":
-		if backgroundLoop {
-			args = append(args, "-stream_loop", "-1")
-		}
-		args = append(args, "-i", plan.Background.Path)
-	default:
-		return fmt.Errorf("unsupported background.type %q", plan.Background.Type)
-	}
-
-	if plan.AudioPath != "" {
-		args = append(args, "-i", plan.AudioPath)
-	}
-	firstOverlayInput := 1
-	if plan.AudioPath != "" {
-		firstOverlayInput = 2
-	}
-	for _, block := range plan.Blocks {
-		args = append(args, "-loop", "1", "-i", block.ImagePath)
-	}
-
-	filterComplex, finalLabel := buildVerselineOverlayFilter(plan, firstOverlayInput)
-	args = append(args, "-filter_complex", filterComplex)
-	args = append(args, "-r", strconv.Itoa(plan.FPS))
-	args = append(args, "-map", finalLabel)
-	if plan.AudioPath != "" {
-		args = append(args, "-map", "1:a:0", "-c:a", "aac", "-b:a", "192k", "-shortest")
-	} else if plan.ClipEnd > 0 {
-		args = append(args, "-t", millisToSecsForFFmpeg(plan.ClipEnd))
-	}
-	args = append(args, "-c:v", "libx264", "-pix_fmt", "yuv420p", "-movflags", "+faststart", plan.OutputPath)
-
-	ffmpeg := ffmpegPathToBin()
-	logCmd(ffmpeg, args...)
-	cmd := exec.Command(ffmpeg, args...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	return renderVerselineWithProgress(plan, nil)
 }
 
 func buildVerselineOverlayFilter(plan verselineRenderPlan, firstOverlayInput int) (string, string) {

@@ -113,6 +113,63 @@
       ]
     }
   ],
+  "preview": {
+    "player": "vlc",
+    "directory": "previews",
+    "padding_ms": 400,
+    "width": 540,
+    "height": 960,
+    "fps": 24,
+    "crf": 32,
+    "preset": "veryfast"
+  },
+  "render_profiles": [
+    {
+      "id": "sdr-fhd",
+      "label": "SDR FHD",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30,
+      "output_suffix": "sdr-fhd",
+      "video_codec": "libx264",
+      "audio_codec": "aac",
+      "audio_bitrate": "192k",
+      "crf": 21,
+      "preset": "medium",
+      "pix_fmt": "yuv420p"
+    },
+    {
+      "id": "sdr-4k",
+      "label": "SDR 4K",
+      "width": 2160,
+      "height": 3840,
+      "fps": 30,
+      "output_suffix": "sdr-4k",
+      "video_codec": "libx264",
+      "audio_codec": "aac",
+      "audio_bitrate": "256k",
+      "crf": 20,
+      "preset": "slow",
+      "pix_fmt": "yuv420p"
+    },
+    {
+      "id": "hdr-4k",
+      "label": "HDR 4K",
+      "width": 2160,
+      "height": 3840,
+      "fps": 30,
+      "output_suffix": "hdr-4k",
+      "video_codec": "libx265",
+      "audio_codec": "aac",
+      "audio_bitrate": "256k",
+      "crf": 18,
+      "preset": "slow",
+      "pix_fmt": "yuv420p10le",
+      "color_primaries": "bt2020",
+      "color_trc": "smpte2084",
+      "colorspace": "bt2020nc"
+    }
+  ],
   "timeline": {
     "draft": "verseline.timeline.draft.jsonl",
     "approved": "verseline.timeline.jsonl"

@@ -11,16 +11,18 @@ import (
 )
 
 type VerselineProject struct {
-	Name       string                     `json:"name,omitempty"`
-	Output     string                     `json:"output,omitempty"`
-	Canvas     VerselineCanvas           `json:"canvas"`
-	Assets     VerselineAssets           `json:"assets"`
-	Fonts      []VerselineFont           `json:"fonts,omitempty"`
-	Styles     []VerselineStyle          `json:"styles,omitempty"`
-	Placements []VerselinePlacement      `json:"placements,omitempty"`
-	Sources    []VerselineSource         `json:"sources,omitempty"`
-	Overlays   []VerselineOverlay        `json:"overlays,omitempty"`
-	Timeline   VerselineTimelinePaths    `json:"timeline"`
+	Name           string                   `json:"name,omitempty"`
+	Output         string                   `json:"output,omitempty"`
+	Canvas         VerselineCanvas          `json:"canvas"`
+	Assets         VerselineAssets          `json:"assets"`
+	Fonts          []VerselineFont          `json:"fonts,omitempty"`
+	Styles         []VerselineStyle         `json:"styles,omitempty"`
+	Placements     []VerselinePlacement     `json:"placements,omitempty"`
+	Sources        []VerselineSource        `json:"sources,omitempty"`
+	Overlays       []VerselineOverlay       `json:"overlays,omitempty"`
+	Preview        VerselinePreviewSettings `json:"preview,omitempty"`
+	RenderProfiles []VerselineRenderProfile `json:"render_profiles,omitempty"`
+	Timeline       VerselineTimelinePaths   `json:"timeline"`
 }
 
 type VerselineCanvas struct {
@@ -30,7 +32,7 @@ type VerselineCanvas struct {
 }
 
 type VerselineAssets struct {
-	Audio      string             `json:"audio,omitempty"`
+	Audio      string              `json:"audio,omitempty"`
 	Background VerselineBackground `json:"background"`
 }
 
@@ -80,6 +82,44 @@ type VerselineSource struct {
 type VerselineTimelinePaths struct {
 	Draft    string `json:"draft,omitempty"`
 	Approved string `json:"approved,omitempty"`
+}
+
+type VerselinePreviewSettings struct {
+	Player       string   `json:"player,omitempty"`
+	PlayerArgs   []string `json:"player_args,omitempty"`
+	Directory    string   `json:"directory,omitempty"`
+	PaddingMS    int      `json:"padding_ms,omitempty"`
+	Width        int      `json:"width,omitempty"`
+	Height       int      `json:"height,omitempty"`
+	FPS          int      `json:"fps,omitempty"`
+	VideoCodec   string   `json:"video_codec,omitempty"`
+	AudioCodec   string   `json:"audio_codec,omitempty"`
+	AudioBitrate string   `json:"audio_bitrate,omitempty"`
+	CRF          int      `json:"crf,omitempty"`
+	Preset       string   `json:"preset,omitempty"`
+	PixFmt       string   `json:"pix_fmt,omitempty"`
+	ExtraArgs    []string `json:"extra_args,omitempty"`
+}
+
+type VerselineRenderProfile struct {
+	ID             string   `json:"id"`
+	Label          string   `json:"label,omitempty"`
+	Width          int      `json:"width,omitempty"`
+	Height         int      `json:"height,omitempty"`
+	FPS            int      `json:"fps,omitempty"`
+	Output         string   `json:"output,omitempty"`
+	OutputSuffix   string   `json:"output_suffix,omitempty"`
+	VideoCodec     string   `json:"video_codec,omitempty"`
+	AudioCodec     string   `json:"audio_codec,omitempty"`
+	AudioBitrate   string   `json:"audio_bitrate,omitempty"`
+	CRF            int      `json:"crf,omitempty"`
+	Preset         string   `json:"preset,omitempty"`
+	PixFmt         string   `json:"pix_fmt,omitempty"`
+	ColorPrimaries string   `json:"color_primaries,omitempty"`
+	ColorTRC       string   `json:"color_trc,omitempty"`
+	ColorSpace     string   `json:"colorspace,omitempty"`
+	ColorRange     string   `json:"color_range,omitempty"`
+	ExtraArgs      []string `json:"extra_args,omitempty"`
 }
 
 type VerselineSegment struct {
@@ -214,9 +254,17 @@ func validateVerselineProject(project VerselineProject) error {
 	if err := validateVerselineIDs("source", verselineSourceIDs(project.Sources)); err != nil {
 		return err
 	}
+	if err := validateVerselineIDs("render profile", verselineRenderProfileIDs(project.RenderProfiles)); err != nil {
+		return err
+	}
 	for index, overlay := range project.Overlays {
 		if err := validateVerselineBlocks(overlay.Blocks, fmt.Sprintf("overlay %d", index)); err != nil {
 			return err
+		}
+	}
+	for _, profile := range project.RenderProfiles {
+		if profile.Width < 0 || profile.Height < 0 || profile.FPS < 0 {
+			return fmt.Errorf("render profile %q dimensions and fps must not be negative", profile.ID)
 		}
 	}
 	return nil
@@ -345,6 +393,14 @@ func verselinePlacementIDs(items []VerselinePlacement) []string {
 }
 
 func verselineSourceIDs(items []VerselineSource) []string {
+	result := make([]string, 0, len(items))
+	for _, item := range items {
+		result = append(result, item.ID)
+	}
+	return result
+}
+
+func verselineRenderProfileIDs(items []VerselineRenderProfile) []string {
 	result := make([]string, 0, len(items))
 	for _, item := range items {
 		result = append(result, item.ID)

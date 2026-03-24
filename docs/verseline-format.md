@@ -46,6 +46,8 @@ This should contain stable clip-level configuration:
 - placements
 - data sources
 - project-level overlays
+- preview settings
+- render profiles
 - timeline paths
 
 Example:
@@ -173,6 +175,49 @@ Example:
       ]
     }
   ],
+  "preview": {
+    "player": "vlc",
+    "directory": "previews",
+    "padding_ms": 400,
+    "width": 540,
+    "height": 960,
+    "fps": 24,
+    "crf": 32,
+    "preset": "veryfast"
+  },
+  "render_profiles": [
+    {
+      "id": "sdr-fhd",
+      "label": "SDR FHD",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30,
+      "output_suffix": "sdr-fhd",
+      "video_codec": "libx264",
+      "audio_codec": "aac",
+      "audio_bitrate": "192k",
+      "crf": 21,
+      "preset": "medium",
+      "pix_fmt": "yuv420p"
+    },
+    {
+      "id": "hdr-4k",
+      "label": "HDR 4K",
+      "width": 2160,
+      "height": 3840,
+      "fps": 30,
+      "output_suffix": "hdr-4k",
+      "video_codec": "libx265",
+      "audio_codec": "aac",
+      "audio_bitrate": "256k",
+      "crf": 18,
+      "preset": "slow",
+      "pix_fmt": "yuv420p10le",
+      "color_primaries": "bt2020",
+      "color_trc": "smpte2084",
+      "colorspace": "bt2020nc"
+    }
+  ],
   "timeline": {
     "draft": "clips/example.timeline.draft.jsonl",
     "approved": "clips/example.timeline.jsonl"
@@ -270,6 +315,33 @@ It also keeps the architecture open for later improvements:
 - bracket-aware styling
 - font-file-specific rendering
 - cached block layers
+
+## Review And Approval
+
+Preview and final render are different operations.
+
+Preview should:
+
+- render from the current draft or working segment selection
+- use low-quality settings
+- target one segment plus a little padding around it
+- open in the configured player, defaulting to VLC
+
+Final renders should:
+
+- render only from the approved timeline
+- target one or more named `render_profiles`
+- support different SDR/HDR and FHD/2K/4K outputs by profile
+- show progress per render job
+
+The TUI should expose the same workflow surface as the CLI:
+
+- validate
+- preview current segment
+- mark statuses
+- approve draft to approved timeline
+- render current profile
+- render all profiles
 
 ## Why JSONL For Timeline
 
