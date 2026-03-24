@@ -1,0 +1,120 @@
+{
+  "name": "al-baqarah-2-5",
+  "output": "al-baqarah-2-5.mp4",
+  "canvas": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30
+  },
+  "assets": {
+    "audio": "audio/clip.mp3",
+    "background": {
+      "type": "image",
+      "path": "assets/background.jpg",
+      "loop": true,
+      "fit": "cover"
+    }
+  },
+  "fonts": [
+    {
+      "id": "latin-main",
+      "family": "Helvetica"
+    },
+    {
+      "id": "arabic-main",
+      "family": "Helvetica"
+    }
+  ],
+  "styles": [
+    {
+      "id": "translation",
+      "font": "latin-main",
+      "size": 64,
+      "color": "#FFFFFF",
+      "auxiliary_color": "#B7B7B7",
+      "outline_color": "#000000",
+      "outline": 3,
+      "shadow": 1
+    },
+    {
+      "id": "translation-large",
+      "font": "latin-main",
+      "size": 84,
+      "color": "#FFFFFF",
+      "auxiliary_color": "#B7B7B7",
+      "outline_color": "#000000",
+      "outline": 3,
+      "shadow": 1
+    },
+    {
+      "id": "arabic-main",
+      "font": "arabic-main",
+      "size": 72,
+      "color": "#FFFFFF",
+      "outline_color": "#000000",
+      "outline": 3,
+      "shadow": 1
+    },
+    {
+      "id": "meta",
+      "font": "latin-main",
+      "size": 28,
+      "color": "#F2F2F2",
+      "outline_color": "#000000",
+      "outline": 2,
+      "shadow": 1
+    }
+  ],
+  "placements": [
+    {
+      "id": "lower-center",
+      "anchor": "bottom_center",
+      "margin_x": 108,
+      "margin_y": 360
+    },
+    {
+      "id": "meta-above",
+      "anchor": "bottom_center",
+      "margin_x": 108,
+      "margin_y": 540
+    },
+    {
+      "id": "upper-safe",
+      "anchor": "top_center",
+      "margin_x": 108,
+      "margin_y": 180
+    }
+  ],
+  "sources": [
+    {
+      "id": "sahih",
+      "type": "jsonl",
+      "path": "translations.sahih.jsonl",
+      "language": "en"
+    },
+    {
+      "id": "arabic-kfqpc",
+      "type": "jsonl",
+      "path": "translations.arabic.jsonl",
+      "language": "ar"
+    }
+  ],
+  "overlays": [
+    {
+      "id": "meta",
+      "blocks": [
+        {
+          "id": "meta",
+          "kind": "literal",
+          "text": "surah al-baqarah 2-5\ntranslation: sahih international",
+          "style": "meta",
+          "placement": "meta-above"
+        }
+      ]
+    }
+  ],
+  "timeline": {
+    "draft": "verseline.timeline.draft.jsonl",
+    "approved": "verseline.timeline.jsonl"
+  }
+}
