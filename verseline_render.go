@@ -686,46 +686,13 @@ func renderVerselineBlockImages(plan *verselineRenderPlan) error {
 
 	for index := range plan.Blocks {
 		outputPath := filepath.Join(cacheDir, fmt.Sprintf("block-%03d.png", index+1))
+		_ = os.Remove(strings.TrimSuffix(outputPath, ".png") + ".txt")
 		if err := renderVerselineBlockImage(plan.Blocks[index], plan.Width, outputPath); err != nil {
 			return err
 		}
 		plan.Blocks[index].ImagePath = outputPath
 	}
 	return nil
-}
-
-func renderVerselineBlockImage(block verselineResolvedBlock, canvasWidth int, outputPath string) error {
-	textPath := strings.TrimSuffix(outputPath, ".png") + ".txt"
-	if err := os.WriteFile(textPath, []byte(block.Text), 0644); err != nil {
-		return err
-	}
-
-	maxWidth := block.Placement.MaxWidth
-	if maxWidth <= 0 {
-		maxWidth = max(canvasWidth-2*block.Placement.MarginX, 200)
-	}
-
-	args := []string{
-		"-background", "none",
-		"-fill", firstNonEmpty(block.Style.Color, "#FFFFFF"),
-		"-gravity", "center",
-		"-pointsize", strconv.Itoa(max(block.Style.Size, 24)),
-	}
-	if block.FontFile != "" {
-		args = append(args, "-font", block.FontFile)
-	} else if strings.TrimSpace(block.Style.Font) != "" {
-		args = append(args, "-font", block.Style.Font)
-	}
-	if strings.TrimSpace(block.Style.OutlineColor) != "" && block.Style.Outline > 0 {
-		args = append(args, "-stroke", block.Style.OutlineColor, "-strokewidth", strconv.Itoa(block.Style.Outline))
-	}
-	args = append(args, "-size", fmt.Sprintf("%dx", maxWidth), "caption:@"+textPath, "PNG32:"+outputPath)
-
-	cmd := exec.Command("magick", args...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
 }
 
 func loadVerselineSourceEntries(path string, source VerselineSource) (map[string]string, error) {

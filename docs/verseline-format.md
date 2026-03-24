@@ -249,6 +249,21 @@ The current implementation does this by:
 
 This is more portable than relying on ffmpeg subtitle filters, because some local ffmpeg builds do not include libass or drawtext.
 
+The raster stage should prefer a real text shaping stack, not shelling out for every block by default.
+
+The current implementation uses `go-text` for shaped text rasterization when it can resolve a real font file.
+That gives better wrapping and cleaner glyph rendering for Latin and Unicode Arabic text.
+
+If the project only provides a family name, Verseline resolves it to a system font file.
+If the font format is not yet supported by the Go raster path, or the chosen face does not cover the block text, it falls back to ImageMagick for that block.
+
+That keeps the render path practical for:
+
+- normal `.ttf`, `.otf`, `.ttc` system fonts
+- Unicode Arabic text
+- mixed family-name and explicit-file projects
+- transitional cases like WOFF-based Quran fonts that may still need a fallback path
+
 It also keeps the architecture open for later improvements:
 
 - better Arabic shaping

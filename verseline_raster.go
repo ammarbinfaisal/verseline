@@ -1,0 +1,361 @@
+package main
+
+import (
+	"encoding/hex"
+	"fmt"
+	"image"
+	"image/color"
+	"image/png"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"sort"
+	"strconv"
+	"strings"
+	"sync"
+	"unicode"
+
+	textdraw "github.com/go-text/render"
+	"github.com/go-text/typesetting/di"
+	textfont "github.com/go-text/typesetting/font"
+	"github.com/go-text/typesetting/language"
+	"github.com/go-text/typesetting/shaping"
+	"golang.org/x/image/math/fixed"
+)
+
+type verselineRasterLine struct {
+	Runs    []shaping.Output
+	Width   int
+	Ascent  int
+	Descent int
+	Height  int
+}
+
+type verselineFontMap struct {
+	face *textfont.Face
+}
+
+func (fm verselineFontMap) ResolveFace(rune) *textfont.Face {
+	return fm.face
+}
+
+var (
+	verselineFontPathCache sync.Map
+	verselineFaceCache     sync.Map
+)
+
+func renderVerselineBlockImage(block verselineResolvedBlock, canvasWidth int, outputPath string) error {
+	maxWidth := block.Placement.MaxWidth
+	if maxWidth <= 0 {
+		maxWidth = max(canvasWidth-2*block.Placement.MarginX, 200)
+	}
+
+	if err := renderVerselineBlockImageGoText(block, maxWidth, outputPath); err == nil {
+		return nil
+	}
+
+	return renderVerselineBlockImageMagick(block, maxWidth, outputPath)
+}
+
+func renderVerselineBlockImageGoText(block verselineResolvedBlock, maxWidth int, outputPath string) error {
+	fontPath, face, err := verselineResolveRasterFace(block)
+	if err != nil {
+		return err
+	}
+	if !verselineFaceSupportsText(face, block.Text) {
+		return fmt.Errorf("font %q does not cover block text", fontPath)
+	}
+
+	lines, err := verselineWrapTextLines(block.Text, face, max(block.Style.Size, 1), maxWidth)
+	if err != nil {
+		return err
+	}
+	if len(lines) == 0 {
+		return fmt.Errorf("no raster lines produced")
+	}
+
+	pad := max(4, block.Style.Outline+block.Style.Shadow+2)
+	imageWidth := pad * 2
+	imageHeight := pad * 2
+	for _, line := range lines {
+		imageWidth = max(imageWidth, line.Width+pad*2)
+		imageHeight += max(line.Height, 1)
+	}
+
+	img := image.NewNRGBA(image.Rect(0, 0, imageWidth, imageHeight))
+	fillColor, err := verselineParseHexColor(firstNonEmpty(block.Style.Color, "#FFFFFF"), 255)
+	if err != nil {
+		return err
+	}
+	outlineColor, err := verselineParseHexColor(firstNonEmpty(block.Style.OutlineColor, "#000000"), 255)
+	if err != nil {
+		return err
+	}
+	shadowColor := color.NRGBA{R: outlineColor.R, G: outlineColor.G, B: outlineColor.B, A: 170}
+
+	renderer := &textdraw.Renderer{
+		FontSize: float32(max(block.Style.Size, 1)),
+		PixScale: 1,
+		Color:    fillColor,
+	}
+
+	y := pad
+	for _, line := range lines {
+		baselineY := y + line.Ascent
+		x := pad + max((imageWidth-pad*2-line.Width)/2, 0)
+
+		if block.Style.Shadow > 0 {
+			renderer.Color = shadowColor
+			verselineDrawLine(renderer, line, img, x+block.Style.Shadow, baselineY+block.Style.Shadow)
+		}
+		if block.Style.Outline > 0 {
+			renderer.Color = outlineColor
+			for dy := -block.Style.Outline; dy <= block.Style.Outline; dy++ {
+				for dx := -block.Style.Outline; dx <= block.Style.Outline; dx++ {
+					if dx == 0 && dy == 0 {
+						continue
+					}
+					if dx*dx+dy*dy > block.Style.Outline*block.Style.Outline {
+						continue
+					}
+					verselineDrawLine(renderer, line, img, x+dx, baselineY+dy)
+				}
+			}
+		}
+
+		renderer.Color = fillColor
+		verselineDrawLine(renderer, line, img, x, baselineY)
+		y += max(line.Height, 1)
+	}
+
+	if err := os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
+		return err
+	}
+	file, err := os.Create(outputPath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	return png.Encode(file, img)
+}
+
+func renderVerselineBlockImageMagick(block verselineResolvedBlock, maxWidth int, outputPath string) error {
+	textPath := strings.TrimSuffix(outputPath, ".png") + ".txt"
+	if err := os.WriteFile(textPath, []byte(block.Text), 0644); err != nil {
+		return err
+	}
+
+	args := []string{
+		"-background", "none",
+		"-fill", firstNonEmpty(block.Style.Color, "#FFFFFF"),
+		"-gravity", "center",
+		"-pointsize", strconv.Itoa(max(block.Style.Size, 24)),
+	}
+	if block.FontFile != "" {
+		args = append(args, "-font", block.FontFile)
+	} else if strings.TrimSpace(block.Style.Font) != "" {
+		args = append(args, "-font", block.Style.Font)
+	}
+	if strings.TrimSpace(block.Style.OutlineColor) != "" && block.Style.Outline > 0 {
+		args = append(args, "-stroke", block.Style.OutlineColor, "-strokewidth", strconv.Itoa(block.Style.Outline))
+	}
+	args = append(args, "-size", fmt.Sprintf("%dx", maxWidth), "caption:@"+textPath, "PNG32:"+outputPath)
+
+	cmd := exec.Command("magick", args...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func verselineResolveRasterFace(block verselineResolvedBlock) (string, *textfont.Face, error) {
+	fontPath := strings.TrimSpace(block.FontFile)
+	if fontPath == "" {
+		var err error
+		fontPath, err = verselineResolveSystemFontPath(block.Style.Font)
+		if err != nil {
+			return "", nil, err
+		}
+	}
+
+	face, err := verselineLoadFace(fontPath)
+	if err != nil {
+		return fontPath, nil, err
+	}
+	return fontPath, face, nil
+}
+
+func verselineResolveSystemFontPath(family string) (string, error) {
+	family = strings.TrimSpace(family)
+	if family == "" {
+		return "", fmt.Errorf("style has no font family")
+	}
+	if cached, ok := verselineFontPathCache.Load(family); ok {
+		return cached.(string), nil
+	}
+
+	cmd := exec.Command("fc-match", "-f", "%{file}\n", family)
+	output, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("fc-match %q: %w", family, err)
+	}
+	path := strings.TrimSpace(string(output))
+	if path == "" {
+		return "", fmt.Errorf("no system font file found for %q", family)
+	}
+	verselineFontPathCache.Store(family, path)
+	return path, nil
+}
+
+func verselineLoadFace(fontPath string) (*textfont.Face, error) {
+	if cached, ok := verselineFaceCache.Load(fontPath); ok {
+		return cached.(*textfont.Face), nil
+	}
+
+	file, err := os.Open(fontPath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	faces, err := textfont.ParseTTC(file)
+	if err != nil {
+		return nil, err
+	}
+	if len(faces) == 0 {
+		return nil, fmt.Errorf("font file %q contains no faces", fontPath)
+	}
+	verselineFaceCache.Store(fontPath, faces[0])
+	return faces[0], nil
+}
+
+func verselineFaceSupportsText(face *textfont.Face, text string) bool {
+	for _, r := range text {
+		if r == '\n' || unicode.IsSpace(r) {
+			continue
+		}
+		if _, ok := face.NominalGlyph(r); !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func verselineWrapTextLines(text string, face *textfont.Face, size int, maxWidth int) ([]verselineRasterLine, error) {
+	paragraphs := strings.Split(text, "\n")
+	if len(paragraphs) == 0 {
+		paragraphs = []string{text}
+	}
+
+	lines := make([]verselineRasterLine, 0, len(paragraphs))
+	for _, paragraph := range paragraphs {
+		paragraphLines, err := verselineWrapParagraph(paragraph, face, size, maxWidth)
+		if err != nil {
+			return nil, err
+		}
+		lines = append(lines, paragraphLines...)
+	}
+	return lines, nil
+}
+
+func verselineWrapParagraph(text string, face *textfont.Face, size int, maxWidth int) ([]verselineRasterLine, error) {
+	if text == "" {
+		height := max(size, 1)
+		return []verselineRasterLine{{Width: 0, Ascent: height, Descent: 0, Height: height}}, nil
+	}
+
+	runes := []rune(text)
+	direction, script, lang := verselineTextDirection(runes)
+	input := shaping.Input{
+		Text:      runes,
+		RunStart:  0,
+		RunEnd:    len(runes),
+		Face:      face,
+		Size:      fixed.I(size),
+		Direction: direction,
+		Script:    script,
+		Language:  lang,
+	}
+
+	var seg shaping.Segmenter
+	runs := seg.Split(input, verselineFontMap{face: face})
+	shapedRuns := make([]shaping.Output, len(runs))
+	for i, run := range runs {
+		var shaper shaping.HarfbuzzShaper
+		shapedRuns[i] = shaper.Shape(run)
+	}
+
+	var wrapper shaping.LineWrapper
+	wrapped, _ := wrapper.WrapParagraph(shaping.WrapConfig{Direction: direction}, maxWidth, runes, shaping.NewSliceIterator(shapedRuns))
+	if len(wrapped) == 0 {
+		return []verselineRasterLine{{Width: 0, Ascent: size, Descent: 0, Height: size}}, nil
+	}
+
+	lines := make([]verselineRasterLine, 0, len(wrapped))
+	for _, wrappedLine := range wrapped {
+		runs := append([]shaping.Output(nil), wrappedLine...)
+		sort.Slice(runs, func(i, j int) bool {
+			return runs[i].VisualIndex < runs[j].VisualIndex
+		})
+
+		line := verselineRasterLine{}
+		for _, run := range runs {
+			line.Width += run.Advance.Ceil()
+			line.Ascent = max(line.Ascent, run.LineBounds.Ascent.Ceil())
+			line.Descent = max(line.Descent, -run.LineBounds.Descent.Floor())
+		}
+		if line.Ascent == 0 && line.Descent == 0 {
+			line.Ascent = size
+		}
+		line.Height = line.Ascent + line.Descent
+		line.Runs = runs
+		lines = append(lines, line)
+	}
+
+	return lines, nil
+}
+
+func verselineTextDirection(runes []rune) (di.Direction, language.Script, language.Language) {
+	for _, r := range runes {
+		if unicode.IsSpace(r) {
+			continue
+		}
+		if verselineIsArabicRune(r) {
+			return di.DirectionRTL, language.Arabic, language.NewLanguage("AR")
+		}
+		break
+	}
+	return di.DirectionLTR, language.Latin, language.NewLanguage("EN")
+}
+
+func verselineIsArabicRune(r rune) bool {
+	return unicode.In(r, unicode.Arabic)
+}
+
+func verselineDrawLine(renderer *textdraw.Renderer, line verselineRasterLine, img *image.NRGBA, x, baselineY int) {
+	cursor := x
+	for _, run := range line.Runs {
+		cursor = renderer.DrawShapedRunAt(run, img, cursor, baselineY)
+	}
+}
+
+func verselineParseHexColor(value string, alpha uint8) (color.NRGBA, error) {
+	trimmed := strings.TrimSpace(strings.TrimPrefix(value, "#"))
+	switch len(trimmed) {
+	case 6:
+		raw, err := hex.DecodeString(trimmed)
+		if err != nil {
+			return color.NRGBA{}, err
+		}
+		return color.NRGBA{R: raw[0], G: raw[1], B: raw[2], A: alpha}, nil
+	case 8:
+		raw, err := hex.DecodeString(trimmed)
+		if err != nil {
+			return color.NRGBA{}, err
+		}
+		return color.NRGBA{R: raw[0], G: raw[1], B: raw[2], A: raw[3]}, nil
+	default:
+		return color.NRGBA{}, fmt.Errorf("unsupported hex color %q", value)
+	}
+}

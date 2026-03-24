@@ -5,6 +5,8 @@ go 1.24.2
 require (
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
+	github.com/go-text/render v0.2.1
+	github.com/go-text/typesetting v0.3.4
 )
 
 require (
@@ -27,7 +29,11 @@ require (
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
+	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c // indirect
+	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
+	golang.org/x/image v0.23.0 // indirect
+	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
-	golang.org/x/text v0.3.8 // indirect
+	golang.org/x/text v0.21.0 // indirect
 )
