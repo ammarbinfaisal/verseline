@@ -1,5 +1,7 @@
 *.mp4
+*.ass
 *.csv
 *.txt
+*.layers/
 markut
 markut.exe
