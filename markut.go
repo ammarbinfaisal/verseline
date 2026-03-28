@@ -1371,13 +1371,13 @@ var Subcommands = map[string]Subcommand{
 	},
 }
 
-func usage() {
+func usage(program string) {
 	names := []string{}
 	for name, _ := range Subcommands {
 		names = append(names, name)
 	}
 	sort.Strings(names)
-	fmt.Printf("Usage: markut <SUBCOMMAND> [OPTIONS]\n")
+	fmt.Printf("Usage: %s <SUBCOMMAND> [OPTIONS]\n", program)
 	fmt.Printf("SUBCOMMANDS:\n")
 	for _, name := range names {
 		fmt.Printf("    %s - %s\n", name, Subcommands[name].Description)
@@ -1389,8 +1389,13 @@ func usage() {
 }
 
 func main() {
+	program := currentProgramName()
 	if len(os.Args) < 2 {
-		usage()
+		if isVerselineExecutableName(program) {
+			printVerselineUsage(program)
+		} else {
+			usage(program)
+		}
 		fmt.Printf("ERROR: No subcommand is provided\n")
 		os.Exit(1)
 	}
@@ -1883,11 +1888,25 @@ func main() {
 		},
 	}
 
+	if isVerselineExecutableName(program) {
+		name := os.Args[1]
+		if isVerselineHelpArg(name) {
+			printVerselineUsage(program)
+			return
+		}
+		if isVerselineNestedCommand(name) {
+			if !runVerselineCommand(program, os.Args[1:]) {
+				os.Exit(1)
+			}
+			return
+		}
+	}
+
 	name := os.Args[1]
 	args := os.Args[2:]
 	subcommand, ok := Subcommands[name]
 	if !ok {
-		usage()
+		usage(program)
 		fmt.Printf("ERROR: Unknown subcommand %s\n", name)
 		os.Exit(1)
 	}

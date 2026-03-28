@@ -1,68 +1,84 @@
 # Verseline Format
 
-Verseline should be a timed text-video renderer, not a Quran-only tool.
+Verseline should be a declarative timed-text video format built around three things:
 
-Quran is still a first-class use case, but the format should also handle:
+- a project file
+- a timeline
+- tooling around that data through a TUI and an MCP server
 
+It should not depend on a stack-based authoring model.
+
+## Product Scope
+
+Verseline is for:
+
+- recitations
+- readings
 - poems
-- Arabic text blocks
-- English translation blocks
-- mixed translators
-- multiple fonts
-- 2 blocks, 3 blocks, or more
-- LLM or MCP-generated draft timelines
+- translated clips
+- source-language preservation
+- one or more timed text layers over an image or video background
 
 The format should optimize for:
 
 - manual editing
 - TUI editing
-- line-by-line diffability
-- LLM friendliness
+- LLM-assisted drafting
+- explicit provenance
 - low ambiguity
+- readability on mobile screens
 
-## File Split
+## File Model
 
-Use two files:
+Use two primary files:
 
 1. `project.json`
 2. `timeline.jsonl`
 
-Why this split:
+Why:
 
 - `project.json` changes slowly
 - `timeline.jsonl` changes often
-- LLMs and TUIs can rewrite one segment line at a time
-- approval workflows are simpler
+- timeline entries can be rewritten one segment at a time
+- diff review stays manageable
+- MCP tools can update only the affected segments
 
 ## `project.json`
 
-This should contain stable clip-level configuration:
+This file contains stable clip-level configuration.
 
-- output path
-- canvas
-- audio/background assets
-- fonts
-- styles
-- placements
-- data sources
-- project-level overlays
-- preview settings
-- render profiles
-- timeline paths
+Recommended top-level fields:
+
+- `name`
+- `output`
+- `canvas`
+- `assets`
+- `sources`
+- `styles`
+- `placements`
+- `timeline`
+- `render_profiles`
+- `defaults`
 
 Example:
 
 ```json
 {
   "name": "al-baqarah-2-5",
-  "output": "out/al-baqarah-2-5.mp4",
+  "output": {
+    "directory": "out",
+    "basename": "al-baqarah-2-5"
+  },
   "canvas": {
     "width": 1080,
     "height": 1920,
-    "fps": 30
+    "fps": 30,
+    "pixel_format": "yuv420p"
   },
   "assets": {
-    "audio": "audio/clip.mp3",
+    "audio": {
+      "path": "audio/clip.mp3"
+    },
     "background": {
       "type": "video",
       "path": "assets/bg.mp4",
@@ -70,157 +86,103 @@ Example:
       "fit": "cover"
     }
   },
-  "fonts": [
+  "sources": [
     {
-      "id": "latin-main",
-      "family": "Helvetica"
+      "id": "arabic-kfqpc",
+      "kind": "canonical_text",
+      "language": "ar",
+      "format": "jsonl",
+      "path": "data/arabic-kfqpc.jsonl"
     },
     {
-      "id": "kfqpc",
-      "family": "KFGQPC Uthmanic Script HAFS",
-      "files": ["fonts/UthmanicHafs1.woff2"]
+      "id": "sahih",
+      "kind": "translation",
+      "language": "en",
+      "format": "jsonl",
+      "path": "data/sahih.jsonl"
+    },
+    {
+      "id": "asr-draft",
+      "kind": "transcript",
+      "language": "ar",
+      "format": "json",
+      "path": "data/asr-draft.json"
     }
   ],
   "styles": [
     {
-      "id": "translation",
-      "font": "latin-main",
-      "size": 64,
-      "color": "#FFFFFF",
-      "auxiliary_color": "#B7B7B7",
-      "outline_color": "#000000",
-      "outline": 3,
-      "shadow": 1
-    },
-    {
-      "id": "translation-large",
-      "font": "latin-main",
-      "size": 84,
-      "color": "#FFFFFF",
-      "auxiliary_color": "#B7B7B7",
-      "outline_color": "#000000",
-      "outline": 3,
-      "shadow": 1
-    },
-    {
       "id": "arabic-main",
-      "font": "kfqpc",
-      "size": 72,
+      "font_family": "KFGQPC Uthmanic Script HAFS",
+      "font_size": 72,
       "color": "#FFFFFF",
       "outline_color": "#000000",
-      "outline": 3,
-      "shadow": 1
+      "outline_width": 4,
+      "shadow_blur": 2,
+      "shadow_offset_y": 2
+    },
+    {
+      "id": "translation-main",
+      "font_family": "Aptos",
+      "font_size": 60,
+      "color": "#FFFFFF",
+      "outline_color": "#000000",
+      "outline_width": 3,
+      "background_fill": "#00000099",
+      "background_padding_x": 24,
+      "background_padding_y": 16,
+      "background_radius": 18
     },
     {
       "id": "meta",
-      "font": "latin-main",
-      "size": 28,
+      "font_family": "Aptos",
+      "font_size": 28,
       "color": "#F2F2F2",
       "outline_color": "#000000",
-      "outline": 2,
-      "shadow": 1
+      "outline_width": 2
     }
   ],
   "placements": [
     {
-      "id": "lower-center",
-      "anchor": "bottom_center",
-      "margin_x": 108,
-      "margin_y": 360
-    },
-    {
-      "id": "meta-above",
-      "anchor": "bottom_center",
-      "margin_x": 108,
-      "margin_y": 540
-    },
-    {
       "id": "upper-safe",
       "anchor": "top_center",
       "margin_x": 108,
-      "margin_y": 180
-    }
-  ],
-  "sources": [
-    {
-      "id": "sahih",
-      "type": "jsonl",
-      "path": "data/sahih.jsonl",
-      "language": "en"
+      "margin_y": 180,
+      "max_width": 864
     },
     {
-      "id": "pickthall",
-      "type": "jsonl",
-      "path": "data/pickthall.jsonl",
-      "language": "en"
-    },
-    {
-      "id": "arabic-kfqpc",
-      "type": "jsonl",
-      "path": "data/arabic-kfqpc.jsonl",
-      "language": "ar"
-    }
-  ],
-  "overlays": [
-    {
-      "id": "meta",
-      "blocks": [
-        {
-          "id": "meta",
-          "kind": "literal",
-          "text": "surah al-baqarah 2-5\ntranslation: sahih international",
-          "style": "meta",
-          "placement": "meta-above"
-        }
-      ]
-    }
-  ],
-  "preview": {
-    "player": "vlc",
-    "directory": "previews",
-    "padding_ms": 400,
-    "width": 540,
-    "height": 960,
-    "fps": 24,
-    "crf": 32,
-    "preset": "veryfast"
-  },
-  "render_profiles": [
-    {
-      "id": "sdr-fhd",
-      "label": "SDR FHD",
-      "width": 1080,
-      "height": 1920,
-      "fps": 30,
-      "output_suffix": "sdr-fhd",
-      "video_codec": "libx264",
-      "audio_codec": "aac",
-      "audio_bitrate": "192k",
-      "crf": 21,
-      "preset": "medium",
-      "pix_fmt": "yuv420p"
-    },
-    {
-      "id": "hdr-4k",
-      "label": "HDR 4K",
-      "width": 2160,
-      "height": 3840,
-      "fps": 30,
-      "output_suffix": "hdr-4k",
-      "video_codec": "libx265",
-      "audio_codec": "aac",
-      "audio_bitrate": "256k",
-      "crf": 18,
-      "preset": "slow",
-      "pix_fmt": "yuv420p10le",
-      "color_primaries": "bt2020",
-      "color_trc": "smpte2084",
-      "colorspace": "bt2020nc"
+      "id": "lower-center",
+      "anchor": "bottom_center",
+      "margin_x": 108,
+      "margin_y": 360,
+      "max_width": 864
     }
   ],
   "timeline": {
     "draft": "clips/example.timeline.draft.jsonl",
     "approved": "clips/example.timeline.jsonl"
+  },
+  "render_profiles": [
+    {
+      "id": "preview",
+      "width": 540,
+      "height": 960,
+      "fps": 24,
+      "crf": 32,
+      "preset": "veryfast"
+    },
+    {
+      "id": "final",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30,
+      "crf": 20,
+      "preset": "medium"
+    }
+  ],
+  "defaults": {
+    "segment_status": "draft",
+    "split_target_chars": 42,
+    "split_max_lines": 2
   }
 }
 ```
@@ -229,168 +191,124 @@ Example:
 
 Each line is one segment.
 
-Each segment has:
+Each segment should be a timed display unit tied to audio, with optional mapping metadata and one or more display layers.
 
+Recommended fields:
+
+- `id`
 - `start`
 - `end`
 - `status`
-- `confidence`
 - `notes`
-- `blocks`
-
-Each block can be:
-
-- literal text
-- text from a source
-- Arabic
-- English
-- meta
-- anything else
+- `mapping`
+- `layers`
 
 Example:
 
 ```json
-{"id":"seg-001","start":"00:00:00.000","end":"00:00:03.200","status":"approved","blocks":[{"id":"en-1","kind":"source_substring","text":"This is the Book about which there is no doubt,","style":"translation","placement":"lower-center","source":{"source":"sahih","mode":"substring","refs":["2:2"]}}]}
-{"id":"seg-002","start":"00:00:03.200","end":"00:00:06.300","status":"approved","blocks":[{"id":"ar-1","kind":"source_full","style":"arabic-main","placement":"upper-safe","source":{"source":"arabic-kfqpc","mode":"full","refs":["2:2"]}},{"id":"en-2","kind":"source_substring","text":"a guidance for those conscious of Allah -","style":"translation-large","placement":"lower-center","source":{"source":"sahih","mode":"substring","refs":["2:2"]}}]}
+{"id":"seg-001","start":"00:00:03.200","end":"00:00:06.300","status":"approved","mapping":{"refs":["2:2"],"method":"llm-assisted","confidence":0.88},"layers":[{"id":"ar","role":"source","language":"ar","preserve":true,"source":{"source_id":"arabic-kfqpc","mode":"full","refs":["2:2"]},"style":"arabic-main","placement":"upper-safe"},{"id":"en","role":"translation","language":"en","preserve":true,"text":"This is the Book about which there is no doubt,","source":{"source_id":"sahih","mode":"substring","refs":["2:2"]},"style":"translation-main","placement":"lower-center"}]}
+{"id":"seg-002","start":"00:00:06.300","end":"00:00:09.900","status":"draft","notes":"split from long source span","mapping":{"refs":["2:2"],"method":"mcp-split","confidence":0.72},"layers":[{"id":"en","role":"translation","language":"en","preserve":false,"text":"A guidance for those mindful of Allah.","source":{"source_id":"sahih","mode":"derived","refs":["2:2"]},"style":"translation-main","placement":"lower-center"}]}
 ```
 
-## Why Blocks Instead Of Fixed Fields
+## Segment Rules
 
-This is the key design change.
+Each segment must:
 
-Do not hardcode:
+- have `start` and `end`
+- contain at least one display layer
+- be valid independently of neighboring segments
 
-- one translation block
-- one meta block
-- one Arabic block
+Each layer should declare:
 
-Instead, every segment has a `blocks` array.
+- `role`
+- `language`
+- whether the wording is preserved or derived
+- either inline `text` or a source lookup
+- `style`
+- `placement`
 
-That lets you handle:
+This separation matters because audio, source text, translation text, and final display text are not always the same thing.
 
-- 2 blocks
-- 3 blocks
-- translator changes mid-project
-- poem original plus translation
-- Arabic only
-- English only
-- Arabic plus transliteration plus translation
+## Provenance Rules
 
-The renderer only needs to know how to render blocks.
+The format should make source provenance explicit.
 
-Project-level overlays are where stable items like meta text should live.
+Recommended layer rules:
 
-That keeps the timeline focused on the content that changes segment by segment.
+- `preserve: true` means wording must stay exact
+- `preserve: false` means the wording may be shortened, split, or otherwise derived
+- `source.refs` should point back to canonical source material when available
+- `mapping.method` should say whether the segment came from manual editing, transcription, or LLM/MCP assistance
 
-## Rendering Model
+This is especially important when:
 
-Verseline should treat block rendering as a separate layer stage.
+- Arabic or another source language must stay exact
+- translation wording comes from a trusted external source
+- long spoken passages are split into subtitle-sized segments
 
-The current implementation does this by:
+## Readability Helpers
 
-1. resolving block text from literal text or sources
-2. rasterizing each block into a transparent PNG layer
-3. compositing those layers over the background with ffmpeg overlay
+The format should directly support readability controls instead of treating them as renderer-only hacks.
 
-This is more portable than relying on ffmpeg subtitle filters, because some local ffmpeg builds do not include libass or drawtext.
+Useful style fields include:
 
-The raster stage should prefer a real text shaping stack, not shelling out for every block by default.
+- `outline_color`
+- `outline_width`
+- `shadow_blur`
+- `background_fill`
+- `background_padding_x`
+- `background_padding_y`
+- `background_radius`
+- `line_height`
+- `letter_spacing`
+- `max_lines`
 
-The current implementation uses `go-text` for shaped text rasterization when it can resolve a real font file.
-That gives better wrapping and cleaner glyph rendering for Latin and Unicode Arabic text.
+Useful project defaults include:
 
-If the project only provides a family name, Verseline resolves it to a system font file.
-If the font format is not yet supported by the Go raster path, or the chosen face does not cover the block text, it falls back to ImageMagick for that block.
+- target character count per subtitle
+- target max lines per subtitle
+- safe area margins
+- alternate style for dense text
 
-That keeps the render path practical for:
+## TUI Responsibilities
 
-- normal `.ttf`, `.otf`, `.ttc` system fonts
-- Unicode Arabic text
-- mixed family-name and explicit-file projects
-- transitional cases like WOFF-based Quran fonts that may still need a fallback path
+The TUI should be the main human review tool.
 
-It also keeps the architecture open for later improvements:
+It should support:
 
-- better Arabic shaping
-- bracket-aware styling
-- font-file-specific rendering
-- cached block layers
+- project and timeline loading
+- segment list navigation
+- previewing one segment or a short range
+- editing text, timing, style, and placements
+- approving or rejecting segments
+- applying MCP suggestions
+- rerendering selected segments or the whole clip
 
-## Review And Approval
+The TUI should not require users to think in terms of many separate executables.
 
-Preview and final render are different operations.
+## MCP Responsibilities
 
-Preview should:
+The MCP server should provide automation around the declarative data model.
 
-- render from the current draft or working segment selection
-- use low-quality settings
-- target one segment plus a little padding around it
-- open in the configured player, defaulting to VLC
+Useful operations:
 
-Final renders should:
+- import audio and transcript data
+- transcribe audio into draft transcript spans
+- map transcript spans to source references
+- preserve source-language text where required
+- split long readings into subtitle-sized segments
+- rewrite or condense non-preserved display text
+- update draft timeline entries
+- trigger preview and final renders
 
-- render only from the approved timeline
-- target one or more named `render_profiles`
-- support different SDR/HDR and FHD/2K/4K outputs by profile
-- show progress per render job
+The MCP server is the right place for LLM-assisted operations. The project and timeline remain the source of truth.
 
-The TUI should expose the same workflow surface as the CLI:
+## Surface Area Reduction
 
-- validate
-- preview current segment
-- mark statuses
-- approve draft to approved timeline
-- render current profile
-- render all profiles
+The intended user-facing surface should be reduced to:
 
-## Why JSONL For Timeline
+- `verseline tui <project>`
+- `verseline render <project>`
+- `verseline mcp`
 
-JSONL is better than one large JSON array for the timeline because:
-
-- each segment is independent
-- LLMs can rewrite individual lines safely
-- approval tools can replace one line at a time
-- merges are easier
-- MCP tools can stream and patch segments incrementally
-
-## Exact-Text Policy
-
-For sourced blocks, the text policy should be explicit:
-
-- `mode: "full"` means exact full entry from the source
-- `mode: "substring"` means exact substring from the source
-- `kind: "literal"` means hand-authored text
-
-This matters for Quran because one segment may stop at a phrase that is only part of a verse translation.
-
-## Fonts
-
-Fonts should be first-class config items.
-
-That includes:
-
-- normal Latin fonts
-- Arabic unicode fonts
-- KFGQPC/KFQPC-style font files
-- font files whose glyph mapping depends on a specific text stream
-
-Verseline should not assume one global font.
-
-It should assume blocks can use different fonts and scripts.
-
-## MCP / LLM Ergonomics
-
-The format should be easy for an agent to reason about.
-
-That means:
-
-- explicit IDs
-- explicit source references
-- explicit block arrays
-- explicit placements
-- explicit status fields
-- no implicit inheritance hidden in too many layers
-
-The goal is not maximum abstraction.
-
-The goal is that an LLM can read the project and timeline, make a localized change, and write valid output back.
+Any current `validate`, `preview`, `approve`, or other specialized commands should become internal actions behind the TUI, MCP, or renderer library unless they remain useful as low-level implementation details.
