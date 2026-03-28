@@ -2,6 +2,59 @@
 
 Verseline is a timed-text video renderer for recitations, readings, poems, and other audio-led clips.
 
+## Usage
+
+Build the binary first:
+
+```console
+$ go build -o verseline
+```
+
+Then add the local stdio server to Claude Code:
+
+```console
+$ claude mcp add verseline -- /absolute/path/to/verseline mcp
+```
+
+Or add it to Codex CLI:
+
+```console
+$ codex mcp add verseline -- /absolute/path/to/verseline mcp
+```
+
+Print the current MCP tool list and example add commands from the binary itself:
+
+```console
+$ ./verseline mcp describe
+```
+
+Open the review TUI:
+
+```console
+$ ./verseline tui -project path/to/project.json
+```
+
+Render approved output:
+
+```console
+$ ./verseline render -project path/to/project.json
+```
+
+The current MCP server exposes tools for:
+
+- project inspection
+- transcript import
+- draft timeline generation from transcript entries
+- timeline validation
+- segment listing
+- segment updates
+- segment splitting
+- draft approval
+- segment previews
+- full renders
+
+## Definition
+
 The core idea is simple:
 
 - one declarative project file
@@ -18,9 +71,10 @@ Verseline should handle:
 - audio-led portrait clips
 - image or video backgrounds
 - one or more timed text layers
-- preserved source text, such as Arabic or any other canonical language
-- translation text from a trusted dataset
-- LLM-assisted mapping between audio, source text, and display text
+- preserved source text in language `x`
+- one or more translation layers in languages `y`, `z`, or any other target languages
+- translation text sourced from trusted files or websites
+- LLM-assisted mapping between audio, source text, and verbatim display text
 - manual review and approval before final render
 
 The source of truth should be a declarative project, not imperative commands.
@@ -43,7 +97,7 @@ A Verseline project should describe:
 - canvas and output settings
 - audio input
 - image or video background input
-- source datasets such as transcript, canonical text, and translations
+- source datasets such as transcript, canonical text in language `x`, and translation sources in one or more target languages
 - text styles and placements
 - timeline segments
 - approval state
@@ -87,49 +141,10 @@ The MCP server should be able to:
 - map transcript spans to source references
 - preserve source-language text exactly when required
 - split long segments into readable subtitle-sized chunks
-- propose revised segment wording or line breaks
-- write those proposals back into the draft timeline
+- suggest timing or segmentation changes
+- write those proposals back into the draft timeline while keeping translation text verbatim from the chosen source
 
-The LLM can help with segmentation and mapping, but approved timeline text remains under user control.
-
-## MCP Integration
-
-Build the binary first:
-
-```console
-$ go build -o verseline
-```
-
-Then add the local stdio server to Claude Code:
-
-```console
-$ claude mcp add verseline -- /absolute/path/to/verseline mcp
-```
-
-Or add it to Codex CLI:
-
-```console
-$ codex mcp add verseline -- /absolute/path/to/verseline mcp
-```
-
-The current MCP server exposes tools for:
-
-- project inspection
-- transcript import
-- draft timeline generation from transcript entries
-- timeline validation
-- segment listing
-- segment updates
-- segment splitting
-- draft approval
-- segment previews
-- full renders
-
-To print the current MCP tool list and example add commands from the binary itself:
-
-```console
-$ ./verseline mcp describe
-```
+The LLM can help with segmentation, mapping, and timing, but your translation use case stays source-driven: translation wording should come verbatim from trusted files or websites, not be authored by the model.
 
 ## Intended Workflow
 
@@ -145,10 +160,4 @@ $ ./verseline mcp describe
 - [docs/verseline-format.md](docs/verseline-format.md)
 - [docs/recitation-workflow.md](docs/recitation-workflow.md)
 
-## Build
-
-Install [Go](https://golang.org/) and [ffmpeg](https://www.ffmpeg.org/), then build the current binary:
-
-```console
-$ go build -o verseline
-```
+Install [Go](https://golang.org/) and [ffmpeg](https://www.ffmpeg.org/).

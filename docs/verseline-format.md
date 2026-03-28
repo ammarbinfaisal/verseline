@@ -19,6 +19,13 @@ Verseline is for:
 - source-language preservation
 - one or more timed text layers over an image or video background
 
+The format should stay language-agnostic:
+
+- language `x` can be any source language
+- translations can target one or more languages such as `y` and `z`
+- translation text can come from files, websites, or any other trusted source
+- the LLM's job is mapping, segmentation, and alignment, not inventing translation wording
+
 The format should optimize for:
 
 - manual editing
@@ -242,9 +249,14 @@ Recommended layer rules:
 
 This is especially important when:
 
-- Arabic or another source language must stay exact
+- language `x` must stay exact
 - translation wording comes from a trusted external source
 - long spoken passages are split into subtitle-sized segments
+
+For a source-driven translation workflow, the preferred rule is:
+
+- the LLM may choose timing, grouping, and mapping
+- the displayed translation text should remain verbatim from the selected source unless the user explicitly asks for a derived form
 
 ## Readability Helpers
 
@@ -297,7 +309,7 @@ Useful operations:
 - map transcript spans to source references
 - preserve source-language text where required
 - split long readings into subtitle-sized segments
-- rewrite or condense non-preserved display text
+- keep translation text verbatim from trusted sources while adjusting timing and grouping
 - update draft timeline entries
 - trigger preview and final renders
 
