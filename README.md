@@ -34,7 +34,7 @@ The intended user-facing surface is:
 - `verseline mcp` for editor and LLM integrations
 
 The current repository still contains legacy `markut` code and several older subcommands. Those are implementation history, not the target product shape.
-The `mcp` entrypoint is scaffolded in the CLI surface but not implemented yet.
+`verseline mcp` now runs as a local stdio MCP server.
 
 ## What The Project Describes
 
@@ -91,6 +91,43 @@ The MCP server should be able to:
 - write those proposals back into the draft timeline
 
 The LLM can help with segmentation and mapping, but approved timeline text remains under user control.
+
+## MCP Integration
+
+Build the binary first:
+
+```console
+$ go build -o verseline
+```
+
+Then add the local stdio server to Claude Code:
+
+```console
+$ claude mcp add verseline -- /absolute/path/to/verseline mcp
+```
+
+Or add it to Codex CLI:
+
+```console
+$ codex mcp add verseline -- /absolute/path/to/verseline mcp
+```
+
+The current MCP server exposes tools for:
+
+- project inspection
+- timeline validation
+- segment listing
+- segment updates
+- segment splitting
+- draft approval
+- segment previews
+- full renders
+
+To print the current MCP tool list and example add commands from the binary itself:
+
+```console
+$ ./verseline mcp describe
+```
 
 ## Intended Workflow
 

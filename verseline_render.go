@@ -67,38 +67,9 @@ func init() {
 				return false
 			}
 
-			project, projectPath, err := loadVerselineProject(*projectPtr)
+			_, approvedPath, _, err := verselineApproveProject(*projectPtr)
 			if err != nil {
-				fmt.Printf("ERROR: Could not load Verseline project %s: %s\n", *projectPtr, err)
-				return false
-			}
-
-			if strings.TrimSpace(project.Timeline.Draft) == "" || strings.TrimSpace(project.Timeline.Approved) == "" {
-				fmt.Printf("ERROR: project must define timeline.draft and timeline.approved\n")
-				return false
-			}
-
-			draftPath := resolveReelPath(filepath.Dir(projectPath), project.Timeline.Draft)
-			approvedPath := resolveReelPath(filepath.Dir(projectPath), project.Timeline.Approved)
-			segments, err := loadVerselineTimeline(draftPath)
-			if err != nil {
-				fmt.Printf("ERROR: Could not load draft timeline %s: %s\n", draftPath, err)
-				return false
-			}
-			if err := validateVerselineTimelineAgainstProject(project, segments); err != nil {
-				fmt.Printf("ERROR: Draft timeline failed project validation: %s\n", err)
-				return false
-			}
-
-			for index, segment := range segments {
-				if strings.EqualFold(segment.Status, "needs_fix") {
-					fmt.Printf("ERROR: segment %d is still marked needs_fix\n", index)
-					return false
-				}
-			}
-
-			if err := saveVerselineTimeline(approvedPath, segments); err != nil {
-				fmt.Printf("ERROR: Could not save approved timeline %s: %s\n", approvedPath, err)
+				fmt.Printf("ERROR: Could not approve project %s: %s\n", *projectPtr, err)
 				return false
 			}
 
@@ -135,6 +106,39 @@ func init() {
 			return true
 		},
 	}
+}
+
+func verselineApproveProject(projectPath string) (draftPath string, approvedPath string, segmentCount int, err error) {
+	project, absProjectPath, err := loadVerselineProject(projectPath)
+	if err != nil {
+		return "", "", 0, err
+	}
+
+	if strings.TrimSpace(project.Timeline.Draft) == "" || strings.TrimSpace(project.Timeline.Approved) == "" {
+		return "", "", 0, fmt.Errorf("project must define timeline.draft and timeline.approved")
+	}
+
+	draftPath = resolveReelPath(filepath.Dir(absProjectPath), project.Timeline.Draft)
+	approvedPath = resolveReelPath(filepath.Dir(absProjectPath), project.Timeline.Approved)
+	segments, err := loadVerselineTimeline(draftPath)
+	if err != nil {
+		return "", "", 0, err
+	}
+	if err := validateVerselineTimelineAgainstProject(project, segments); err != nil {
+		return "", "", 0, err
+	}
+
+	for index, segment := range segments {
+		if strings.EqualFold(segment.Status, "needs_fix") {
+			return "", "", 0, fmt.Errorf("segment %d is still marked needs_fix", index)
+		}
+	}
+
+	if err := saveVerselineTimeline(approvedPath, segments); err != nil {
+		return "", "", 0, err
+	}
+
+	return draftPath, approvedPath, len(segments), nil
 }
 func buildVerselineRenderPlan(project VerselineProject, absProjectPath string, segments []VerselineSegment, request verselineRenderRequest) (verselineRenderPlan, error) {
 	plan := verselineRenderPlan{}

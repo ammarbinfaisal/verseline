@@ -303,6 +303,17 @@ Useful operations:
 
 The MCP server is the right place for LLM-assisted operations. The project and timeline remain the source of truth.
 
+Today, the practical MCP baseline should be a local stdio server addable from both Claude Code and Codex CLI. That means `verseline mcp` should run without extra wrappers and expose concrete tools for:
+
+- inspecting a project
+- validating a timeline
+- listing segment summaries
+- updating draft segments
+- splitting long segments into shorter subtitle units
+- approving the draft timeline
+- previewing one segment
+- rendering approved outputs
+
 ## Surface Area Reduction
 
 The intended user-facing surface should be reduced to:

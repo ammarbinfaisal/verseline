@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -158,33 +157,4 @@ func withImplicitProjectFlag(args []string) []string {
 	}
 
 	return append([]string{"-project", first}, args[1:]...)
-}
-
-func runVerselineMCPCommand(name string, args []string) bool {
-	subFlag := flag.NewFlagSet(name, flag.ContinueOnError)
-	describePtr := subFlag.Bool("describe", false, "Print the planned MCP responsibilities and exit")
-
-	err := subFlag.Parse(args)
-	if err == flag.ErrHelp {
-		return true
-	}
-	if err != nil {
-		fmt.Printf("ERROR: Could not parse command line arguments: %s\n", err)
-		return false
-	}
-
-	if *describePtr {
-		fmt.Printf("Planned MCP responsibilities:\n")
-		fmt.Printf("- transcribe or import transcript spans\n")
-		fmt.Printf("- map transcript spans to source references\n")
-		fmt.Printf("- split long passages into readable subtitle segments\n")
-		fmt.Printf("- preserve trusted source-language text where required\n")
-		fmt.Printf("- update draft timeline records\n")
-		fmt.Printf("- trigger preview or final renders\n")
-		return true
-	}
-
-	fmt.Printf("ERROR: verseline mcp is not implemented yet\n")
-	fmt.Printf("Use `verseline mcp -describe` to inspect the intended MCP responsibilities.\n")
-	return false
 }
