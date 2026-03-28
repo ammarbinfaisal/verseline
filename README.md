@@ -115,6 +115,8 @@ $ codex mcp add verseline -- /absolute/path/to/verseline mcp
 The current MCP server exposes tools for:
 
 - project inspection
+- transcript import
+- draft timeline generation from transcript entries
 - timeline validation
 - segment listing
 - segment updates

@@ -305,6 +305,8 @@ The MCP server is the right place for LLM-assisted operations. The project and t
 
 Today, the practical MCP baseline should be a local stdio server addable from both Claude Code and Codex CLI. That means `verseline mcp` should run without extra wrappers and expose concrete tools for:
 
+- importing transcript JSON or JSONL into normalized timed entries
+- generating a draft timeline from transcript entries plus source/style/placement settings
 - inspecting a project
 - validating a timeline
 - listing segment summaries
