@@ -703,7 +703,7 @@ That is a better fit than the current chunk/cut terminology.
 ## Recommended Directory Layout
 
 ```text
-markut/
+verseline/
   clips/
     al-ikhlas/
       clip.json

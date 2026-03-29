@@ -62,7 +62,7 @@ The core idea is simple:
 - one TUI for review and approval
 - one MCP server for transcription, mapping, text splitting, and edit automation
 
-This repo was forked from [markut](https://github.com/tsoding/markut), but the intended direction here is no longer a stack-based video language. The target workflow is a data-first timed text system with LLM-assisted tooling around it.
+This repo began as a fork of [markut](https://github.com/tsoding/markut) — a stack-based video editing language. What remains is the idea of making videos using languages, but the direction has shifted to a data-first timed text system with LLM-assisted tooling for multilingual audio-led clips.
 
 ## Product Definition
 
@@ -87,7 +87,7 @@ The intended user-facing surface is:
 - `verseline render <project>` for headless render execution
 - `verseline mcp` for editor and LLM integrations
 
-The current repository still contains legacy `markut` code and several older subcommands. Those are implementation history, not the target product shape.
+The repository still contains legacy subcommands from the original fork. Those are implementation history, not the target product shape.
 `verseline mcp` now runs as a local stdio MCP server.
 
 ## What The Project Describes

@@ -60,7 +60,7 @@ func init() {
 func currentProgramName() string {
 	name := strings.TrimSpace(filepath.Base(os.Args[0]))
 	if name == "" {
-		return "markut"
+		return "verseline"
 	}
 	return name
 }

@@ -1,4 +1,4 @@
-module github.com/tsoding/markut
+module github.com/ammar/verseline
 
 go 1.25.0
 

@@ -31,7 +31,7 @@ func decomposeMillis(millis Millis) (hh int64, mm int64, ss int64, ms int64, sig
 	return
 }
 
-// Timestamp format used by Markut Language
+// Timestamp format: HH:MM:SS.mmm
 func millisToTs(millis Millis) string {
 	hh, mm, ss, ms, sign := decomposeMillis(millis)
 	return fmt.Sprintf("%s%02d:%02d:%02d.%03d", sign, hh, mm, ss, ms)
@@ -180,7 +180,7 @@ func defaultContext() (EvalContext, bool) {
 	}
 
 	if home, ok := os.LookupEnv("HOME"); ok {
-		path := path.Join(home, ".markut")
+		path := path.Join(home, ".verseline")
 		content, err := ioutil.ReadFile(path)
 		if err != nil {
 			if os.IsNotExist(err) {
@@ -189,7 +189,7 @@ func defaultContext() (EvalContext, bool) {
 			fmt.Printf("ERROR: Could not open %s to read as a config: %s\n", path, err)
 			return context, false
 		}
-		if !context.evalMarkutContent(string(content), path) {
+		if !context.evalConfigContent(string(content), path) {
 			return context, false
 		}
 	}
@@ -425,7 +425,7 @@ func loadTwitchChatDownloaderCSVButParseManually(path string) ([]ChatMessageGrou
 	return compressChatLog(chatLog), nil
 }
 
-func (context *EvalContext) evalMarkutContent(content string, path string) bool {
+func (context *EvalContext) evalConfigContent(content string, path string) bool {
 	lexer := NewLexer(content, path)
 	token := Token{}
 	var err error
@@ -489,7 +489,7 @@ func (context *EvalContext) evalMarkutContent(content string, path string) bool 
 	return true
 }
 
-func (context *EvalContext) evalMarkutFile(loc *Loc, path string, ignoreIfMissing bool) bool {
+func (context *EvalContext) evalConfigFile(loc *Loc, path string, ignoreIfMissing bool) bool {
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
 		sb := strings.Builder{}
@@ -506,7 +506,7 @@ func (context *EvalContext) evalMarkutFile(loc *Loc, path string, ignoreIfMissin
 		return ignoreIfMissing
 	}
 
-	return context.evalMarkutContent(string(content), path)
+	return context.evalConfigContent(string(content), path)
 }
 
 func (context *EvalContext) finishEval() bool {
@@ -543,7 +543,7 @@ func (context *EvalContext) finishEval() bool {
 
 func ffmpegPathToBin() (ffmpegPath string) {
 	ffmpegPath = "ffmpeg"
-	// TODO: replace FFMPEG_PREFIX envar in favor of a func `ffmpeg_prefix` that you have to call in $HOME/.markut
+	// TODO: replace FFMPEG_PREFIX envar in favor of a func `ffmpeg_prefix` that you have to call in $HOME/.verseline
 	ffmpegPrefix, ok := os.LookupEnv("FFMPEG_PREFIX")
 	if ok {
 		ffmpegPath = path.Join(ffmpegPrefix, "bin", "ffmpeg")
@@ -758,7 +758,7 @@ var Subcommands = map[string]Subcommand{
 		Description: "Render specific cut of the final video",
 		Run: func(name string, args []string) bool {
 			subFlag := flag.NewFlagSet(name, flag.ContinueOnError)
-			markutPtr := subFlag.String("markut", "MARKUT", "Path to the MARKUT file")
+			scriptPtr := subFlag.String("script", "SCRIPT", "Path to the script file")
 
 			err := subFlag.Parse(args)
 			if err == flag.ErrHelp {
@@ -771,7 +771,7 @@ var Subcommands = map[string]Subcommand{
 			}
 
 			context, ok := defaultContext()
-			ok = ok && context.evalMarkutFile(nil, *markutPtr, false) && context.finishEval()
+			ok = ok && context.evalConfigFile(nil, *scriptPtr, false) && context.finishEval()
 			if !ok {
 				return false
 			}
@@ -833,7 +833,7 @@ var Subcommands = map[string]Subcommand{
 		Description: "Render specific chunk of the final video",
 		Run: func(name string, args []string) bool {
 			subFlag := flag.NewFlagSet(name, flag.ContinueOnError)
-			markutPtr := subFlag.String("markut", "MARKUT", "Path to the MARKUT file")
+			scriptPtr := subFlag.String("script", "SCRIPT", "Path to the script file")
 			chunkPtr := subFlag.Int("chunk", 0, "Chunk number to render")
 
 			err := subFlag.Parse(args)
@@ -848,7 +848,7 @@ var Subcommands = map[string]Subcommand{
 			}
 
 			context, ok := defaultContext()
-			ok = ok && context.evalMarkutFile(nil, *markutPtr, false) && context.finishEval()
+			ok = ok && context.evalConfigFile(nil, *scriptPtr, false) && context.finishEval()
 			if !ok {
 				return false
 			}
@@ -874,7 +874,7 @@ var Subcommands = map[string]Subcommand{
 		Description: "Render the final video",
 		Run: func(name string, args []string) bool {
 			subFlag := flag.NewFlagSet(name, flag.ContinueOnError)
-			markutPtr := subFlag.String("markut", "MARKUT", "Path to the MARKUT file")
+			scriptPtr := subFlag.String("script", "SCRIPT", "Path to the script file")
 
 			err := subFlag.Parse(args)
 			if err == flag.ErrHelp {
@@ -887,7 +887,7 @@ var Subcommands = map[string]Subcommand{
 			}
 
 			context, ok := defaultContext()
-			ok = ok && context.evalMarkutFile(nil, *markutPtr, false) && context.finishEval()
+			ok = ok && context.evalConfigFile(nil, *scriptPtr, false) && context.finishEval()
 			if !ok {
 				return false
 			}
@@ -925,7 +925,7 @@ var Subcommands = map[string]Subcommand{
 		Description: "Print the summary of the video",
 		Run: func(name string, args []string) bool {
 			summFlag := flag.NewFlagSet(name, flag.ContinueOnError)
-			markutPtr := summFlag.String("markut", "MARKUT", "Path to the MARKUT file")
+			scriptPtr := summFlag.String("script", "SCRIPT", "Path to the script file")
 
 			err := summFlag.Parse(args)
 
@@ -939,7 +939,7 @@ var Subcommands = map[string]Subcommand{
 			}
 
 			context, ok := defaultContext()
-			ok = ok && context.evalMarkutFile(nil, *markutPtr, false) && context.finishEval()
+			ok = ok && context.evalConfigFile(nil, *scriptPtr, false) && context.finishEval()
 			if !ok {
 				return false
 			}
@@ -957,7 +957,7 @@ var Subcommands = map[string]Subcommand{
 		Description: "Generate chat captions",
 		Run: func(name string, args []string) bool {
 			chatFlag := flag.NewFlagSet(name, flag.ContinueOnError)
-			markutPtr := chatFlag.String("markut", "MARKUT", "Path to the MARKUT file")
+			scriptPtr := chatFlag.String("script", "SCRIPT", "Path to the script file")
 			csvPtr := chatFlag.Bool("csv", false, "Generate the chat using the stupid Twich Chat Downloader CSV format. You can then feed this output to tools like SubChat https://github.com/Kam1k4dze/SubChat")
 
 			err := chatFlag.Parse(args)
@@ -972,7 +972,7 @@ var Subcommands = map[string]Subcommand{
 			}
 
 			context, ok := defaultContext()
-			ok = ok && context.evalMarkutFile(nil, *markutPtr, false) && context.finishEval()
+			ok = ok && context.evalConfigFile(nil, *scriptPtr, false) && context.finishEval()
 			if !ok {
 				return false
 			}
@@ -1027,7 +1027,7 @@ var Subcommands = map[string]Subcommand{
 		Description: "Prune unused chunks",
 		Run: func(name string, args []string) bool {
 			subFlag := flag.NewFlagSet(name, flag.ContinueOnError)
-			markutPtr := subFlag.String("markut", "MARKUT", "Path to the MARKUT file")
+			scriptPtr := subFlag.String("script", "SCRIPT", "Path to the script file")
 
 			err := subFlag.Parse(args)
 
@@ -1041,7 +1041,7 @@ var Subcommands = map[string]Subcommand{
 			}
 
 			context, ok := defaultContext()
-			ok = ok && context.evalMarkutFile(nil, *markutPtr, false) && context.finishEval()
+			ok = ok && context.evalConfigFile(nil, *scriptPtr, false) && context.finishEval()
 			if !ok {
 				return false
 			}
@@ -1073,10 +1073,10 @@ var Subcommands = map[string]Subcommand{
 	},
 	// TODO: Maybe watch mode should just be a flag for the `final` subcommand
 	"watch": {
-		Description: "Render finished chunks in watch mode every time MARKUT file is modified",
+		Description: "Render finished chunks in watch mode every time script file is modified",
 		Run: func(name string, args []string) bool {
 			subFlag := flag.NewFlagSet(name, flag.ContinueOnError)
-			markutPtr := subFlag.String("markut", "MARKUT", "Path to the MARKUT file")
+			scriptPtr := subFlag.String("script", "SCRIPT", "Path to the script file")
 			skipcatPtr := subFlag.Bool("skipcat", false, "Skip concatenation step")
 
 			err := subFlag.Parse(args)
@@ -1090,14 +1090,14 @@ var Subcommands = map[string]Subcommand{
 				return false
 			}
 
-			fmt.Printf("INFO: Waiting for updates to %s\n", *markutPtr)
+			fmt.Printf("INFO: Waiting for updates to %s\n", *scriptPtr)
 			for {
-				// NOTE: always use rsync(1) for updating the MARKUT file remotely.
+				// NOTE: always use rsync(1) for updating the script file remotely.
 				// This kind of crappy modification checking needs at least some sort of atomicity.
 				// rsync(1) is as atomic as rename(2). So it's alright for majority of the cases.
 
 				context, ok := defaultContext()
-				ok = ok && context.evalMarkutFile(nil, *markutPtr, false) && context.finishEval()
+				ok = ok && context.evalConfigFile(nil, *scriptPtr, false) && context.finishEval()
 				if !ok {
 					return false
 				}
@@ -1115,7 +1115,7 @@ var Subcommands = map[string]Subcommand{
 							fmt.Printf("ERROR: Could not cut the chunk %s: %s\n", chunk.Name(), err)
 							return false
 						}
-						fmt.Printf("INFO: Waiting for more updates to %s\n", *markutPtr)
+						fmt.Printf("INFO: Waiting for more updates to %s\n", *scriptPtr)
 						done = false
 						break
 					}
@@ -1129,7 +1129,7 @@ var Subcommands = map[string]Subcommand{
 			}
 
 			context, ok := defaultContext()
-			ok = ok && context.evalMarkutFile(nil, *markutPtr, false) && context.finishEval()
+			ok = ok && context.evalConfigFile(nil, *scriptPtr, false) && context.finishEval()
 			if !ok {
 				return false
 			}
@@ -1160,7 +1160,7 @@ var Subcommands = map[string]Subcommand{
 		},
 	},
 	"funcs": {
-		Description: "Print info about all the available funcs of the Markut Language",
+		Description: "Print info about all the available funcs of the legacy scripting language",
 		Run: func(commandName string, args []string) bool {
 			if len(args) > 0 {
 				name := args[0]
@@ -1342,7 +1342,7 @@ var Subcommands = map[string]Subcommand{
 		Description: "Generate YouTube chapters list that is easily copy-pastable to the Video Description",
 		Run: func(commandName string, args []string) bool {
 			subFlag := flag.NewFlagSet(commandName, flag.ContinueOnError)
-			markutPtr := subFlag.String("markut", "MARKUT", "Path to the MARKUT file")
+			scriptPtr := subFlag.String("script", "SCRIPT", "Path to the script file")
 
 			err := subFlag.Parse(args)
 
@@ -1356,7 +1356,7 @@ var Subcommands = map[string]Subcommand{
 			}
 
 			context, ok := defaultContext()
-			ok = ok && context.evalMarkutFile(nil, *markutPtr, false) && context.finishEval()
+			ok = ok && context.evalConfigFile(nil, *scriptPtr, false) && context.finishEval()
 			if !ok {
 				return false
 			}
@@ -1385,7 +1385,7 @@ func usage(program string) {
 	fmt.Printf("ENVARS:\n")
 	fmt.Printf("    FFMPEG_PREFIX      Prefix path for a custom ffmpeg distribution\n")
 	fmt.Printf("FILES:\n")
-	fmt.Printf("    $HOME/.markut      File that is always evaluated automatically before the MARKUT file\n")
+	fmt.Printf("    $HOME/.verseline      File that is always evaluated automatically before the script file\n")
 }
 
 func main() {
@@ -1402,7 +1402,7 @@ func main() {
 
 	funcs = map[string]Func{
 		"chat": {
-			Description: "Load a chat log file generated by https://www.twitchchatdownloader.com/$SPOILER$ which is going to be used by the subsequent `chunk` func calls to include certain messages into the subtitles generated by the `markut chat` subcommand. There could be only one loaded chat log at a time. Repeated calls to the `chat` func replace the currently loaded chat log with another one. The already defined chunks keep the copy of the logs that were loaded at the time of their definition.",
+			Description: "Load a chat log file generated by https://www.twitchchatdownloader.com/$SPOILER$ which is going to be used by the subsequent `chunk` func calls to include certain messages into the subtitles generated by the `verseline chat` subcommand. There could be only one loaded chat log at a time. Repeated calls to the `chat` func replace the currently loaded chat log with another one. The already defined chunks keep the copy of the logs that were loaded at the time of their definition.",
 			Signature:   "<path:String> --",
 			Category:    "Chat",
 			Run: func(context *EvalContext, command string, token Token) bool {
@@ -1572,7 +1572,7 @@ func main() {
 			},
 		},
 		"unfinished": {
-			Description: "Mark the last defined chunk as unfinished$SPOILER$. This is used by the `markut watch` subcommand. `markut watch` does not render any unfinished chunks and keeps monitoring the MARKUT file until there is no unfinished chunks.",
+			Description: "Mark the last defined chunk as unfinished$SPOILER$. This is used by the `verseline watch` subcommand. `verseline watch` does not render any unfinished chunks and keeps monitoring the script file until there is no unfinished chunks.",
 			Signature:   "--",
 			Category:    "Chunk",
 			Run: func(context *EvalContext, command string, token Token) bool {
@@ -1783,7 +1783,7 @@ func main() {
 			},
 		},
 		"chapter": {
-			Description: "Define a new YouTube chapter for within a chunk for `markut summary` command.",
+			Description: "Define a new YouTube chapter for within a chunk for `verseline summary` command.",
 			Category:    "Misc",
 			Signature:   "<timestamp:Timestamp> <title:String> --",
 			Run: func(context *EvalContext, command string, token Token) bool {
@@ -1802,7 +1802,7 @@ func main() {
 			},
 		},
 		"cut": {
-			Description: "Define a new cut for `markut cut` command.",
+			Description: "Define a new cut for `verseline cut` command.",
 			Category:    "Misc",
 			Signature:   "<padding:Timestamp> --",
 			Run: func(context *EvalContext, command string, token Token) bool {
@@ -1825,7 +1825,7 @@ func main() {
 			},
 		},
 		"include": {
-			Description: "Include another MARKUT file and fail if it does not exist.",
+			Description: "Include another script file and fail if it does not exist.",
 			Category:    "Misc",
 			Signature:   "<path:String> --",
 			Run: func(context *EvalContext, command string, token Token) bool {
@@ -1836,11 +1836,11 @@ func main() {
 					return false
 				}
 				path := args[0]
-				return context.evalMarkutFile(&path.Loc, string(path.Text), false)
+				return context.evalConfigFile(&path.Loc, string(path.Text), false)
 			},
 		},
 		"include_if_exists": {
-			Description: "Try to include another MARKUT file but do not fail if it does not exist.",
+			Description: "Try to include another script file but do not fail if it does not exist.",
 			Category:    "Misc",
 			Signature:   "<path:String> --",
 			Run: func(context *EvalContext, command string, token Token) bool {
@@ -1851,7 +1851,7 @@ func main() {
 					return false
 				}
 				path := args[0]
-				return context.evalMarkutFile(&path.Loc, string(path.Text), true)
+				return context.evalConfigFile(&path.Loc, string(path.Text), true)
 			},
 		},
 		"home": {
@@ -1915,7 +1915,4 @@ func main() {
 	}
 }
 
-// TODO: Consider rewritting Markut in C with nob.h
-//   There is no reason for it to be written in go at this point. C+nob.h can do all the tricks.
-//   For the lexing part we can even use https://github.com/tsoding/alexer
-// TODO: Embed git hash into the executable and display it on `markut version`
+// TODO: Embed git hash into the executable and display it on `verseline version`

@@ -11,5 +11,5 @@ jobs:
           go-version: '^1.13.1'
       - run: go build
       - run: |
-          go fmt markut.go
+          go fmt ./...
           git diff --exit-code
