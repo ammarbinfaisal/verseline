@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -201,6 +202,24 @@ type verselineMCPImportTranscriptOutput struct {
 	Entries        []verselineMCPTranscriptEntrySummary `json:"entries"`
 }
 
+type verselineMCPTranscribeInput struct {
+	ProjectPath string `json:"project_path"`
+	AudioPath   string `json:"audio_path,omitempty"`
+	Language    string `json:"language,omitempty"`
+	Model       string `json:"model,omitempty"`
+	OutputPath  string `json:"output_path,omitempty"`
+}
+
+type verselineMCPTranscribeOutput struct {
+	ProjectPath    string                               `json:"project_path"`
+	AudioPath      string                               `json:"audio_path"`
+	Language       string                               `json:"language,omitempty"`
+	Duration       float64                              `json:"duration,omitempty"`
+	TranscriptPath string                               `json:"transcript_path,omitempty"`
+	EntryCount     int                                  `json:"entry_count"`
+	Entries        []verselineMCPTranscriptEntrySummary `json:"entries"`
+}
+
 type verselineMCPGenerateDraftInput struct {
 	ProjectPath        string                             `json:"project_path"`
 	TranscriptPath     string                             `json:"transcript_path,omitempty"`
@@ -265,6 +284,7 @@ func printVerselineMCPDescription() {
 	fmt.Printf("- verseline_list_segments\n")
 	fmt.Printf("- verseline_validate_project\n")
 	fmt.Printf("- verseline_import_transcript\n")
+	fmt.Printf("- verseline_transcribe\n")
 	fmt.Printf("- verseline_generate_draft_from_transcript\n")
 	fmt.Printf("- verseline_update_segment\n")
 	fmt.Printf("- verseline_split_segment\n")
@@ -278,6 +298,7 @@ func printVerselineMCPDescription() {
 }
 
 func runVerselineMCPServe() bool {
+	loadVerselineEnvFile()
 	server := newVerselineMCPServer()
 	if err := server.Run(context.Background(), &mcp.StdioTransport{}); err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: Verseline MCP server failed: %s\n", err)
@@ -311,6 +332,11 @@ func newVerselineMCPServer() *mcp.Server {
 		Name:        "verseline_import_transcript",
 		Description: "Load a transcript JSON or JSONL file and return normalized timed entries with refs, text, and status fields.",
 	}, verselineMCPImportTranscriptTool)
+
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "verseline_transcribe",
+		Description: "Transcribe project audio using the OpenAI Whisper API and return timed transcript entries. Reads OPENAI_API_KEY from the environment (.env next to the binary). Optionally saves the raw transcript to a JSON file.",
+	}, verselineMCPTranscribeTool)
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "verseline_generate_draft_from_transcript",
@@ -472,6 +498,83 @@ func verselineMCPImportTranscriptTool(_ context.Context, _ *mcp.CallToolRequest,
 		Entries:        items,
 	}
 	summary := fmt.Sprintf("Imported %d transcript entries from %s", len(items), filepath.Base(transcriptPath))
+	return verselineMCPTextResult(summary), output, nil
+}
+
+func verselineMCPTranscribeTool(_ context.Context, _ *mcp.CallToolRequest, in verselineMCPTranscribeInput) (*mcp.CallToolResult, verselineMCPTranscribeOutput, error) {
+	apiKey := os.Getenv("OPENAI_API_KEY")
+	if apiKey == "" {
+		return nil, verselineMCPTranscribeOutput{}, fmt.Errorf("OPENAI_API_KEY is not set (place it in .env next to the verseline binary or export it)")
+	}
+
+	project, absProjectPath, err := loadVerselineProject(in.ProjectPath)
+	if err != nil {
+		return nil, verselineMCPTranscribeOutput{}, err
+	}
+
+	projectDir := filepath.Dir(absProjectPath)
+	audioPath := strings.TrimSpace(in.AudioPath)
+	if audioPath == "" {
+		audioPath = resolveOptionalReelPath(projectDir, project.Assets.Audio)
+	} else if !filepath.IsAbs(audioPath) {
+		audioPath = resolveReelPath(projectDir, audioPath)
+	}
+	if audioPath == "" {
+		return nil, verselineMCPTranscribeOutput{}, fmt.Errorf("no audio path: set audio_path or configure assets.audio in the project")
+	}
+	if _, err := os.Stat(audioPath); err != nil {
+		return nil, verselineMCPTranscribeOutput{}, fmt.Errorf("audio file not found: %s", audioPath)
+	}
+
+	result, err := callWhisperAPI(whisperRequestOptions{
+		AudioPath: audioPath,
+		Language:  in.Language,
+		Model:     in.Model,
+		APIKey:    apiKey,
+	})
+	if err != nil {
+		return nil, verselineMCPTranscribeOutput{}, err
+	}
+
+	entries := whisperSegmentsToDraftEntries(result.Segments)
+
+	var transcriptPath string
+	outputPath := strings.TrimSpace(in.OutputPath)
+	if outputPath != "" {
+		if !filepath.IsAbs(outputPath) {
+			outputPath = resolveReelPath(projectDir, outputPath)
+		}
+		raw, err := json.MarshalIndent(result, "", "  ")
+		if err != nil {
+			return nil, verselineMCPTranscribeOutput{}, fmt.Errorf("encode transcript: %w", err)
+		}
+		if err := os.WriteFile(outputPath, raw, 0644); err != nil {
+			return nil, verselineMCPTranscribeOutput{}, fmt.Errorf("write transcript: %w", err)
+		}
+		transcriptPath = outputPath
+	}
+
+	items := make([]verselineMCPTranscriptEntrySummary, 0, len(entries))
+	for index, entry := range entries {
+		items = append(items, verselineMCPTranscriptEntrySummary{
+			Number:     index + 1,
+			Start:      entry.Start,
+			End:        entry.End,
+			Text:       entry.Text,
+			Confidence: entry.Confidence,
+		})
+	}
+
+	output := verselineMCPTranscribeOutput{
+		ProjectPath:    absProjectPath,
+		AudioPath:      audioPath,
+		Language:       result.Language,
+		Duration:       result.Duration,
+		TranscriptPath: transcriptPath,
+		EntryCount:     len(items),
+		Entries:        items,
+	}
+	summary := fmt.Sprintf("Transcribed %s: %d segments, %.1fs, language=%s", filepath.Base(audioPath), len(items), result.Duration, result.Language)
 	return verselineMCPTextResult(summary), output, nil
 }
 
