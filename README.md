@@ -2,139 +2,170 @@
 
 Verseline is a timed-text video renderer for recitations, readings, poems, and other audio-led clips.
 
-## Usage
+## Setup
 
-Build the binary:
+Requires [Go](https://golang.org/) 1.25+ and [ffmpeg](https://www.ffmpeg.org/).
 
 ```console
+$ git clone https://github.com/ammarbinfaisal/verseline.git
+$ cd verseline
 $ go build -o verseline .
 ```
 
-Then add the local stdio server to Claude Code:
+## Usage
 
-```console
-$ claude mcp add verseline -- /absolute/path/to/verseline mcp
-```
-
-Or add it to Codex CLI:
-
-```console
-$ codex mcp add verseline -- /absolute/path/to/verseline mcp
-```
-
-Print the current MCP tool list and example add commands from the binary itself:
-
-```console
-$ ./verseline mcp describe
-```
-
-Open the review TUI:
+Open the TUI editor:
 
 ```console
 $ ./verseline tui -project path/to/project.json
 ```
 
-Render approved output:
+Open the draft timeline instead of the approved one:
+
+```console
+$ ./verseline tui -project path/to/project.json -draft
+```
+
+Render approved output from the command line:
 
 ```console
 $ ./verseline render -project path/to/project.json
 ```
 
-The MCP server exposes tools for:
+## TUI
 
-- project inspection and validation
-- audio transcription (Whisper API) with batched JSONL output
-- timeline segment listing, updates, and splitting
-- draft approval
-- segment previews and full renders
-- text-on-background readability analysis (WCAG contrast ratios)
+The TUI is a multi-tab editor for the entire project. Switch between tabs and edit everything from timeline segments to fonts, styles, placements, and project settings.
 
-## Definition
+### Global keys
 
-The core idea is simple:
+| Key | Action |
+|---|---|
+| `tab` | Next tab |
+| `shift+tab` | Previous tab |
+| `ctrl+s` | Save all changes (timeline + project) |
+| `ctrl+c` | Quit (auto-saves if dirty) |
+| `?` | Toggle full help |
 
-- one declarative project file
-- one renderer
-- one TUI for review and approval
-- one MCP server for transcription, rendering primitives, and readability analysis
+### Timeline tab
 
-This repo began as a fork of [markut](https://github.com/tsoding/markut) — a stack-based video editing language. What remains is the idea of making videos using languages, but the direction has shifted to a data-first timed text system for audio-led clips.
+Navigate and edit timeline segments, preview and render video.
 
-## Product Definition
+**Navigation:**
 
-Verseline should handle:
+| Key | Action |
+|---|---|
+| `up` / `k` | Previous segment |
+| `down` / `j` | Next segment |
+| `left` / `h` | Previous block within segment |
+| `right` / `l` | Next block within segment |
 
-- audio-led portrait clips
-- image or video backgrounds
-- one or more timed text layers with independent time ranges
-- font blocks referencing TTF files, used in style definitions
-- text styling: outlines, shadows, and text backgrounds with rounded corners
-- manual review and approval before final render
+**Editing fields:**
 
-The source of truth should be a declarative project, not imperative commands.
+| Key | Action |
+|---|---|
+| `1` | Edit segment start timestamp |
+| `2` | Edit segment end timestamp |
+| `3` | Edit segment status |
+| `4` | Edit block text |
+| `5` | Edit block style reference |
+| `6` | Edit block placement reference |
+| `enter` | Commit the edit |
+| `esc` | Cancel the edit |
 
-## Reduced Surface
+**Segment actions:**
 
-The intended user-facing surface is:
+| Key | Action |
+|---|---|
+| `a` | Mark segment as approved |
+| `x` | Mark segment as needs_fix |
+| `d` | Delete segment (press twice to confirm) -- shifts timestamps of subsequent segments |
+| `v` | Validate the entire timeline |
 
-- `verseline tui <project>` for review, editing, approval, and rerendering
-- `verseline render <project>` for headless render execution
-- `verseline mcp` for editor and LLM integrations
+**Preview and render:**
 
-The repository still contains legacy subcommands from the original fork. Those are implementation history, not the target product shape.
-`verseline mcp` now runs as a local stdio MCP server.
+| Key | Action |
+|---|---|
+| `p` | Preview the selected segment (renders a low-quality clip and opens it in the media player) |
+| `[` / `]` | Cycle through render profiles |
+| `r` | Render the selected profile |
+| `R` | Render all profiles |
+| `A` | Approve the draft timeline (copies draft to approved) |
 
-## What The Project Describes
+**Render workflow:**
 
-A Verseline project should describe:
+1. Edit and review segments in the timeline tab
+2. Mark each segment as approved with `a`
+3. Press `A` to promote the draft to the approved timeline
+4. Select a render profile with `[` / `]`
+5. Press `r` to render the selected profile, or `R` to render all
 
-- canvas and output settings
-- audio input
-- image or video background input
-- source datasets
-- font blocks referencing TTF/OTF files
-- text styles with color, outline, shadow, and text background options
+Rendering requires an approved timeline. If you are editing the draft and have unsaved changes, the TUI will ask you to save and approve first.
+
+**Preview player:** if `preview.player` is set in the project, that player is used. Otherwise verseline looks for `vlc` in PATH, then falls back to the OS default (`open` on macOS, `xdg-open` on Linux).
+
+### Styles tab
+
+Edit text styles defined in the project.
+
+| Key | Action |
+|---|---|
+| `enter` / `e` | Edit the selected style |
+| `ctrl+left` / `ctrl+right` | Cycle through fields while editing (id, font, size, color, outline, shadow, text_bg, align, ...) |
+| `n` | Add a new style |
+| `d` | Delete style (press twice to confirm) |
+| `enter` | Commit edit |
+| `esc` | Cancel edit |
+
+### Fonts tab
+
+Edit font definitions.
+
+| Key | Action |
+|---|---|
+| `enter` / `e` | Edit the selected font |
+| `ctrl+left` / `ctrl+right` | Cycle through fields (id, family, files) |
+| `n` | Add a new font |
+| `d` | Delete font (press twice to confirm) |
+
+### Placements tab
+
+Edit text placement anchors and margins.
+
+| Key | Action |
+|---|---|
+| `enter` / `e` | Edit the selected placement |
+| `ctrl+left` / `ctrl+right` | Cycle through fields (id, anchor, margin_x, margin_y, max_width, max_height) |
+| `n` | Add a new placement |
+| `d` | Delete placement (press twice to confirm) |
+
+### Project tab
+
+Edit project-level settings as a key-value table: name, output, canvas dimensions, asset paths, preview settings, and timeline paths. Render profiles are shown as a read-only summary below the table.
+
+| Key | Action |
+|---|---|
+| `enter` / `e` | Edit the selected field |
+
+## Project format
+
+A verseline project is a JSON file that describes:
+
+- canvas dimensions and FPS
+- audio and background assets (image or video)
+- font definitions with TTF/OTF file references
+- text styles with color, outline, shadow, text background, and alignment
 - text placements with anchoring and margins
-- timeline segments with timed text blocks
-- overlays with independent time ranges (multiple text cards can overlap)
-- approval state
-- render profiles
+- source datasets (JSONL/JSON)
+- static overlays with independent time ranges
+- preview settings (player, resolution, encoding)
+- render profiles (resolution, codec, CRF, color space)
+- timeline paths (draft and approved JSONL files)
 
-The project format should be friendly to:
+See [docs/verseline-format.md](docs/verseline-format.md) for the full specification.
 
-- hand editing
-- TUI editing
-- line-by-line diffs
-- MCP-assisted updates
+## Logs
 
-## Readability Helpers
+ffmpeg and subprocess output is written to a log file instead of the terminal:
 
-Timed text readability is part of the product, not an afterthought.
-
-The renderer supports:
-
-- outline and shadow with configurable colors
-- text background boxes with padding and corner radius (Instagram stories style)
-- safe margins and placements
-- font selection per style via TTF file references
-- softer styling for auxiliary text such as bracketed phrases
-
-The `verseline_check_readability` MCP tool samples the background at each text placement and computes WCAG contrast ratios, reporting which blocks have poor contrast and recommending outline, shadow, or text background additions.
-
-## Intended Workflow
-
-1. create or import a project
-2. transcribe audio (writes batched JSONL files to a directory)
-3. build the timeline from transcription data
-4. review and edit segments in the TUI
-5. check readability and adjust styles as needed
-6. preview and rerender selected segments
-7. approve the timeline
-8. render the final output
-
-## Docs
-
-- [docs/verseline-format.md](docs/verseline-format.md)
-- [docs/recitation-workflow.md](docs/recitation-workflow.md)
-
-Install [Go](https://golang.org/) and [ffmpeg](https://www.ffmpeg.org/).
+- macOS: `~/Library/Logs/verseline/verseline.log`
+- Linux: `~/.local/state/verseline/verseline.log` (or `$XDG_STATE_HOME/verseline/verseline.log`)
