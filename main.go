@@ -556,13 +556,12 @@ func logCmd(name string, args ...string) {
 	chunks = append(chunks, name)
 	for _, arg := range args {
 		if strings.Contains(arg, " ") {
-			// TODO: use proper shell escaping instead of just wrapping with double quotes
 			chunks = append(chunks, "\""+arg+"\"")
 		} else {
 			chunks = append(chunks, arg)
 		}
 	}
-	fmt.Printf("[CMD] %s\n", strings.Join(chunks, " "))
+	verselineLog("[CMD] %s", strings.Join(chunks, " "))
 }
 
 func millisToSecsForFFmpeg(millis Millis) string {
@@ -637,15 +636,15 @@ func ffmpegCutChunk(context EvalContext, chunk Chunk) error {
 
 	logCmd(ffmpeg, args...)
 	cmd := exec.Command(ffmpeg, args...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err = cmd.Run()
+	out, err := cmd.CombinedOutput()
+	if len(out) > 0 {
+		verselineLog("[FFMPEG] %s", string(out))
+	}
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("INFO: Rename %s -> %s\n", unfinishedChunkName, chunk.Name())
+	verselineLog("INFO: Rename %s -> %s", unfinishedChunkName, chunk.Name())
 	return os.Rename(unfinishedChunkName, chunk.Name())
 }
 
@@ -666,10 +665,11 @@ func ffmpegConcatChunks(listPath string, outputPath string) error {
 
 	logCmd(ffmpeg, args...)
 	cmd := exec.Command(ffmpeg, args...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	out, err := cmd.CombinedOutput()
+	if len(out) > 0 {
+		verselineLog("[FFMPEG] %s", string(out))
+	}
+	return err
 }
 
 func ffmpegFixupInput(inputPath, outputPath string, y bool) error {
@@ -687,10 +687,11 @@ func ffmpegFixupInput(inputPath, outputPath string, y bool) error {
 	args = append(args, outputPath)
 	logCmd(ffmpeg, args...)
 	cmd := exec.Command(ffmpeg, args...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	out, err := cmd.CombinedOutput()
+	if len(out) > 0 {
+		verselineLog("[FFMPEG] %s", string(out))
+	}
+	return err
 }
 
 func ffmpegGenerateConcatList(chunks []Chunk, outputPath string) error {

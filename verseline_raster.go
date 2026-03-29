@@ -194,10 +194,11 @@ func renderVerselineBlockImageMagick(block verselineResolvedBlock, maxWidth int,
 	args = append(args, "-size", fmt.Sprintf("%dx", maxWidth), "caption:@"+textPath, "PNG32:"+outputPath)
 
 	cmd := exec.Command("magick", args...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	out, err := cmd.CombinedOutput()
+	if err != nil && len(out) > 0 {
+		verselineLog("[MAGICK STDERR] %s", string(out))
+	}
+	return err
 }
 
 func verselineResolveRasterFace(block verselineResolvedBlock) (string, *textfont.Face, error) {

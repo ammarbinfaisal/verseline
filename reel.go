@@ -699,10 +699,11 @@ func renderReel(plan reelRenderPlan) error {
 	ffmpeg := ffmpegPathToBin()
 	logCmd(ffmpeg, args...)
 	cmd := exec.Command(ffmpeg, args...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	out, err := cmd.CombinedOutput()
+	if len(out) > 0 {
+		verselineLog("[FFMPEG] %s", string(out))
+	}
+	return err
 }
 
 func buildReelVideoFilter(plan reelRenderPlan) string {

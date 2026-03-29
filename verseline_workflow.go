@@ -512,15 +512,18 @@ func runVerselineFFmpeg(args []string, total Millis, plan verselineRenderPlan, o
 	waitErr := cmd.Wait()
 	progressErr := <-progressDone
 	<-errDone
+	stderrOutput := strings.TrimSpace(errBuf.String())
+	if stderrOutput != "" {
+		verselineLog("[FFMPEG STDERR] %s", stderrOutput)
+	}
 	if progressErr != nil {
 		return progressErr
 	}
 	if waitErr != nil {
-		message := strings.TrimSpace(errBuf.String())
-		if message == "" {
+		if stderrOutput == "" {
 			return waitErr
 		}
-		return fmt.Errorf("%w: %s", waitErr, message)
+		return fmt.Errorf("%w: %s", waitErr, stderrOutput)
 	}
 	if onProgress != nil {
 		onProgress(verselineRenderProgress{
