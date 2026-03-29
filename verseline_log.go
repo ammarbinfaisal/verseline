@@ -55,9 +55,3 @@ func verselineLog(format string, args ...any) {
 	fmt.Fprintf(f, "%s %s\n", ts, strings.TrimRight(line, "\n"))
 }
 
-func verselineCloseLog() {
-	if verselineLogFile != nil {
-		verselineLogFile.Close()
-		verselineLogFile = nil
-	}
-}

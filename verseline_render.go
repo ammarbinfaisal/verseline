@@ -522,10 +522,6 @@ func writeVerselineASS(plan verselineRenderPlan) error {
 	return os.WriteFile(plan.ASSPath, []byte(sb.String()), 0644)
 }
 
-func renderVerseline(plan verselineRenderPlan) error {
-	return renderVerselineWithProgress(plan, nil)
-}
-
 func buildVerselineOverlayFilter(plan verselineRenderPlan, firstOverlayInput int) (string, string) {
 	parts := []string{fmt.Sprintf("[0:v]%s[base0]", buildVerselineBaseFilter(plan))}
 	current := "base0"

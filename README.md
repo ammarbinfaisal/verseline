@@ -2,14 +2,32 @@
 
 Verseline is a timed-text video renderer for recitations, readings, poems, and other audio-led clips.
 
+It started as a fork of [markut](https://github.com/tsoding/markut), a markup-driven video editing tool. The original goal was to adapt markut's scripting approach for timed recitation overlays, but the use case diverged enough that the project was redesigned from scratch with Claude Code -- replacing the DSL-first workflow with a simpler JSON project format, a TUI editor, and an MCP server for AI-assisted timeline editing.
+
+The legacy markut subcommands (`cut`, `chunk`, `final`, `summary`, `watch`, `prune`, `chapters`, etc.) still ship in the binary and work as before.
+
 ## Setup
 
 Requires [Go](https://golang.org/) 1.25+ and [ffmpeg](https://www.ffmpeg.org/).
+
+**Build from source:**
 
 ```console
 $ git clone https://github.com/ammarbinfaisal/verseline.git
 $ cd verseline
 $ go build -o verseline .
+$ ./verseline --help
+```
+
+**Install a prebuilt binary:**
+
+Grab the latest release from the [Releases](https://github.com/ammarbinfaisal/verseline/releases) page. Binaries are published for linux (amd64/arm64), macOS (amd64/arm64), and windows (amd64).
+
+```console
+# Example: download and use on macOS arm64
+$ curl -LO https://github.com/ammarbinfaisal/verseline/releases/latest/download/verseline-darwin-arm64
+$ chmod +x verseline-darwin-arm64
+$ mv verseline-darwin-arm64 /usr/local/bin/verseline
 ```
 
 ## Usage
@@ -30,6 +48,18 @@ Render approved output from the command line:
 
 ```console
 $ ./verseline render -project path/to/project.json
+```
+
+Preview a specific segment:
+
+```console
+$ ./verseline preview -project path/to/project.json -segment 3
+```
+
+Run the MCP server (for AI-assisted editing via Claude Code or other MCP clients):
+
+```console
+$ ./verseline mcp serve
 ```
 
 ## TUI

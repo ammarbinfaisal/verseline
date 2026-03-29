@@ -431,20 +431,6 @@ func (lexer *Lexer) ChopToken() (token Token, err error) {
 	return
 }
 
-func (lexer *Lexer) Peek() (token Token, err error) {
-	if !lexer.PeekFull {
-		token, err = lexer.ChopToken()
-		if err != nil {
-			return
-		}
-		lexer.PeekFull = true
-		lexer.PeekBuf = token
-	} else {
-		token = lexer.PeekBuf
-	}
-	return
-}
-
 func (lexer *Lexer) Next() (token Token, err error) {
 	if lexer.PeekFull {
 		token = lexer.PeekBuf
