@@ -84,6 +84,42 @@ func verselineOpsUpdateSegment(project VerselineProject, segments []VerselineSeg
 	return segments, nil
 }
 
+func verselineOpsDeleteSegment(segments []VerselineSegment, index int) ([]VerselineSegment, error) {
+	if index < 0 || index >= len(segments) {
+		return segments, fmt.Errorf("segment index %d out of range", index)
+	}
+
+	deleted := segments[index]
+	deletedStart, err := tsToMillis(deleted.Start)
+	if err != nil {
+		return segments, err
+	}
+	deletedEnd, err := tsToMillis(deleted.End)
+	if err != nil {
+		return segments, err
+	}
+	gap := deletedEnd - deletedStart
+
+	updated := make([]VerselineSegment, 0, len(segments)-1)
+	updated = append(updated, segments[:index]...)
+	updated = append(updated, segments[index+1:]...)
+
+	for i := index; i < len(updated); i++ {
+		segStart, err := tsToMillis(updated[i].Start)
+		if err != nil {
+			continue
+		}
+		segEnd, err := tsToMillis(updated[i].End)
+		if err != nil {
+			continue
+		}
+		updated[i].Start = millisToTs(segStart - gap)
+		updated[i].End = millisToTs(segEnd - gap)
+	}
+
+	return updated, nil
+}
+
 func verselineOpsSetSegmentStatus(segments []VerselineSegment, index int, status string) []VerselineSegment {
 	if index >= 0 && index < len(segments) {
 		segments[index].Status = status

@@ -42,6 +42,7 @@ type verselineTimelineKeyMap struct {
 	RenderAll     key.Binding
 	PrevProfile   key.Binding
 	NextProfile   key.Binding
+	Delete        key.Binding
 	BlockUp       key.Binding
 	BlockDown     key.Binding
 	Quit          key.Binding
@@ -64,6 +65,7 @@ func newVerselineTimelineKeyMap() verselineTimelineKeyMap {
 		RenderAll:     key.NewBinding(key.WithKeys("R"), key.WithHelp("R", "render all")),
 		PrevProfile:   key.NewBinding(key.WithKeys("["), key.WithHelp("[", "prev profile")),
 		NextProfile:   key.NewBinding(key.WithKeys("]"), key.WithHelp("]", "next profile")),
+		Delete:        key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "delete segment")),
 		BlockUp:       key.NewBinding(key.WithKeys("left", "h"), key.WithHelp("h/left", "prev block")),
 		BlockDown:     key.NewBinding(key.WithKeys("right", "l"), key.WithHelp("l/right", "next block")),
 		Quit:          key.NewBinding(key.WithKeys("q"), key.WithHelp("q", "quit")),
@@ -82,7 +84,7 @@ func (km verselineTimelineHelpKeyMap) ShortHelp() []key.Binding {
 func (km verselineTimelineHelpKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{km.timeline.EditStart, km.timeline.EditEnd, km.timeline.EditStatus, km.timeline.EditBlockText, km.timeline.EditBlockSty, km.timeline.EditBlockPlc},
-		{km.timeline.Approve, km.timeline.NeedsFix, km.timeline.ApproveDraft},
+		{km.timeline.Approve, km.timeline.NeedsFix, km.timeline.ApproveDraft, km.timeline.Delete},
 		{km.timeline.Preview, km.timeline.Validate, km.timeline.Render, km.timeline.RenderAll, km.timeline.PrevProfile, km.timeline.NextProfile},
 		{km.timeline.BlockUp, km.timeline.BlockDown, km.global.NextTab, km.global.PrevTab, km.global.Save, km.timeline.Quit, km.global.Help},
 	}
@@ -95,6 +97,7 @@ type verselineTimelineView struct {
 	editing            bool
 	editField          verselineTimelineEditField
 	editor             textinput.Model
+	pendingDelete      bool
 	keys               verselineTimelineKeyMap
 }
 
@@ -363,6 +366,27 @@ func (v *verselineTimelineView) updateNormal(msg tea.KeyMsg, ctx *verselineTUICo
 		root.status = fmt.Sprintf("segment %d marked needs_fix", v.segmentIndex()+1)
 		v.syncRows(root.segments)
 		return nil
+	case key.Matches(msg, v.keys.Delete):
+		idx := v.segmentIndex()
+		if v.pendingDelete {
+			updated, err := verselineOpsDeleteSegment(root.segments, idx)
+			if err != nil {
+				root.lastErr = err
+				root.status = err.Error()
+			} else {
+				root.segments = updated
+				root.dirtyTimeline = true
+				root.lastErr = nil
+				root.status = fmt.Sprintf("deleted segment %d, shifted %d remaining", idx+1, len(updated)-idx)
+				v.blockIndex = 0
+			}
+			v.pendingDelete = false
+			v.syncRows(root.segments)
+			return nil
+		}
+		v.pendingDelete = true
+		root.status = fmt.Sprintf("press d again to delete segment %d and shift timestamps", idx+1)
+		return nil
 	case key.Matches(msg, v.keys.Validate):
 		if err := validateVerselineTimeline(root.segments); err != nil {
 			root.lastErr = err
@@ -405,6 +429,8 @@ func (v *verselineTimelineView) updateNormal(msg tea.KeyMsg, ctx *verselineTUICo
 		}
 		return tea.Quit
 	}
+
+	v.pendingDelete = false
 
 	// pass to table for up/down navigation
 	oldCursor := v.segmentTable.Cursor()
