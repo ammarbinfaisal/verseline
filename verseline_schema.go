@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -57,7 +58,11 @@ type VerselineStyle struct {
 	AuxiliaryColor string `json:"auxiliary_color,omitempty"`
 	OutlineColor   string `json:"outline_color,omitempty"`
 	Outline        int    `json:"outline,omitempty"`
+	ShadowColor    string `json:"shadow_color,omitempty"`
 	Shadow         int    `json:"shadow,omitempty"`
+	TextBG         string `json:"text_bg,omitempty"`
+	TextBGPad      int    `json:"text_bg_pad,omitempty"`
+	TextBGRadius   int    `json:"text_bg_radius,omitempty"`
 	LineHeight     int    `json:"line_height,omitempty"`
 }
 
@@ -219,7 +224,7 @@ func loadVerselineProject(path string) (VerselineProject, string, error) {
 	}
 
 	if err := json.Unmarshal(content, &project); err != nil {
-		return project, "", err
+		return project, "", verselineProjectUnmarshalError(err)
 	}
 
 	if err := validateVerselineProject(project); err != nil {
@@ -229,18 +234,48 @@ func loadVerselineProject(path string) (VerselineProject, string, error) {
 	return project, absPath, nil
 }
 
+var verselineFieldHints = map[string]string{
+	"canvas":          `expected object: "canvas": {"width": 1080, "height": 1920, "fps": 30}`,
+	"assets":          `expected object: "assets": {"audio": "file.m4a", "background": {"path": "bg.jpg"}}`,
+	"assets.background": `expected object: "background": {"path": "bg.jpg", "type": "image"}`,
+	"fonts":           `expected array of objects: "fonts": [{"id": "main", "family": "Arial"}]`,
+	"styles":          `expected array of objects: "styles": [{"id": "primary", "font": "main", "size": 48}]`,
+	"placements":      `expected array of objects: "placements": [{"id": "center", "anchor": "center"}]`,
+	"sources":         `expected array of objects: "sources": [{"id": "en", "type": "json", "path": "data.json"}]`,
+	"overlays":        `expected array of objects: "overlays": [{"blocks": [{"text": "...", "style": "..."}]}]`,
+	"render_profiles": `expected array of objects: "render_profiles": [{"id": "default"}]`,
+	"timeline":        `expected object: "timeline": {"draft": "timeline-draft.jsonl"}`,
+	"preview":         `expected object: "preview": {"directory": "previews/", "padding_ms": 500}`,
+}
+
+func verselineProjectUnmarshalError(err error) error {
+	var typeErr *json.UnmarshalTypeError
+	if errors.As(err, &typeErr) {
+		field := typeErr.Field
+		if field == "" {
+			field = "(root)"
+		}
+		msg := fmt.Sprintf("field %q: got JSON %s, expected %s", field, typeErr.Value, typeErr.Type)
+		if hint, ok := verselineFieldHints[field]; ok {
+			msg += " — " + hint
+		}
+		return fmt.Errorf("invalid project JSON: %s", msg)
+	}
+	return fmt.Errorf("invalid project JSON: %w", err)
+}
+
 func validateVerselineProject(project VerselineProject) error {
 	if project.Canvas.Width <= 0 || project.Canvas.Height <= 0 {
-		return fmt.Errorf("canvas width and height must be positive")
+		return fmt.Errorf("canvas width and height must be positive (got width=%d, height=%d)", project.Canvas.Width, project.Canvas.Height)
 	}
 	if project.Canvas.FPS <= 0 {
-		return fmt.Errorf("canvas fps must be positive")
+		return fmt.Errorf("canvas fps must be positive (got fps=%d)", project.Canvas.FPS)
 	}
 	if strings.TrimSpace(project.Assets.Background.Path) == "" {
 		return fmt.Errorf("assets.background.path is required")
 	}
 	if strings.TrimSpace(project.Timeline.Draft) == "" && strings.TrimSpace(project.Timeline.Approved) == "" {
-		return fmt.Errorf("timeline.draft or timeline.approved is required")
+		return fmt.Errorf("at least one of timeline.draft or timeline.approved is required")
 	}
 	if err := validateVerselineIDs("font", verselineFontIDs(project.Fonts)); err != nil {
 		return err
@@ -358,10 +393,10 @@ func validateVerselineIDs(kind string, ids []string) error {
 	seen := map[string]bool{}
 	for _, id := range ids {
 		if strings.TrimSpace(id) == "" {
-			return fmt.Errorf("%s ids must not be empty", kind)
+			return fmt.Errorf("%s ids must not be empty — each %s entry must have an \"id\" field", kind, kind)
 		}
 		if seen[id] {
-			return fmt.Errorf("duplicate %s id %q", kind, id)
+			return fmt.Errorf("duplicate %s id %q — each %s must have a unique \"id\"", kind, id, kind)
 		}
 		seen[id] = true
 	}

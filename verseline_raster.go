@@ -6,6 +6,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -74,7 +75,13 @@ func renderVerselineBlockImageGoText(block verselineResolvedBlock, maxWidth int,
 		return fmt.Errorf("no raster lines produced")
 	}
 
-	pad := max(4, block.Style.Outline+block.Style.Shadow+2)
+	effectPad := max(4, block.Style.Outline+block.Style.Shadow+2)
+	bgPad := 0
+	hasTextBG := strings.TrimSpace(block.Style.TextBG) != ""
+	if hasTextBG {
+		bgPad = max(block.Style.TextBGPad, 4)
+	}
+	pad := effectPad + bgPad
 	imageWidth := pad * 2
 	imageHeight := pad * 2
 	for _, line := range lines {
@@ -83,6 +90,16 @@ func renderVerselineBlockImageGoText(block verselineResolvedBlock, maxWidth int,
 	}
 
 	img := image.NewNRGBA(image.Rect(0, 0, imageWidth, imageHeight))
+
+	if hasTextBG {
+		bgColor, bgErr := verselineParseHexColor(block.Style.TextBG, 200)
+		if bgErr == nil {
+			bgRect := image.Rect(effectPad, effectPad, imageWidth-effectPad, imageHeight-effectPad)
+			bgRadius := min(block.Style.TextBGRadius, min(bgRect.Dx()/2, bgRect.Dy()/2))
+			verselineDrawRoundedRect(img, bgRect, bgRadius, bgColor)
+		}
+	}
+
 	fillColor, err := verselineParseHexColor(firstNonEmpty(block.Style.Color, "#FFFFFF"), 255)
 	if err != nil {
 		return err
@@ -92,6 +109,11 @@ func renderVerselineBlockImageGoText(block verselineResolvedBlock, maxWidth int,
 		return err
 	}
 	shadowColor := color.NRGBA{R: outlineColor.R, G: outlineColor.G, B: outlineColor.B, A: 170}
+	if strings.TrimSpace(block.Style.ShadowColor) != "" {
+		if sc, scErr := verselineParseHexColor(block.Style.ShadowColor, 170); scErr == nil {
+			shadowColor = sc
+		}
+	}
 
 	renderer := &textdraw.Renderer{
 		FontSize: float32(max(block.Style.Size, 1)),
@@ -357,5 +379,39 @@ func verselineParseHexColor(value string, alpha uint8) (color.NRGBA, error) {
 		return color.NRGBA{R: raw[0], G: raw[1], B: raw[2], A: raw[3]}, nil
 	default:
 		return color.NRGBA{}, fmt.Errorf("unsupported hex color %q", value)
+	}
+}
+
+// verselineDrawRoundedRect fills a rounded rectangle on img. The radius is
+// clamped so it never exceeds half the rectangle's smaller dimension.
+func verselineDrawRoundedRect(img *image.NRGBA, rect image.Rectangle, radius int, fill color.NRGBA) {
+	w := rect.Dx()
+	h := rect.Dy()
+	if w <= 0 || h <= 0 {
+		return
+	}
+	if radius <= 0 {
+		for py := rect.Min.Y; py < rect.Max.Y; py++ {
+			for px := rect.Min.X; px < rect.Max.X; px++ {
+				img.SetNRGBA(px, py, fill)
+			}
+		}
+		return
+	}
+
+	r := float64(min(radius, min(w/2, h/2)))
+	hw := float64(w) / 2
+	hh := float64(h) / 2
+
+	for py := rect.Min.Y; py < rect.Max.Y; py++ {
+		for px := rect.Min.X; px < rect.Max.X; px++ {
+			lx := float64(px-rect.Min.X) + 0.5
+			ly := float64(py-rect.Min.Y) + 0.5
+			dx := math.Max(math.Abs(lx-hw)-(hw-r), 0)
+			dy := math.Max(math.Abs(ly-hh)-(hh-r), 0)
+			if dx*dx+dy*dy <= r*r {
+				img.SetNRGBA(px, py, fill)
+			}
+		}
 	}
 }

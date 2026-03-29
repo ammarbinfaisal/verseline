@@ -4,10 +4,10 @@ Verseline is a timed-text video renderer for recitations, readings, poems, and o
 
 ## Usage
 
-Build the binary first:
+Build the binary:
 
 ```console
-$ go build -o verseline
+$ go build -o verseline .
 ```
 
 Then add the local stdio server to Claude Code:
@@ -40,18 +40,14 @@ Render approved output:
 $ ./verseline render -project path/to/project.json
 ```
 
-The current MCP server exposes tools for:
+The MCP server exposes tools for:
 
-- project inspection
-- transcript import
-- draft timeline generation from transcript entries
-- timeline validation
-- segment listing
-- segment updates
-- segment splitting
+- project inspection and validation
+- audio transcription (Whisper API) with batched JSONL output
+- timeline segment listing, updates, and splitting
 - draft approval
-- segment previews
-- full renders
+- segment previews and full renders
+- text-on-background readability analysis (WCAG contrast ratios)
 
 ## Definition
 
@@ -60,9 +56,9 @@ The core idea is simple:
 - one declarative project file
 - one renderer
 - one TUI for review and approval
-- one MCP server for transcription, mapping, text splitting, and edit automation
+- one MCP server for transcription, rendering primitives, and readability analysis
 
-This repo began as a fork of [markut](https://github.com/tsoding/markut) — a stack-based video editing language. What remains is the idea of making videos using languages, but the direction has shifted to a data-first timed text system with LLM-assisted tooling for multilingual audio-led clips.
+This repo began as a fork of [markut](https://github.com/tsoding/markut) — a stack-based video editing language. What remains is the idea of making videos using languages, but the direction has shifted to a data-first timed text system for audio-led clips.
 
 ## Product Definition
 
@@ -70,11 +66,9 @@ Verseline should handle:
 
 - audio-led portrait clips
 - image or video backgrounds
-- one or more timed text layers
-- preserved source text in language `x`
-- one or more translation layers in languages `y`, `z`, or any other target languages
-- translation text sourced from trusted files or websites
-- LLM-assisted mapping between audio, source text, and verbatim display text
+- one or more timed text layers with independent time ranges
+- font blocks referencing TTF files, used in style definitions
+- text styling: outlines, shadows, and text backgrounds with rounded corners
 - manual review and approval before final render
 
 The source of truth should be a declarative project, not imperative commands.
@@ -97,9 +91,12 @@ A Verseline project should describe:
 - canvas and output settings
 - audio input
 - image or video background input
-- source datasets such as transcript, canonical text in language `x`, and translation sources in one or more target languages
-- text styles and placements
-- timeline segments
+- source datasets
+- font blocks referencing TTF/OTF files
+- text styles with color, outline, shadow, and text background options
+- text placements with anchoring and margins
+- timeline segments with timed text blocks
+- overlays with independent time ranges (multiple text cards can overlap)
 - approval state
 - render profiles
 
@@ -108,52 +105,32 @@ The project format should be friendly to:
 - hand editing
 - TUI editing
 - line-by-line diffs
-- LLM or MCP-assisted updates
+- MCP-assisted updates
 
 ## Readability Helpers
 
 Timed text readability is part of the product, not an afterthought.
 
-The renderer should support:
+The renderer supports:
 
-- outline and shadow
-- optional background box behind text
-- per-layer padding and corner radius for text backgrounds
+- outline and shadow with configurable colors
+- text background boxes with padding and corner radius (Instagram stories style)
 - safe margins and placements
-- font selection per layer
+- font selection per style via TTF file references
 - softer styling for auxiliary text such as bracketed phrases
-- alternate styles for long segments or dense lines
 
-This matters because many clips will be consumed on phones, often against busy backgrounds.
-
-## Long Recitations And Readings
-
-Some readings will be too long or too dense to map cleanly to one subtitle segment at a time.
-
-Verseline should support two paths:
-
-- manual segment editing in the TUI
-- MCP-assisted splitting and remapping for long passages
-
-The MCP server should be able to:
-
-- transcribe or import transcript data
-- map transcript spans to source references
-- preserve source-language text exactly when required
-- split long segments into readable subtitle-sized chunks
-- suggest timing or segmentation changes
-- write those proposals back into the draft timeline while keeping translation text verbatim from the chosen source
-
-The LLM can help with segmentation, mapping, and timing, but your translation use case stays source-driven: translation wording should come verbatim from trusted files or websites, not be authored by the model.
+The `verseline_check_readability` MCP tool samples the background at each text placement and computes WCAG contrast ratios, reporting which blocks have poor contrast and recommending outline, shadow, or text background additions.
 
 ## Intended Workflow
 
 1. create or import a project
-2. generate a draft timeline from transcript and source datasets
-3. review and edit segments in the TUI
-4. preview and rerender selected segments as needed
-5. approve the timeline
-6. render the final output
+2. transcribe audio (writes batched JSONL files to a directory)
+3. build the timeline from transcription data
+4. review and edit segments in the TUI
+5. check readability and adjust styles as needed
+6. preview and rerender selected segments
+7. approve the timeline
+8. render the final output
 
 ## Docs
 

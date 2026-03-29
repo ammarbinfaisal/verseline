@@ -165,84 +165,39 @@ type verselineMCPRenderOutput struct {
 	Outputs     []string `json:"outputs"`
 }
 
-type verselineMCPTranscriptEntryInput struct {
-	ID         string   `json:"id,omitempty"`
-	Start      string   `json:"start,omitempty"`
-	End        string   `json:"end,omitempty"`
-	StartMS    int      `json:"start_ms,omitempty"`
-	EndMS      int      `json:"end_ms,omitempty"`
-	Text       string   `json:"text,omitempty"`
-	Refs       []string `json:"refs,omitempty"`
-	Status     string   `json:"status,omitempty"`
-	Notes      string   `json:"notes,omitempty"`
-	Confidence float64  `json:"confidence,omitempty"`
-}
-
-type verselineMCPTranscriptEntrySummary struct {
-	Number     int      `json:"number"`
-	ID         string   `json:"id,omitempty"`
-	Start      string   `json:"start"`
-	End        string   `json:"end"`
-	Text       string   `json:"text,omitempty"`
-	Refs       []string `json:"refs,omitempty"`
-	Status     string   `json:"status,omitempty"`
-	Notes      string   `json:"notes,omitempty"`
-	Confidence float64  `json:"confidence,omitempty"`
-}
-
-type verselineMCPImportTranscriptInput struct {
-	ProjectPath    string `json:"project_path"`
-	TranscriptPath string `json:"transcript_path"`
-}
-
-type verselineMCPImportTranscriptOutput struct {
-	ProjectPath    string                               `json:"project_path"`
-	TranscriptPath string                               `json:"transcript_path"`
-	EntryCount     int                                  `json:"entry_count"`
-	Entries        []verselineMCPTranscriptEntrySummary `json:"entries"`
-}
-
 type verselineMCPTranscribeInput struct {
-	ProjectPath string `json:"project_path"`
-	AudioPath   string `json:"audio_path,omitempty"`
-	Language    string `json:"language,omitempty"`
-	Model       string `json:"model,omitempty"`
-	OutputPath  string `json:"output_path,omitempty"`
+	AudioPath     string `json:"audio_path"`
+	OutputDir     string `json:"output_dir"`
+	LinesPerBatch int    `json:"lines_per_batch,omitempty"`
+	Language      string `json:"language,omitempty"`
+	Model         string `json:"model,omitempty"`
+}
+
+type verselineMCPTranscribeBatchFile struct {
+	Path      string `json:"path"`
+	LineCount int    `json:"line_count"`
 }
 
 type verselineMCPTranscribeOutput struct {
-	ProjectPath    string                               `json:"project_path"`
-	AudioPath      string                               `json:"audio_path"`
-	Language       string                               `json:"language,omitempty"`
-	Duration       float64                              `json:"duration,omitempty"`
-	TranscriptPath string                               `json:"transcript_path,omitempty"`
-	EntryCount     int                                  `json:"entry_count"`
-	Entries        []verselineMCPTranscriptEntrySummary `json:"entries"`
+	AudioPath  string                            `json:"audio_path"`
+	Language   string                            `json:"language,omitempty"`
+	Duration   float64                           `json:"duration,omitempty"`
+	BatchFiles []verselineMCPTranscribeBatchFile `json:"batch_files"`
+	TotalLines int                               `json:"total_lines"`
 }
 
-type verselineMCPGenerateDraftInput struct {
-	ProjectPath        string                             `json:"project_path"`
-	TranscriptPath     string                             `json:"transcript_path,omitempty"`
-	Entries            []verselineMCPTranscriptEntryInput `json:"entries,omitempty"`
-	Timeline           string                             `json:"timeline,omitempty"`
-	DefaultStatus      string                             `json:"default_status,omitempty"`
-	SplitMaxChars      int                                `json:"split_max_chars,omitempty"`
-	PrimarySourceID    string                             `json:"primary_source_id,omitempty"`
-	PrimaryStyle       string                             `json:"primary_style,omitempty"`
-	PrimaryPlacement   string                             `json:"primary_placement,omitempty"`
-	SecondarySourceID  string                             `json:"secondary_source_id,omitempty"`
-	SecondaryStyle     string                             `json:"secondary_style,omitempty"`
-	SecondaryPlacement string                             `json:"secondary_placement,omitempty"`
-	DryRun             bool                               `json:"dry_run,omitempty"`
+type verselineMCPReadabilityInput struct {
+	ProjectPath   string `json:"project_path"`
+	Timeline      string `json:"timeline,omitempty"`
+	SegmentNumber int    `json:"segment_number,omitempty"`
+	SegmentID     string `json:"segment_id,omitempty"`
+	Timestamp     string `json:"timestamp,omitempty"`
 }
 
-type verselineMCPGenerateDraftOutput struct {
-	ProjectPath  string                       `json:"project_path"`
-	Timeline     string                       `json:"timeline"`
-	TimelinePath string                       `json:"timeline_path"`
-	SegmentCount int                          `json:"segment_count"`
-	Segments     []verselineMCPSegmentSummary `json:"segments"`
-	Saved        bool                         `json:"saved"`
+type verselineMCPReadabilityOutput struct {
+	ProjectPath string                      `json:"project_path"`
+	Timestamp   string                      `json:"timestamp,omitempty"`
+	Blocks      []verselineReadabilityBlock `json:"blocks"`
 }
 
 func runVerselineMCPCommand(name string, args []string) bool {
@@ -283,14 +238,13 @@ func printVerselineMCPDescription() {
 	fmt.Printf("- verseline_inspect_project\n")
 	fmt.Printf("- verseline_list_segments\n")
 	fmt.Printf("- verseline_validate_project\n")
-	fmt.Printf("- verseline_import_transcript\n")
 	fmt.Printf("- verseline_transcribe\n")
-	fmt.Printf("- verseline_generate_draft_from_transcript\n")
 	fmt.Printf("- verseline_update_segment\n")
 	fmt.Printf("- verseline_split_segment\n")
 	fmt.Printf("- verseline_approve_timeline\n")
 	fmt.Printf("- verseline_preview_segment\n")
 	fmt.Printf("- verseline_render_project\n")
+	fmt.Printf("- verseline_check_readability\n")
 	fmt.Printf("Claude Code add command:\n")
 	fmt.Printf("  claude mcp add verseline -- %s mcp\n", executable)
 	fmt.Printf("Codex CLI add command:\n")
@@ -310,63 +264,94 @@ func runVerselineMCPServe() bool {
 func newVerselineMCPServer() *mcp.Server {
 	server := mcp.NewServer(&mcp.Implementation{
 		Name:    "verseline",
-		Version: "0.1.0",
+		Version: "0.2.0",
 	}, nil)
 
 	mcp.AddTool(server, &mcp.Tool{
-		Name:        "verseline_inspect_project",
-		Description: "Load a Verseline project and return a compact summary of assets, styles, timelines, and render profiles.",
+		Name: "verseline_inspect_project",
+		Description: `Load a Verseline project JSON file and return its canvas dimensions, asset paths, registered styles, placements, sources, render profiles, and timeline file paths with segment counts.
+
+The project.json schema:
+{
+  "name": "string (optional)",
+  "output": "string — output file path (optional)",
+  "canvas": { "width": int, "height": int, "fps": int },
+  "assets": {
+    "audio": "string — path to audio file (optional)",
+    "background": { "path": "string (required)", "type": "\"image\" or \"video\" (optional, default image)", "loop": bool (optional), "fit": "\"cover\" or \"contain\" (optional, default cover)" }
+  },
+  "fonts": [{ "id": "string", "family": "string", "files": ["path to .ttf/.otf file"] }],
+  "styles": [{
+    "id": "string", "font": "string — references a font id", "size": int,
+    "color": "#RRGGBB (optional)", "auxiliary_color": "#RRGGBB (optional)",
+    "outline_color": "#RRGGBB (optional)", "outline": int pixels (optional),
+    "shadow_color": "#RRGGBB or #RRGGBBAA (optional)", "shadow": int pixels (optional),
+    "text_bg": "#RRGGBB or #RRGGBBAA (optional) — background color for a rounded box behind the text",
+    "text_bg_pad": int pixels (optional) — padding inside the text background box",
+    "text_bg_radius": int pixels (optional) — corner radius of the text background box",
+    "line_height": int (optional)
+  }],
+  "placements": [{ "id": "string", "anchor": "top-left|top-center|top-right|middle-left|center|middle-right|bottom-left|bottom-center|bottom-right", "margin_x": int (optional), "margin_y": int (optional), "max_width": int (optional), "max_height": int (optional) }],
+  "sources": [{ "id": "string", "type": "json|jsonl", "path": "string", "language": "string (optional)", "text_field": "string (optional)", "key_field": "string (optional)" }],
+  "overlays": [{ "id": "string (optional)", "start": "HH:MM:SS.mmm (optional — default 0)", "end": "HH:MM:SS.mmm (optional — default end of video)", "blocks": [block...] }],
+  "preview": { "player": "string (optional)", "directory": "string (optional)", "padding_ms": int (optional), "width": int (optional)", "height": int (optional)", "fps": int (optional) },
+  "render_profiles": [{ "id": "string", "label": "string (optional)", "width": int (optional, inherits canvas)", "height": int (optional, inherits canvas)", "fps": int (optional, inherits canvas)", "output": "string (optional)", "output_suffix": "string (optional)", "video_codec": "string (optional)", "audio_codec": "string (optional)", "crf": int (optional)", "preset": "string (optional)" }],
+  "timeline": { "draft": "string — path to draft JSONL (optional)", "approved": "string — path to approved JSONL (optional)" }
+}
+
+A timeline JSONL file has one segment per line:
+{"id":"string","start":"HH:MM:SS.mmm","end":"HH:MM:SS.mmm","status":"draft|approved|needs_fix","blocks":[{"text":"string","style":"style-id","placement":"placement-id"},...]}
+
+Multiple text cards can overlap in time: segment/overlay t1 from 0s-10s, t2 from 5s-40s, t3 from 0s to end — all render simultaneously when their time ranges overlap.
+
+Required: canvas (width>0, height>0, fps>0), assets.background.path, at least one of timeline.draft or timeline.approved.
+All arrays use objects with "id" fields, NOT objects keyed by id. Timestamps use HH:MM:SS.mmm format.`,
 	}, verselineMCPInspectProjectTool)
 
 	mcp.AddTool(server, &mcp.Tool{
-		Name:        "verseline_list_segments",
-		Description: "List draft or approved timeline segments with text previews and source references.",
+		Name: "verseline_list_segments",
+		Description: `Return paginated segments from a project's draft or approved timeline. Each segment includes its 1-based number, start/end timestamps, status, block count, a text preview (first 160 characters), and source references. Defaults: timeline="draft", start_at=1, limit=50.`,
 	}, verselineMCPListSegmentsTool)
 
 	mcp.AddTool(server, &mcp.Tool{
-		Name:        "verseline_validate_project",
-		Description: "Validate a Verseline project together with one of its timelines.",
+		Name: "verseline_validate_project",
+		Description: `Validate a project JSON file and one of its timelines. Checks: canvas dimensions are positive, background path exists, all IDs are unique and non-empty, every timestamp parses as HH:MM:SS.mmm, every block has text or a source, and all style/placement/source references in the timeline exist in the project. Returns valid=true or an error describing the first failing check.`,
 	}, verselineMCPValidateProjectTool)
 
 	mcp.AddTool(server, &mcp.Tool{
-		Name:        "verseline_import_transcript",
-		Description: "Load a transcript JSON or JSONL file and return normalized timed entries with refs, text, and status fields.",
-	}, verselineMCPImportTranscriptTool)
-
-	mcp.AddTool(server, &mcp.Tool{
-		Name:        "verseline_transcribe",
-		Description: "Transcribe project audio using the OpenAI Whisper API and return timed transcript entries. Reads OPENAI_API_KEY from the environment (.env next to the binary). Optionally saves the raw transcript to a JSON file.",
+		Name: "verseline_transcribe",
+		Description: `Transcribe an audio file using the OpenAI Whisper API and write results as JSONL batch files to output_dir. Each batch file contains up to lines_per_batch entries (1–100, default 50). Each JSONL line is {"start":"HH:MM:SS.mmm","end":"HH:MM:SS.mmm","text":"...","confidence":0.0-1.0}. Returns the list of written file paths and line counts — does not return transcription content in the tool result. Requires OPENAI_API_KEY in the environment or .env next to the binary.`,
 	}, verselineMCPTranscribeTool)
 
 	mcp.AddTool(server, &mcp.Tool{
-		Name:        "verseline_generate_draft_from_transcript",
-		Description: "Generate a draft timeline from transcript entries plus source/style/placement settings, with optional auto-splitting for long text.",
-	}, verselineMCPGenerateDraftTool)
-
-	mcp.AddTool(server, &mcp.Tool{
-		Name:        "verseline_update_segment",
-		Description: "Update segment timing, status, notes, or one block's text/style/placement in the selected timeline.",
+		Name: "verseline_update_segment",
+		Description: `Update properties of a single segment in the draft or approved timeline. Can set start, end, status, notes, or a single block's text/style/placement. Identify the segment by 1-based segment_number or segment_id. Validates the full timeline after the edit. Set dry_run=true to preview the change without saving.`,
 	}, verselineMCPUpdateSegmentTool)
 
 	mcp.AddTool(server, &mcp.Tool{
-		Name:        "verseline_split_segment",
-		Description: "Replace one segment with several shorter segments by splitting one block's text across new time slices.",
+		Name: "verseline_split_segment",
+		Description: `Replace one timeline segment with multiple shorter segments by splitting a block's text. Provide the new text fragments in the texts array (minimum 2). Time is distributed proportionally to text length (longer fragments get more time). Identify the segment by segment_number or segment_id, and the block by block_index (1-based, default 1). Validates the result before saving. Set dry_run=true to preview.`,
 	}, verselineMCPSplitSegmentTool)
 
 	mcp.AddTool(server, &mcp.Tool{
-		Name:        "verseline_approve_timeline",
-		Description: "Copy the draft timeline into the approved timeline after validation checks.",
+		Name: "verseline_approve_timeline",
+		Description: `Copy the draft timeline to the approved timeline path. Rejects if any segment has status "needs_fix". Both timeline.draft and timeline.approved must be defined in the project.`,
 	}, verselineMCPApproveTimelineTool)
 
 	mcp.AddTool(server, &mcp.Tool{
-		Name:        "verseline_preview_segment",
-		Description: "Render a preview clip for one segment from the draft or approved timeline.",
+		Name: "verseline_preview_segment",
+		Description: `Render a low-quality preview video clip for one segment. Uses the project's preview settings (reduced resolution, fast encoding). The clip includes padding around the segment's time range. Set open_player=true to launch the configured media player after rendering.`,
 	}, verselineMCPPreviewSegmentTool)
 
 	mcp.AddTool(server, &mcp.Tool{
-		Name:        "verseline_render_project",
-		Description: "Render one or more approved project outputs using the configured render profiles.",
+		Name: "verseline_render_project",
+		Description: `Render final video outputs from the approved timeline using one or more render profiles. Each profile can override resolution, codec, CRF, and output path. Text blocks are rendered as PNG images and composited onto the background using ffmpeg overlays. Omit profiles to render all configured profiles.`,
 	}, verselineMCPRenderProjectTool)
+
+	mcp.AddTool(server, &mcp.Tool{
+		Name: "verseline_check_readability",
+		Description: `Analyze text-on-background contrast for a specific segment. Samples the background image (or extracts a video frame at the segment's midpoint) at each block's placement region and computes WCAG 2.0 contrast ratios. Returns per-block: contrast_ratio, meets_wcag_aa (>=3:1 for large text), meets_wcag_aaa (>=4.5:1), and whether outline/shadow/text_bg are already set. When contrast is poor, returns recommendations to add outline, shadow, or text_bg. Use timestamp (HH:MM:SS.mmm) to override the default midpoint sampling time.`,
+	}, verselineMCPReadabilityTool)
 
 	return server
 }
@@ -464,66 +449,42 @@ func verselineMCPValidateProjectTool(_ context.Context, _ *mcp.CallToolRequest, 
 	return verselineMCPTextResult(summary), output, nil
 }
 
-func verselineMCPImportTranscriptTool(_ context.Context, _ *mcp.CallToolRequest, in verselineMCPImportTranscriptInput) (*mcp.CallToolResult, verselineMCPImportTranscriptOutput, error) {
-	project, absProjectPath, err := loadVerselineProject(in.ProjectPath)
-	if err != nil {
-		return nil, verselineMCPImportTranscriptOutput{}, err
-	}
-	_ = project
-
-	entries, transcriptPath, err := loadVerselineDraftEntries(absProjectPath, in.TranscriptPath)
-	if err != nil {
-		return nil, verselineMCPImportTranscriptOutput{}, err
-	}
-
-	items := make([]verselineMCPTranscriptEntrySummary, 0, len(entries))
-	for index, entry := range entries {
-		items = append(items, verselineMCPTranscriptEntrySummary{
-			Number:     index + 1,
-			ID:         entry.ID,
-			Start:      entry.Start,
-			End:        entry.End,
-			Text:       entry.Text,
-			Refs:       append([]string(nil), entry.Refs...),
-			Status:     entry.Status,
-			Notes:      entry.Notes,
-			Confidence: entry.Confidence,
-		})
-	}
-
-	output := verselineMCPImportTranscriptOutput{
-		ProjectPath:    absProjectPath,
-		TranscriptPath: transcriptPath,
-		EntryCount:     len(items),
-		Entries:        items,
-	}
-	summary := fmt.Sprintf("Imported %d transcript entries from %s", len(items), filepath.Base(transcriptPath))
-	return verselineMCPTextResult(summary), output, nil
-}
-
 func verselineMCPTranscribeTool(_ context.Context, _ *mcp.CallToolRequest, in verselineMCPTranscribeInput) (*mcp.CallToolResult, verselineMCPTranscribeOutput, error) {
 	apiKey := os.Getenv("OPENAI_API_KEY")
 	if apiKey == "" {
 		return nil, verselineMCPTranscribeOutput{}, fmt.Errorf("OPENAI_API_KEY is not set (place it in .env next to the verseline binary or export it)")
 	}
 
-	project, absProjectPath, err := loadVerselineProject(in.ProjectPath)
-	if err != nil {
-		return nil, verselineMCPTranscribeOutput{}, err
-	}
-
-	projectDir := filepath.Dir(absProjectPath)
 	audioPath := strings.TrimSpace(in.AudioPath)
 	if audioPath == "" {
-		audioPath = resolveOptionalReelPath(projectDir, project.Assets.Audio)
-	} else if !filepath.IsAbs(audioPath) {
-		audioPath = resolveReelPath(projectDir, audioPath)
+		return nil, verselineMCPTranscribeOutput{}, fmt.Errorf("audio_path is required")
 	}
-	if audioPath == "" {
-		return nil, verselineMCPTranscribeOutput{}, fmt.Errorf("no audio path: set audio_path or configure assets.audio in the project")
+	if !filepath.IsAbs(audioPath) {
+		cwd, _ := os.Getwd()
+		audioPath = filepath.Join(cwd, audioPath)
 	}
 	if _, err := os.Stat(audioPath); err != nil {
 		return nil, verselineMCPTranscribeOutput{}, fmt.Errorf("audio file not found: %s", audioPath)
+	}
+
+	outputDir := strings.TrimSpace(in.OutputDir)
+	if outputDir == "" {
+		return nil, verselineMCPTranscribeOutput{}, fmt.Errorf("output_dir is required")
+	}
+	if !filepath.IsAbs(outputDir) {
+		cwd, _ := os.Getwd()
+		outputDir = filepath.Join(cwd, outputDir)
+	}
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return nil, verselineMCPTranscribeOutput{}, fmt.Errorf("create output directory: %w", err)
+	}
+
+	linesPerBatch := in.LinesPerBatch
+	if linesPerBatch <= 0 {
+		linesPerBatch = 50
+	}
+	if linesPerBatch > 100 {
+		linesPerBatch = 100
 	}
 
 	result, err := callWhisperAPI(whisperRequestOptions{
@@ -536,103 +497,66 @@ func verselineMCPTranscribeTool(_ context.Context, _ *mcp.CallToolRequest, in ve
 		return nil, verselineMCPTranscribeOutput{}, err
 	}
 
-	entries := whisperSegmentsToDraftEntries(result.Segments)
-
-	var transcriptPath string
-	outputPath := strings.TrimSpace(in.OutputPath)
-	if outputPath != "" {
-		if !filepath.IsAbs(outputPath) {
-			outputPath = resolveReelPath(projectDir, outputPath)
-		}
-		raw, err := json.MarshalIndent(result, "", "  ")
-		if err != nil {
-			return nil, verselineMCPTranscribeOutput{}, fmt.Errorf("encode transcript: %w", err)
-		}
-		if err := os.WriteFile(outputPath, raw, 0644); err != nil {
-			return nil, verselineMCPTranscribeOutput{}, fmt.Errorf("write transcript: %w", err)
-		}
-		transcriptPath = outputPath
+	type transcriptLine struct {
+		Start      string  `json:"start"`
+		End        string  `json:"end"`
+		Text       string  `json:"text"`
+		Confidence float64 `json:"confidence"`
 	}
 
-	items := make([]verselineMCPTranscriptEntrySummary, 0, len(entries))
-	for index, entry := range entries {
-		items = append(items, verselineMCPTranscriptEntrySummary{
-			Number:     index + 1,
-			Start:      entry.Start,
-			End:        entry.End,
-			Text:       entry.Text,
-			Confidence: entry.Confidence,
+	lines := make([]transcriptLine, 0, len(result.Segments))
+	for _, seg := range result.Segments {
+		text := strings.TrimSpace(seg.Text)
+		if text == "" {
+			continue
+		}
+		lines = append(lines, transcriptLine{
+			Start:      secondsToTs(seg.Start),
+			End:        secondsToTs(seg.End),
+			Text:       text,
+			Confidence: whisperConfidence(seg),
+		})
+	}
+
+	batchFiles := make([]verselineMCPTranscribeBatchFile, 0)
+	for i := 0; i < len(lines); i += linesPerBatch {
+		end := min(i+linesPerBatch, len(lines))
+		batch := lines[i:end]
+
+		batchNum := len(batchFiles) + 1
+		fileName := fmt.Sprintf("batch-%03d.jsonl", batchNum)
+		filePath := filepath.Join(outputDir, fileName)
+
+		var sb strings.Builder
+		for _, line := range batch {
+			raw, jsonErr := json.Marshal(line)
+			if jsonErr != nil {
+				return nil, verselineMCPTranscribeOutput{}, fmt.Errorf("encode line: %w", jsonErr)
+			}
+			sb.Write(raw)
+			sb.WriteByte('\n')
+		}
+
+		if writeErr := os.WriteFile(filePath, []byte(sb.String()), 0644); writeErr != nil {
+			return nil, verselineMCPTranscribeOutput{}, fmt.Errorf("write batch %d: %w", batchNum, writeErr)
+		}
+
+		batchFiles = append(batchFiles, verselineMCPTranscribeBatchFile{
+			Path:      filePath,
+			LineCount: len(batch),
 		})
 	}
 
 	output := verselineMCPTranscribeOutput{
-		ProjectPath:    absProjectPath,
-		AudioPath:      audioPath,
-		Language:       result.Language,
-		Duration:       result.Duration,
-		TranscriptPath: transcriptPath,
-		EntryCount:     len(items),
-		Entries:        items,
+		AudioPath:  audioPath,
+		Language:   result.Language,
+		Duration:   result.Duration,
+		BatchFiles: batchFiles,
+		TotalLines: len(lines),
 	}
-	summary := fmt.Sprintf("Transcribed %s: %d segments, %.1fs, language=%s", filepath.Base(audioPath), len(items), result.Duration, result.Language)
+	summary := fmt.Sprintf("Transcribed %s: %d lines in %d batch files, %.1fs, language=%s", filepath.Base(audioPath), len(lines), len(batchFiles), result.Duration, result.Language)
 	return verselineMCPTextResult(summary), output, nil
 }
-
-func verselineMCPGenerateDraftTool(_ context.Context, _ *mcp.CallToolRequest, in verselineMCPGenerateDraftInput) (*mcp.CallToolResult, verselineMCPGenerateDraftOutput, error) {
-	project, absProjectPath, err := loadVerselineProject(in.ProjectPath)
-	if err != nil {
-		return nil, verselineMCPGenerateDraftOutput{}, err
-	}
-
-	entries, err := verselineMCPResolveDraftEntries(absProjectPath, in.TranscriptPath, in.Entries)
-	if err != nil {
-		return nil, verselineMCPGenerateDraftOutput{}, err
-	}
-
-	segments, err := generateVerselineDraftTimeline(entries, verselineDraftGenerationOptions{
-		PrimarySourceID:    in.PrimarySourceID,
-		PrimaryStyle:       in.PrimaryStyle,
-		PrimaryPlacement:   in.PrimaryPlacement,
-		SecondarySourceID:  in.SecondarySourceID,
-		SecondaryStyle:     in.SecondaryStyle,
-		SecondaryPlacement: in.SecondaryPlacement,
-		DefaultStatus:      firstNonEmpty(in.DefaultStatus, "draft"),
-		SplitMaxChars:      in.SplitMaxChars,
-	})
-	if err != nil {
-		return nil, verselineMCPGenerateDraftOutput{}, err
-	}
-	if err := validateVerselineTimelineAgainstProject(project, segments); err != nil {
-		return nil, verselineMCPGenerateDraftOutput{}, err
-	}
-
-	timelinePath, timelineKind, err := resolveVerselineTimelinePath(project, absProjectPath, in.Timeline)
-	if err != nil {
-		return nil, verselineMCPGenerateDraftOutput{}, err
-	}
-	if !in.DryRun {
-		if err := saveVerselineTimeline(timelinePath, segments); err != nil {
-			return nil, verselineMCPGenerateDraftOutput{}, err
-		}
-	}
-
-	items := make([]verselineMCPSegmentSummary, 0, len(segments))
-	for index, segment := range segments {
-		items = append(items, verselineMCPSummarizeSegment(index, segment))
-	}
-
-	output := verselineMCPGenerateDraftOutput{
-		ProjectPath:  absProjectPath,
-		Timeline:     timelineKind,
-		TimelinePath: timelinePath,
-		SegmentCount: len(segments),
-		Segments:     items,
-		Saved:        !in.DryRun,
-	}
-	summary := fmt.Sprintf("Generated %d %s timeline segments for %s", len(segments), timelineKind, filepath.Base(absProjectPath))
-	return verselineMCPTextResult(summary), output, nil
-}
-
 func verselineMCPUpdateSegmentTool(_ context.Context, _ *mcp.CallToolRequest, in verselineMCPUpdateSegmentInput) (*mcp.CallToolResult, verselineMCPUpdateSegmentOutput, error) {
 	project, absProjectPath, segments, timelinePath, timelineKind, err := verselineMCPLoadProjectTimeline(in.ProjectPath, in.Timeline, false)
 	if err != nil {
@@ -816,6 +740,54 @@ func verselineMCPRenderProjectTool(_ context.Context, _ *mcp.CallToolRequest, in
 		Outputs:     outputs,
 	}
 	summary := fmt.Sprintf("Rendered %d project outputs for %s", len(outputs), filepath.Base(absProjectPath))
+	return verselineMCPTextResult(summary), output, nil
+}
+
+func verselineMCPReadabilityTool(_ context.Context, _ *mcp.CallToolRequest, in verselineMCPReadabilityInput) (*mcp.CallToolResult, verselineMCPReadabilityOutput, error) {
+	project, absProjectPath, segments, _, _, err := verselineMCPLoadProjectTimeline(in.ProjectPath, in.Timeline, false)
+	if err != nil {
+		return nil, verselineMCPReadabilityOutput{}, err
+	}
+
+	index, err := verselineMCPFindSegmentIndex(segments, in.SegmentNumber, in.SegmentID)
+	if err != nil {
+		return nil, verselineMCPReadabilityOutput{}, err
+	}
+
+	segment := segments[index]
+	startMs, _ := tsToMillis(segment.Start)
+	endMs, _ := tsToMillis(segment.End)
+	timestamp := startMs + (endMs-startMs)/2
+	if strings.TrimSpace(in.Timestamp) != "" {
+		ts, tsErr := tsToMillis(in.Timestamp)
+		if tsErr != nil {
+			return nil, verselineMCPReadabilityOutput{}, fmt.Errorf("invalid timestamp: %w", tsErr)
+		}
+		timestamp = ts
+	}
+
+	blocks, err := analyzeVerselineReadability(project, absProjectPath, segment, timestamp)
+	if err != nil {
+		return nil, verselineMCPReadabilityOutput{}, err
+	}
+
+	output := verselineMCPReadabilityOutput{
+		ProjectPath: absProjectPath,
+		Timestamp:   millisToTs(timestamp),
+		Blocks:      blocks,
+	}
+
+	poor := 0
+	for _, b := range blocks {
+		if !b.MeetsWCAG_AA {
+			poor++
+		}
+	}
+	summary := fmt.Sprintf("Checked readability for segment %d: %d blocks", index+1, len(blocks))
+	if poor > 0 {
+		summary += fmt.Sprintf(", %d with poor contrast", poor)
+	}
+
 	return verselineMCPTextResult(summary), output, nil
 }
 
@@ -1021,7 +993,6 @@ func verselineMCPSplitTimelineSegment(segment VerselineSegment, segmentIndex int
 		clone.Blocks = append([]VerselineBlock(nil), segment.Blocks...)
 		clone.Start = millisToTs(partStart)
 		clone.End = millisToTs(partEnd)
-		clone.Blocks[blockIndex] = clone.Blocks[blockIndex]
 		clone.Blocks[blockIndex].Text = text
 		clone.Blocks[blockIndex].Kind = "literal"
 		clone.Blocks[blockIndex].Source = nil
@@ -1038,39 +1009,3 @@ func verselineMCPSplitTimelineSegment(segment VerselineSegment, segmentIndex int
 	return replacements, nil
 }
 
-func verselineMCPResolveDraftEntries(projectPath string, transcriptPath string, inputs []verselineMCPTranscriptEntryInput) ([]verselineDraftEntry, error) {
-	if strings.TrimSpace(transcriptPath) != "" {
-		entries, _, err := loadVerselineDraftEntries(projectPath, transcriptPath)
-		return entries, err
-	}
-	if len(inputs) == 0 {
-		return nil, fmt.Errorf("transcript_path or entries is required")
-	}
-
-	entries := make([]verselineDraftEntry, 0, len(inputs))
-	for index, input := range inputs {
-		start := strings.TrimSpace(input.Start)
-		end := strings.TrimSpace(input.End)
-		if start == "" && input.StartMS > 0 {
-			start = millisToTs(Millis(input.StartMS))
-		}
-		if end == "" && input.EndMS > 0 {
-			end = millisToTs(Millis(input.EndMS))
-		}
-		entry := verselineDraftEntry{
-			ID:         strings.TrimSpace(input.ID),
-			Start:      start,
-			End:        end,
-			Text:       strings.TrimSpace(input.Text),
-			Refs:       append([]string(nil), input.Refs...),
-			Status:     strings.TrimSpace(input.Status),
-			Notes:      strings.TrimSpace(input.Notes),
-			Confidence: input.Confidence,
-		}
-		if entry.Start == "" || entry.End == "" {
-			return nil, fmt.Errorf("entry %d: start and end are required", index+1)
-		}
-		entries = append(entries, entry)
-	}
-	return entries, nil
-}

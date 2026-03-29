@@ -96,24 +96,6 @@ func callWhisperAPI(opts whisperRequestOptions) (*whisperResponse, error) {
 	return &result, nil
 }
 
-func whisperSegmentsToDraftEntries(segments []whisperSegment) []verselineDraftEntry {
-	entries := make([]verselineDraftEntry, 0, len(segments))
-	for _, seg := range segments {
-		text := strings.TrimSpace(seg.Text)
-		if text == "" {
-			continue
-		}
-		confidence := whisperConfidence(seg)
-		entries = append(entries, verselineDraftEntry{
-			Start:      secondsToTs(seg.Start),
-			End:        secondsToTs(seg.End),
-			Text:       text,
-			Confidence: confidence,
-		})
-	}
-	return entries
-}
-
 func secondsToTs(seconds float64) string {
 	millis := int64(math.Round(seconds * 1000))
 	return millisToTs(Millis(millis))
