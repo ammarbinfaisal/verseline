@@ -124,7 +124,16 @@ func renderVerselineBlockImageGoText(block verselineResolvedBlock, maxWidth int,
 	y := pad
 	for _, line := range lines {
 		baselineY := y + line.Ascent
-		x := pad + max((imageWidth-pad*2-line.Width)/2, 0)
+		contentWidth := imageWidth - pad*2
+		var x int
+		switch strings.ToLower(strings.TrimSpace(block.Style.Align)) {
+		case "left":
+			x = pad
+		case "right":
+			x = pad + max(contentWidth-line.Width, 0)
+		default: // center
+			x = pad + max(contentWidth-line.Width, 0)/2
+		}
 
 		if block.Style.Shadow > 0 {
 			renderer.Color = shadowColor
@@ -171,7 +180,7 @@ func renderVerselineBlockImageMagick(block verselineResolvedBlock, maxWidth int,
 	args := []string{
 		"-background", "none",
 		"-fill", firstNonEmpty(block.Style.Color, "#FFFFFF"),
-		"-gravity", "center",
+		"-gravity", verselineAlignToGravity(block.Style.Align),
 		"-pointsize", strconv.Itoa(max(block.Style.Size, 24)),
 	}
 	if block.FontFile != "" {
@@ -413,5 +422,16 @@ func verselineDrawRoundedRect(img *image.NRGBA, rect image.Rectangle, radius int
 				img.SetNRGBA(px, py, fill)
 			}
 		}
+	}
+}
+
+func verselineAlignToGravity(align string) string {
+	switch strings.ToLower(strings.TrimSpace(align)) {
+	case "left":
+		return "west"
+	case "right":
+		return "east"
+	default:
+		return "center"
 	}
 }

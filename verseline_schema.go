@@ -63,6 +63,7 @@ type VerselineStyle struct {
 	TextBG         string `json:"text_bg,omitempty"`
 	TextBGPad      int    `json:"text_bg_pad,omitempty"`
 	TextBGRadius   int    `json:"text_bg_radius,omitempty"`
+	Align          string `json:"align,omitempty"`
 	LineHeight     int    `json:"line_height,omitempty"`
 }
 
