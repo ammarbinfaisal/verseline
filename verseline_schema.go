@@ -212,6 +212,14 @@ func init() {
 	}
 }
 
+func saveVerselineProject(path string, project VerselineProject) error {
+	data, err := json.MarshalIndent(project, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, append(data, '\n'), 0644)
+}
+
 func loadVerselineProject(path string) (VerselineProject, string, error) {
 	project := VerselineProject{}
 	absPath, err := filepath.Abs(path)

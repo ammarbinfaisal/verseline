@@ -144,7 +144,7 @@ func verselinePreviewSegments(project VerselineProject, absProjectPath string, s
 	}
 
 	if openPlayer {
-		player := firstNonEmpty(playerOverride, project.Preview.Player, "vlc")
+		player := firstNonEmpty(playerOverride, project.Preview.Player)
 		if err := verselineOpenMedia(plan.OutputPath, player, project.Preview.PlayerArgs); err != nil {
 			return plan.OutputPath, err
 		}
@@ -320,8 +320,13 @@ func verselineRenderRequestFromProfile(project VerselineProject, projectPath str
 
 func verselineOpenMedia(path string, player string, playerArgs []string) error {
 	player = strings.TrimSpace(player)
-	if player == "" {
-		player = "vlc"
+
+	if player == "" || player == "default" {
+		if verselineHasExec("vlc") {
+			player = "vlc"
+		} else {
+			return verselineDefaultOpenCmd(path).Start()
+		}
 	}
 
 	args := append([]string(nil), playerArgs...)
@@ -329,8 +334,6 @@ func verselineOpenMedia(path string, player string, playerArgs []string) error {
 
 	var cmd *exec.Cmd
 	switch {
-	case player == "default":
-		cmd = verselineDefaultOpenCmd(path)
 	case verselineHasExec(player):
 		cmd = exec.Command(player, args...)
 	case runtime.GOOS == "darwin":

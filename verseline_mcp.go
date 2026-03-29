@@ -8,8 +8,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"unicode/utf8"
-
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -563,46 +561,22 @@ func verselineMCPUpdateSegmentTool(_ context.Context, _ *mcp.CallToolRequest, in
 		return nil, verselineMCPUpdateSegmentOutput{}, err
 	}
 
-	index, err := verselineMCPFindSegmentIndex(segments, in.SegmentNumber, in.SegmentID)
+	index, err := verselineOpsFindSegmentIndex(segments, in.SegmentNumber, in.SegmentID)
 	if err != nil {
 		return nil, verselineMCPUpdateSegmentOutput{}, err
 	}
 
-	segment := segments[index]
-	if in.Start != nil {
-		segment.Start = *in.Start
-	}
-	if in.End != nil {
-		segment.End = *in.End
-	}
-	if in.Status != nil {
-		segment.Status = *in.Status
-	}
-	if in.Notes != nil {
-		segment.Notes = *in.Notes
-	}
-
-	if in.BlockText != nil || in.BlockStyle != nil || in.BlockPlacement != nil {
-		blockIndex := max(in.BlockIndex, 1) - 1
-		if blockIndex < 0 || blockIndex >= len(segment.Blocks) {
-			return nil, verselineMCPUpdateSegmentOutput{}, fmt.Errorf("segment %d block %d is out of range", index+1, blockIndex+1)
-		}
-		if in.BlockText != nil {
-			segment.Blocks[blockIndex].Text = *in.BlockText
-		}
-		if in.BlockStyle != nil {
-			segment.Blocks[blockIndex].Style = *in.BlockStyle
-		}
-		if in.BlockPlacement != nil {
-			segment.Blocks[blockIndex].Placement = *in.BlockPlacement
-		}
-	}
-
-	segments[index] = segment
-	if err := validateVerselineTimeline(segments); err != nil {
-		return nil, verselineMCPUpdateSegmentOutput{}, err
-	}
-	if err := validateVerselineTimelineAgainstProject(project, segments); err != nil {
+	segments, err = verselineOpsUpdateSegment(project, segments, index, verselineSegmentUpdates{
+		Start:          in.Start,
+		End:            in.End,
+		Status:         in.Status,
+		Notes:          in.Notes,
+		BlockIndex:     max(in.BlockIndex, 1) - 1,
+		BlockText:      in.BlockText,
+		BlockStyle:     in.BlockStyle,
+		BlockPlacement: in.BlockPlacement,
+	})
+	if err != nil {
 		return nil, verselineMCPUpdateSegmentOutput{}, err
 	}
 	if !in.DryRun {
@@ -615,7 +589,7 @@ func verselineMCPUpdateSegmentTool(_ context.Context, _ *mcp.CallToolRequest, in
 		ProjectPath:  absProjectPath,
 		Timeline:     timelineKind,
 		TimelinePath: timelinePath,
-		Segment:      verselineMCPSummarizeSegment(index, segment),
+		Segment:      verselineMCPSummarizeSegment(index, segments[index]),
 		Saved:        !in.DryRun,
 	}
 	summary := fmt.Sprintf("Updated %s timeline segment %d in %s", timelineKind, index+1, filepath.Base(absProjectPath))
@@ -628,34 +602,14 @@ func verselineMCPSplitSegmentTool(_ context.Context, _ *mcp.CallToolRequest, in 
 		return nil, verselineMCPSplitSegmentOutput{}, err
 	}
 
-	index, err := verselineMCPFindSegmentIndex(segments, in.SegmentNumber, in.SegmentID)
-	if err != nil {
-		return nil, verselineMCPSplitSegmentOutput{}, err
-	}
-	partTexts, err := verselineMCPSanitizeSplitTexts(in.Texts)
+	index, err := verselineOpsFindSegmentIndex(segments, in.SegmentNumber, in.SegmentID)
 	if err != nil {
 		return nil, verselineMCPSplitSegmentOutput{}, err
 	}
 
 	blockIndex := max(in.BlockIndex, 1) - 1
-	if blockIndex < 0 || blockIndex >= len(segments[index].Blocks) {
-		return nil, verselineMCPSplitSegmentOutput{}, fmt.Errorf("segment %d block %d is out of range", index+1, blockIndex+1)
-	}
-
-	replacements, err := verselineMCPSplitTimelineSegment(segments[index], index, blockIndex, partTexts)
+	updated, err := verselineOpsApplySplit(project, segments, index, blockIndex, in.Texts)
 	if err != nil {
-		return nil, verselineMCPSplitSegmentOutput{}, err
-	}
-
-	updated := make([]VerselineSegment, 0, len(segments)-1+len(replacements))
-	updated = append(updated, segments[:index]...)
-	updated = append(updated, replacements...)
-	updated = append(updated, segments[index+1:]...)
-
-	if err := validateVerselineTimeline(updated); err != nil {
-		return nil, verselineMCPSplitSegmentOutput{}, err
-	}
-	if err := validateVerselineTimelineAgainstProject(project, updated); err != nil {
 		return nil, verselineMCPSplitSegmentOutput{}, err
 	}
 	if !in.DryRun {
@@ -664,9 +618,10 @@ func verselineMCPSplitSegmentTool(_ context.Context, _ *mcp.CallToolRequest, in 
 		}
 	}
 
-	items := make([]verselineMCPSegmentSummary, 0, len(replacements))
-	for replacementIndex, segment := range replacements {
-		items = append(items, verselineMCPSummarizeSegment(index+replacementIndex, segment))
+	replacementCount := len(updated) - len(segments) + 1
+	items := make([]verselineMCPSegmentSummary, 0, replacementCount)
+	for i := 0; i < replacementCount; i++ {
+		items = append(items, verselineMCPSummarizeSegment(index+i, updated[index+i]))
 	}
 
 	output := verselineMCPSplitSegmentOutput{
@@ -674,11 +629,11 @@ func verselineMCPSplitSegmentTool(_ context.Context, _ *mcp.CallToolRequest, in 
 		Timeline:         timelineKind,
 		TimelinePath:     timelinePath,
 		OriginalNumber:   index + 1,
-		ReplacementCount: len(replacements),
+		ReplacementCount: replacementCount,
 		Segments:         items,
 		Saved:            !in.DryRun,
 	}
-	summary := fmt.Sprintf("Split %s timeline segment %d into %d segments in %s", timelineKind, index+1, len(replacements), filepath.Base(absProjectPath))
+	summary := fmt.Sprintf("Split %s timeline segment %d into %d segments in %s", timelineKind, index+1, replacementCount, filepath.Base(absProjectPath))
 	return verselineMCPTextResult(summary), output, nil
 }
 
@@ -749,7 +704,7 @@ func verselineMCPReadabilityTool(_ context.Context, _ *mcp.CallToolRequest, in v
 		return nil, verselineMCPReadabilityOutput{}, err
 	}
 
-	index, err := verselineMCPFindSegmentIndex(segments, in.SegmentNumber, in.SegmentID)
+	index, err := verselineOpsFindSegmentIndex(segments, in.SegmentNumber, in.SegmentID)
 	if err != nil {
 		return nil, verselineMCPReadabilityOutput{}, err
 	}
@@ -890,8 +845,8 @@ func verselineMCPBlockPreview(blocks []VerselineBlock) string {
 		}
 	}
 	preview := strings.Join(parts, " | ")
-	if utf8.RuneCountInString(preview) > 160 {
-		runes := []rune(preview)
+	runes := []rune(preview)
+	if len(runes) > 160 {
 		return string(runes[:160]) + "..."
 	}
 	return preview
@@ -917,95 +872,4 @@ func verselineMCPCollectRefs(blocks []VerselineBlock) []string {
 	return refs
 }
 
-func verselineMCPFindSegmentIndex(segments []VerselineSegment, segmentNumber int, segmentID string) (int, error) {
-	if segmentNumber > 0 {
-		index := segmentNumber - 1
-		if index < 0 || index >= len(segments) {
-			return 0, fmt.Errorf("segment %d is out of range", segmentNumber)
-		}
-		return index, nil
-	}
-
-	id := strings.TrimSpace(segmentID)
-	if id == "" {
-		return 0, fmt.Errorf("segment_number or segment_id is required")
-	}
-	for index, segment := range segments {
-		if strings.TrimSpace(segment.ID) == id {
-			return index, nil
-		}
-	}
-	return 0, fmt.Errorf("no segment found with id %q", id)
-}
-
-func verselineMCPSanitizeSplitTexts(values []string) ([]string, error) {
-	result := make([]string, 0, len(values))
-	for _, value := range values {
-		value = strings.TrimSpace(value)
-		if value == "" {
-			continue
-		}
-		result = append(result, value)
-	}
-	if len(result) < 2 {
-		return nil, fmt.Errorf("at least two non-empty split texts are required")
-	}
-	return result, nil
-}
-
-func verselineMCPSplitTimelineSegment(segment VerselineSegment, segmentIndex int, blockIndex int, texts []string) ([]VerselineSegment, error) {
-	start, err := tsToMillis(segment.Start)
-	if err != nil {
-		return nil, err
-	}
-	end, err := tsToMillis(segment.End)
-	if err != nil {
-		return nil, err
-	}
-	if end <= start {
-		return nil, fmt.Errorf("segment %d has non-positive duration", segmentIndex+1)
-	}
-
-	weights := make([]int, len(texts))
-	totalWeight := 0
-	for index, text := range texts {
-		weight := max(utf8.RuneCountInString(text), 1)
-		weights[index] = weight
-		totalWeight += weight
-	}
-
-	duration := end - start
-	cursor := start
-	replacements := make([]VerselineSegment, 0, len(texts))
-	for index, text := range texts {
-		partStart := cursor
-		partEnd := end
-		if index < len(texts)-1 {
-			remainingParts := len(texts) - index - 1
-			remainingMin := Millis(remainingParts)
-			partDuration := Millis(int64(duration) * int64(weights[index]) / int64(totalWeight))
-			partDuration = max(partDuration, 1)
-			partDuration = min(partDuration, end-cursor-remainingMin)
-			partEnd = cursor + partDuration
-		}
-
-		clone := segment
-		clone.Blocks = append([]VerselineBlock(nil), segment.Blocks...)
-		clone.Start = millisToTs(partStart)
-		clone.End = millisToTs(partEnd)
-		clone.Blocks[blockIndex].Text = text
-		clone.Blocks[blockIndex].Kind = "literal"
-		clone.Blocks[blockIndex].Source = nil
-		if strings.TrimSpace(clone.ID) != "" {
-			clone.ID = fmt.Sprintf("%s-%02d", clone.ID, index+1)
-		} else {
-			clone.ID = fmt.Sprintf("seg-%03d-%02d", segmentIndex+1, index+1)
-		}
-
-		replacements = append(replacements, clone)
-		cursor = partEnd
-	}
-
-	return replacements, nil
-}
 
