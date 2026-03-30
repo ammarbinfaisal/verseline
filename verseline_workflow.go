@@ -91,9 +91,6 @@ func verselineLoadTimelineForProject(project VerselineProject, projectPath strin
 	if err != nil {
 		return nil, "", err
 	}
-	if err := validateVerselineTimelineAgainstProject(project, segments); err != nil {
-		return nil, "", err
-	}
 	return segments, resolved, nil
 }
 

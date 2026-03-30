@@ -414,8 +414,14 @@ func verselineMCPListSegmentsTool(_ context.Context, _ *mcp.CallToolRequest, in 
 }
 
 func verselineMCPValidateProjectTool(_ context.Context, _ *mcp.CallToolRequest, in verselineMCPValidateInput) (*mcp.CallToolResult, verselineMCPValidateOutput, error) {
-	_, absProjectPath, segments, timelinePath, timelineKind, err := verselineMCPLoadProjectTimeline(in.ProjectPath, in.Timeline, true)
+	project, absProjectPath, segments, timelinePath, timelineKind, err := verselineMCPLoadProjectTimeline(in.ProjectPath, in.Timeline, true)
 	if err != nil {
+		return nil, verselineMCPValidateOutput{}, err
+	}
+	if err := validateVerselineTimeline(segments); err != nil {
+		return nil, verselineMCPValidateOutput{}, err
+	}
+	if err := validateVerselineTimelineAgainstProject(project, segments); err != nil {
 		return nil, verselineMCPValidateOutput{}, err
 	}
 
