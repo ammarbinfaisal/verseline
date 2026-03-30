@@ -198,6 +198,7 @@ func init() {
 		Description: "Render a project: render <project.json> [-profile ids] [-o output.mp4]",
 		Run: func(name string, args []string) bool {
 			subFlag := flag.NewFlagSet(name, flag.ContinueOnError)
+			projectPtr := subFlag.String("project", "", "Path to the project JSON file")
 			profilesPtr := subFlag.String("profile", "", "Comma-separated render profile ids. Empty means all profiles")
 			outputPtr := subFlag.String("o", "", "Output file path override")
 
@@ -210,7 +211,10 @@ func init() {
 				return false
 			}
 
-			projectPath := subFlag.Arg(0)
+			projectPath := strings.TrimSpace(*projectPtr)
+			if projectPath == "" {
+				projectPath = subFlag.Arg(0)
+			}
 			if projectPath == "" {
 				fmt.Println("Usage: render <project.json> [-profile ids] [-o output.mp4]")
 				return false

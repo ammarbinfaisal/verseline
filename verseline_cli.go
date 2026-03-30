@@ -33,7 +33,7 @@ var verselineNestedCommands = map[string]verselineNestedCommand{
 	"render": {
 		Description: "Render approved project outputs",
 		Run: func(name string, args []string) bool {
-			return runVerselineLegacyAlias("verseline-render", name, args)
+			return runVerselineLegacyAlias("render", name, args)
 		},
 	},
 	"tui": {
