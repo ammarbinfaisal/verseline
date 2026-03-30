@@ -52,32 +52,6 @@ type verselineRenderPlan struct {
 }
 
 func init() {
-	Subcommands["verseline-approve"] = Subcommand{
-		Description: "Promote a Verseline draft timeline into the approved timeline",
-		Run: func(name string, args []string) bool {
-			subFlag := flag.NewFlagSet(name, flag.ContinueOnError)
-			projectPtr := subFlag.String("project", "examples/verseline-project.json", "Path to the Verseline project JSON file")
-
-			err := subFlag.Parse(args)
-			if err == flag.ErrHelp {
-				return true
-			}
-			if err != nil {
-				fmt.Printf("ERROR: Could not parse command line arguments: %s\n", err)
-				return false
-			}
-
-			_, approvedPath, _, err := verselineApproveProject(*projectPtr)
-			if err != nil {
-				fmt.Printf("ERROR: Could not approve project %s: %s\n", *projectPtr, err)
-				return false
-			}
-
-			fmt.Printf("Generated %s\n", approvedPath)
-			return true
-		},
-	}
-
 	Subcommands["verseline-render"] = Subcommand{
 		Description: "Render one or more approved Verseline outputs using render profiles",
 		Run: func(name string, args []string) bool {
@@ -108,38 +82,6 @@ func init() {
 	}
 }
 
-func verselineApproveProject(projectPath string) (draftPath string, approvedPath string, segmentCount int, err error) {
-	project, absProjectPath, err := loadVerselineProject(projectPath)
-	if err != nil {
-		return "", "", 0, err
-	}
-
-	if strings.TrimSpace(project.Timeline.Draft) == "" || strings.TrimSpace(project.Timeline.Approved) == "" {
-		return "", "", 0, fmt.Errorf("project must define timeline.draft and timeline.approved")
-	}
-
-	draftPath = resolveReelPath(filepath.Dir(absProjectPath), project.Timeline.Draft)
-	approvedPath = resolveReelPath(filepath.Dir(absProjectPath), project.Timeline.Approved)
-	segments, err := loadVerselineTimeline(draftPath)
-	if err != nil {
-		return "", "", 0, err
-	}
-	if err := validateVerselineTimelineAgainstProject(project, segments); err != nil {
-		return "", "", 0, err
-	}
-
-	for index, segment := range segments {
-		if strings.EqualFold(segment.Status, "needs_fix") {
-			return "", "", 0, fmt.Errorf("segment %d is still marked needs_fix", index)
-		}
-	}
-
-	if err := saveVerselineTimeline(approvedPath, segments); err != nil {
-		return "", "", 0, err
-	}
-
-	return draftPath, approvedPath, len(segments), nil
-}
 func buildVerselineRenderPlan(project VerselineProject, absProjectPath string, segments []VerselineSegment, request verselineRenderRequest) (verselineRenderPlan, error) {
 	plan := verselineRenderPlan{}
 	projectDir := filepath.Dir(absProjectPath)

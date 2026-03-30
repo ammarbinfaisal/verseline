@@ -33,9 +33,7 @@ type verselineTimelineKeyMap struct {
 	EditBlockText key.Binding
 	EditBlockSty  key.Binding
 	EditBlockPlc  key.Binding
-	Approve       key.Binding
-	NeedsFix      key.Binding
-	ApproveDraft  key.Binding
+	NeedsFix key.Binding
 	Preview       key.Binding
 	Validate      key.Binding
 	Render        key.Binding
@@ -56,9 +54,7 @@ func newVerselineTimelineKeyMap() verselineTimelineKeyMap {
 		EditBlockText: key.NewBinding(key.WithKeys("4"), key.WithHelp("4", "edit block text")),
 		EditBlockSty:  key.NewBinding(key.WithKeys("5"), key.WithHelp("5", "edit block style")),
 		EditBlockPlc:  key.NewBinding(key.WithKeys("6"), key.WithHelp("6", "edit block placement")),
-		Approve:       key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "approve segment")),
-		NeedsFix:      key.NewBinding(key.WithKeys("x"), key.WithHelp("x", "needs fix")),
-		ApproveDraft:  key.NewBinding(key.WithKeys("A"), key.WithHelp("A", "approve draft")),
+		NeedsFix: key.NewBinding(key.WithKeys("x"), key.WithHelp("x", "needs fix")),
 		Preview:       key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "preview")),
 		Validate:      key.NewBinding(key.WithKeys("v"), key.WithHelp("v", "validate")),
 		Render:        key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "render")),
@@ -78,13 +74,13 @@ type verselineTimelineHelpKeyMap struct {
 }
 
 func (km verselineTimelineHelpKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{km.timeline.EditStart, km.timeline.Approve, km.timeline.Preview, km.timeline.Validate, km.global.NextTab, km.global.Help}
+	return []key.Binding{km.timeline.EditStart, km.timeline.Preview, km.timeline.Validate, km.global.NextTab, km.global.Help}
 }
 
 func (km verselineTimelineHelpKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{km.timeline.EditStart, km.timeline.EditEnd, km.timeline.EditStatus, km.timeline.EditBlockText, km.timeline.EditBlockSty, km.timeline.EditBlockPlc},
-		{km.timeline.Approve, km.timeline.NeedsFix, km.timeline.ApproveDraft, km.timeline.Delete},
+		{km.timeline.NeedsFix, km.timeline.Delete},
 		{km.timeline.Preview, km.timeline.Validate, km.timeline.Render, km.timeline.RenderAll, km.timeline.PrevProfile, km.timeline.NextProfile},
 		{km.timeline.BlockUp, km.timeline.BlockDown, km.global.NextTab, km.global.PrevTab, km.global.Save, km.timeline.Quit, km.global.Help},
 	}
@@ -354,12 +350,6 @@ func (v *verselineTimelineView) updateNormal(msg tea.KeyMsg, ctx *verselineTUICo
 			v.blockIndex++
 		}
 		return nil
-	case key.Matches(msg, v.keys.Approve):
-		root.segments = verselineOpsSetSegmentStatus(root.segments, v.segmentIndex(), "approved")
-		root.dirtyTimeline = true
-		root.status = fmt.Sprintf("segment %d marked approved", v.segmentIndex()+1)
-		v.syncRows(root.segments)
-		return nil
 	case key.Matches(msg, v.keys.NeedsFix):
 		root.segments = verselineOpsSetSegmentStatus(root.segments, v.segmentIndex(), "needs_fix")
 		root.dirtyTimeline = true
@@ -401,8 +391,6 @@ func (v *verselineTimelineView) updateNormal(msg tea.KeyMsg, ctx *verselineTUICo
 		root.lastErr = nil
 		root.status = "timeline valid"
 		return nil
-	case key.Matches(msg, v.keys.ApproveDraft):
-		return v.approveDraft(root)
 	case key.Matches(msg, v.keys.Preview):
 		return v.startPreview(root)
 	case key.Matches(msg, v.keys.PrevProfile):
@@ -447,38 +435,6 @@ func (v *verselineTimelineView) currentProfileLabel(root *verselineTUIRoot) stri
 		return "default"
 	}
 	return firstNonEmpty(profiles[v.renderProfileIndex].Label, profiles[v.renderProfileIndex].ID, "default")
-}
-
-func (v *verselineTimelineView) approveDraft(root *verselineTUIRoot) tea.Cmd {
-	if strings.TrimSpace(root.project.Timeline.Approved) == "" {
-		root.status = "project has no approved timeline path"
-		return nil
-	}
-	if err := validateVerselineTimeline(root.segments); err != nil {
-		root.lastErr = err
-		root.status = err.Error()
-		return nil
-	}
-	if err := validateVerselineTimelineAgainstProject(*root.project, root.segments); err != nil {
-		root.lastErr = err
-		root.status = err.Error()
-		return nil
-	}
-	for i, seg := range root.segments {
-		if strings.EqualFold(strings.TrimSpace(seg.Status), "needs_fix") {
-			root.status = fmt.Sprintf("segment %d is still needs_fix", i+1)
-			return nil
-		}
-	}
-	approvedPath := resolveReelPath(filepath.Dir(root.projectPath), root.project.Timeline.Approved)
-	if err := saveVerselineTimeline(approvedPath, root.segments); err != nil {
-		root.lastErr = err
-		root.status = err.Error()
-		return nil
-	}
-	root.lastErr = nil
-	root.status = "approved timeline saved"
-	return nil
 }
 
 func (v *verselineTimelineView) startPreview(root *verselineTUIRoot) tea.Cmd {

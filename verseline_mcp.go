@@ -126,18 +126,6 @@ type verselineMCPSplitSegmentOutput struct {
 	Saved            bool                         `json:"saved"`
 }
 
-type verselineMCPApproveInput struct {
-	ProjectPath string `json:"project_path"`
-}
-
-type verselineMCPApproveOutput struct {
-	ProjectPath  string `json:"project_path"`
-	DraftPath    string `json:"draft_path"`
-	ApprovedPath string `json:"approved_path"`
-	SegmentCount int    `json:"segment_count"`
-	Saved        bool   `json:"saved"`
-}
-
 type verselineMCPPreviewInput struct {
 	ProjectPath   string `json:"project_path"`
 	Timeline      string `json:"timeline,omitempty"`
@@ -330,11 +318,6 @@ All arrays use objects with "id" fields, NOT objects keyed by id. Timestamps use
 		Name: "verseline_split_segment",
 		Description: `Replace one timeline segment with multiple shorter segments by splitting a block's text. Provide the new text fragments in the texts array (minimum 2). Time is distributed proportionally to text length (longer fragments get more time). Identify the segment by segment_number or segment_id, and the block by block_index (1-based, default 1). Validates the result before saving. Set dry_run=true to preview.`,
 	}, verselineMCPSplitSegmentTool)
-
-	mcp.AddTool(server, &mcp.Tool{
-		Name: "verseline_approve_timeline",
-		Description: `Copy the draft timeline to the approved timeline path. Rejects if any segment has status "needs_fix". Both timeline.draft and timeline.approved must be defined in the project.`,
-	}, verselineMCPApproveTimelineTool)
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name: "verseline_preview_segment",
@@ -634,27 +617,6 @@ func verselineMCPSplitSegmentTool(_ context.Context, _ *mcp.CallToolRequest, in 
 		Saved:            !in.DryRun,
 	}
 	summary := fmt.Sprintf("Split %s timeline segment %d into %d segments in %s", timelineKind, index+1, replacementCount, filepath.Base(absProjectPath))
-	return verselineMCPTextResult(summary), output, nil
-}
-
-func verselineMCPApproveTimelineTool(_ context.Context, _ *mcp.CallToolRequest, in verselineMCPApproveInput) (*mcp.CallToolResult, verselineMCPApproveOutput, error) {
-	draftPath, approvedPath, segmentCount, err := verselineApproveProject(in.ProjectPath)
-	if err != nil {
-		return nil, verselineMCPApproveOutput{}, err
-	}
-	absProjectPath, err := filepath.Abs(in.ProjectPath)
-	if err != nil {
-		return nil, verselineMCPApproveOutput{}, err
-	}
-
-	output := verselineMCPApproveOutput{
-		ProjectPath:  absProjectPath,
-		DraftPath:    draftPath,
-		ApprovedPath: approvedPath,
-		SegmentCount: segmentCount,
-		Saved:        true,
-	}
-	summary := fmt.Sprintf("Approved %d draft timeline segments for %s", segmentCount, filepath.Base(absProjectPath))
 	return verselineMCPTextResult(summary), output, nil
 }
 
