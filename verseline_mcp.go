@@ -141,16 +141,6 @@ type verselineMCPPreviewOutput struct {
 	SubtitleASSPath string `json:"subtitle_ass_path"`
 }
 
-type verselineMCPRenderInput struct {
-	ProjectPath string   `json:"project_path"`
-	Profiles    []string `json:"profiles,omitempty"`
-}
-
-type verselineMCPRenderOutput struct {
-	ProjectPath string   `json:"project_path"`
-	Outputs     []string `json:"outputs"`
-}
-
 type verselineMCPTranscribeInput struct {
 	AudioPath     string `json:"audio_path"`
 	OutputDir     string `json:"output_dir"`
@@ -227,9 +217,7 @@ func printVerselineMCPDescription() {
 	fmt.Printf("- verseline_transcribe\n")
 	fmt.Printf("- verseline_update_segment\n")
 	fmt.Printf("- verseline_split_segment\n")
-	fmt.Printf("- verseline_approve_timeline\n")
 	fmt.Printf("- verseline_preview_segment\n")
-	fmt.Printf("- verseline_render_project\n")
 	fmt.Printf("- verseline_check_readability\n")
 	fmt.Printf("Claude Code add command:\n")
 	fmt.Printf("  claude mcp add verseline -- %s mcp\n", executable)
@@ -323,11 +311,6 @@ All arrays use objects with "id" fields, NOT objects keyed by id. Timestamps use
 		Name: "verseline_preview_segment",
 		Description: `Render a low-quality preview video clip for one segment. Uses the project's preview settings (reduced resolution, fast encoding). The clip includes padding around the segment's time range. Set open_player=true to launch the configured media player after rendering.`,
 	}, verselineMCPPreviewSegmentTool)
-
-	mcp.AddTool(server, &mcp.Tool{
-		Name: "verseline_render_project",
-		Description: `Render final video outputs from the approved timeline using one or more render profiles. Each profile can override resolution, codec, CRF, and output path. Text blocks are rendered as PNG images and composited onto the background using ffmpeg overlays. Omit profiles to render all configured profiles.`,
-	}, verselineMCPRenderProjectTool)
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name: "verseline_check_readability",
@@ -645,24 +628,6 @@ func verselineMCPPreviewSegmentTool(_ context.Context, _ *mcp.CallToolRequest, i
 		SubtitleASSPath: strings.TrimSuffix(outputPath, filepath.Ext(outputPath)) + ".ass",
 	}
 	summary := fmt.Sprintf("Rendered %s preview for segment %d at %s", timelineKind, in.SegmentNumber, outputPath)
-	return verselineMCPTextResult(summary), output, nil
-}
-
-func verselineMCPRenderProjectTool(_ context.Context, _ *mcp.CallToolRequest, in verselineMCPRenderInput) (*mcp.CallToolResult, verselineMCPRenderOutput, error) {
-	outputs, err := verselineRenderProjectProfiles(in.ProjectPath, in.Profiles, nil)
-	if err != nil {
-		return nil, verselineMCPRenderOutput{}, err
-	}
-	absProjectPath, err := filepath.Abs(in.ProjectPath)
-	if err != nil {
-		return nil, verselineMCPRenderOutput{}, err
-	}
-
-	output := verselineMCPRenderOutput{
-		ProjectPath: absProjectPath,
-		Outputs:     outputs,
-	}
-	summary := fmt.Sprintf("Rendered %d project outputs for %s", len(outputs), filepath.Base(absProjectPath))
 	return verselineMCPTextResult(summary), output, nil
 }
 
