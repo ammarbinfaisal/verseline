@@ -31,7 +31,6 @@
       "font": "latin-main",
       "size": 64,
       "color": "#FFFFFF",
-      "auxiliary_color": "#B7B7B7",
       "outline_color": "#000000",
       "outline": 3,
       "shadow": 1
@@ -41,10 +40,15 @@
       "font": "latin-main",
       "size": 84,
       "color": "#FFFFFF",
-      "auxiliary_color": "#B7B7B7",
       "outline_color": "#000000",
       "outline": 3,
       "shadow": 1
+    },
+    {
+      "id": "aux",
+      "font": "latin-main",
+      "size": 64,
+      "color": "#B7B7B7"
     },
     {
       "id": "arabic-main",

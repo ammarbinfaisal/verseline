@@ -63,11 +63,18 @@ func renderVerselineBlockImageGoText(block verselineResolvedBlock, maxWidth int,
 	if err != nil {
 		return err
 	}
-	if !verselineFaceSupportsText(face, block.Text) {
+
+	// Parse inline style tags and build per-rune color map.
+	spans := verselineParseTextSpans(block.Text)
+	plainText := verselineStripStyleTags(block.Text)
+	primaryHex := firstNonEmpty(block.Style.Color, "#FFFFFF")
+	runeColors := verselineRuneColors(spans, primaryHex, block.StylesByID)
+
+	if !verselineFaceSupportsText(face, plainText) {
 		return fmt.Errorf("font %q does not cover block text", fontPath)
 	}
 
-	lines, err := verselineWrapTextLines(block.Text, face, max(block.Style.Size, 1), maxWidth)
+	lines, err := verselineWrapTextLines(plainText, face, max(block.Style.Size, 1), maxWidth)
 	if err != nil {
 		return err
 	}
@@ -100,7 +107,7 @@ func renderVerselineBlockImageGoText(block verselineResolvedBlock, maxWidth int,
 		}
 	}
 
-	fillColor, err := verselineParseHexColor(firstNonEmpty(block.Style.Color, "#FFFFFF"), 255)
+	fillColor, err := verselineParseHexColor(primaryHex, 255)
 	if err != nil {
 		return err
 	}
@@ -135,10 +142,12 @@ func renderVerselineBlockImageGoText(block verselineResolvedBlock, maxWidth int,
 			x = pad + max(contentWidth-line.Width, 0)/2
 		}
 
+		// Shadow pass — single color.
 		if block.Style.Shadow > 0 {
 			renderer.Color = shadowColor
 			verselineDrawLine(renderer, line, img, x+block.Style.Shadow, baselineY+block.Style.Shadow)
 		}
+		// Outline pass — single color.
 		if block.Style.Outline > 0 {
 			renderer.Color = outlineColor
 			for dy := -block.Style.Outline; dy <= block.Style.Outline; dy++ {
@@ -154,8 +163,8 @@ func renderVerselineBlockImageGoText(block verselineResolvedBlock, maxWidth int,
 			}
 		}
 
-		renderer.Color = fillColor
-		verselineDrawLine(renderer, line, img, x, baselineY)
+		// Fill pass — per-run colors from inline style tags.
+		verselineDrawLineColored(renderer, line, img, x, baselineY, fillColor, runeColors)
 		y += max(line.Height, 1)
 	}
 
@@ -172,8 +181,9 @@ func renderVerselineBlockImageGoText(block verselineResolvedBlock, maxWidth int,
 }
 
 func renderVerselineBlockImageMagick(block verselineResolvedBlock, maxWidth int, outputPath string) error {
+	plainText := verselineStripStyleTags(block.Text)
 	textPath := strings.TrimSuffix(outputPath, ".png") + ".txt"
-	if err := os.WriteFile(textPath, []byte(block.Text), 0644); err != nil {
+	if err := os.WriteFile(textPath, []byte(plainText), 0644); err != nil {
 		return err
 	}
 
@@ -365,9 +375,36 @@ func verselineIsArabicRune(r rune) bool {
 	return unicode.In(r, unicode.Arabic)
 }
 
+// verselineDrawLine draws a full line of shaped runs in the renderer's current
+// color. Used for shadow and outline passes.
 func verselineDrawLine(renderer *textdraw.Renderer, line verselineRasterLine, img *image.NRGBA, x, baselineY int) {
 	cursor := x
 	for _, run := range line.Runs {
+		cursor = renderer.DrawShapedRunAt(run, img, cursor, baselineY)
+	}
+}
+
+// verselineDrawLineColored draws a line with per-run color switching based on
+// the runeColors slice (one hex color string per rune in the full plain text).
+// Each run's color is determined by its first rune's color entry. The fallback
+// is used when runeColors is nil or too short.
+func verselineDrawLineColored(renderer *textdraw.Renderer, line verselineRasterLine, img *image.NRGBA, x, baselineY int, fallback color.NRGBA, runeColors []string) {
+	if len(runeColors) == 0 {
+		renderer.Color = fallback
+		verselineDrawLine(renderer, line, img, x, baselineY)
+		return
+	}
+
+	cursor := x
+	for _, run := range line.Runs {
+		runColor := fallback
+		runeIdx := run.Runes.Offset
+		if runeIdx >= 0 && runeIdx < len(runeColors) {
+			if c, err := verselineParseHexColor(runeColors[runeIdx], 255); err == nil {
+				runColor = c
+			}
+		}
+		renderer.Color = runColor
 		cursor = renderer.DrawShapedRunAt(run, img, cursor, baselineY)
 	}
 }

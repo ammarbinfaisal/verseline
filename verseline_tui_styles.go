@@ -43,7 +43,7 @@ func (km verselineStylesHelpKeyMap) FullHelp() [][]key.Binding {
 	}
 }
 
-var verselineStyleFields = []string{"id", "font", "size", "color", "auxiliary_color", "outline_color", "outline", "shadow_color", "shadow", "text_bg", "text_bg_pad", "text_bg_radius", "align", "line_height"}
+var verselineStyleFields = []string{"id", "font", "size", "color", "outline_color", "outline", "shadow_color", "shadow", "text_bg", "text_bg_pad", "text_bg_radius", "align", "line_height"}
 
 type verselineStylesView struct {
 	table          table.Model
@@ -260,8 +260,6 @@ func (v *verselineStylesView) styleFieldValue(project *VerselineProject, styleId
 		return fmt.Sprintf("%d", s.Size)
 	case "color":
 		return s.Color
-	case "auxiliary_color":
-		return s.AuxiliaryColor
 	case "outline_color":
 		return s.OutlineColor
 	case "outline":

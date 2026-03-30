@@ -54,9 +54,8 @@ type VerselineStyle struct {
 	ID             string `json:"id"`
 	Font           string `json:"font"`
 	Size           int    `json:"size"`
-	Color          string `json:"color,omitempty"`
-	AuxiliaryColor string `json:"auxiliary_color,omitempty"`
-	OutlineColor   string `json:"outline_color,omitempty"`
+	Color        string `json:"color,omitempty"`
+	OutlineColor string `json:"outline_color,omitempty"`
 	Outline        int    `json:"outline,omitempty"`
 	ShadowColor    string `json:"shadow_color,omitempty"`
 	Shadow         int    `json:"shadow,omitempty"`

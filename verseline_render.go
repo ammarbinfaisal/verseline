@@ -12,14 +12,156 @@ import (
 )
 
 type verselineResolvedBlock struct {
-	Start     Millis
-	End       Millis
-	Text      string
-	StyleID   string
-	Style     VerselineStyle
-	Placement VerselinePlacement
-	FontFile  string
-	ImagePath string
+	Start      Millis
+	End        Millis
+	Text       string
+	StyleID    string
+	Style      VerselineStyle
+	Placement  VerselinePlacement
+	FontFile   string
+	ImagePath  string
+	StylesByID map[string]VerselineStyle
+}
+
+// verselineTextSpan is a contiguous run of text rendered with a single style.
+// StyleID is empty for text using the block's default style.
+type verselineTextSpan struct {
+	Text    string
+	StyleID string
+}
+
+// verselineParseTextSpans splits text containing <styleID>...</styleID> tags
+// into spans. Untagged text gets an empty StyleID (meaning the block default).
+// Tags do not nest; an open tag must be closed before another can open.
+func verselineParseTextSpans(text string) []verselineTextSpan {
+	var spans []verselineTextSpan
+	for len(text) > 0 {
+		openIdx := strings.Index(text, "<")
+		if openIdx < 0 {
+			spans = append(spans, verselineTextSpan{Text: text})
+			break
+		}
+		closeAngle := strings.Index(text[openIdx:], ">")
+		if closeAngle < 0 {
+			spans = append(spans, verselineTextSpan{Text: text})
+			break
+		}
+		tagName := text[openIdx+1 : openIdx+closeAngle]
+		if tagName == "" || strings.HasPrefix(tagName, "/") || strings.ContainsAny(tagName, " \t\n") {
+			// Not a valid style tag — treat the < as literal text
+			spans = append(spans, verselineTextSpan{Text: text[:openIdx+closeAngle+1]})
+			text = text[openIdx+closeAngle+1:]
+			continue
+		}
+		closeTag := "</" + tagName + ">"
+		closeIdx := strings.Index(text[openIdx:], closeTag)
+		if closeIdx < 0 {
+			// No closing tag — treat as literal
+			spans = append(spans, verselineTextSpan{Text: text[:openIdx+closeAngle+1]})
+			text = text[openIdx+closeAngle+1:]
+			continue
+		}
+		// Emit any text before the tag
+		if openIdx > 0 {
+			spans = append(spans, verselineTextSpan{Text: text[:openIdx]})
+		}
+		innerStart := openIdx + closeAngle + 1
+		innerEnd := openIdx + closeIdx
+		spans = append(spans, verselineTextSpan{
+			Text:    text[innerStart:innerEnd],
+			StyleID: tagName,
+		})
+		text = text[innerEnd+len(closeTag):]
+	}
+	return spans
+}
+
+// verselineStripStyleTags returns the plain text with all <styleID>...</styleID>
+// tags removed (content preserved, tags stripped).
+func verselineStripStyleTags(text string) string {
+	spans := verselineParseTextSpans(text)
+	var sb strings.Builder
+	for _, span := range spans {
+		sb.WriteString(span.Text)
+	}
+	return sb.String()
+}
+
+// verselineRuneColors builds a color for each rune in the plain (tag-stripped)
+// text. Runes inside a tagged span get the color from that style; other runes
+// get the fallback color.
+func verselineRuneColors(spans []verselineTextSpan, fallback string, stylesByID map[string]VerselineStyle) []string {
+	var colors []string
+	for _, span := range spans {
+		c := fallback
+		if span.StyleID != "" {
+			if s, ok := stylesByID[span.StyleID]; ok && s.Color != "" {
+				c = s.Color
+			}
+		}
+		for range []rune(span.Text) {
+			colors = append(colors, c)
+		}
+	}
+	return colors
+}
+
+// verselineSpansToASS converts tagged text into ASS dialogue text with inline
+// color overrides. Each <styleID>...</styleID> region gets a {\1c&HBBGGRR&}
+// prefix using that style's color, and the primary color is restored after.
+func verselineSpansToASS(text string, primaryHex string, stylesByID map[string]VerselineStyle) (string, error) {
+	spans := verselineParseTextSpans(text)
+	primary, err := reelHexToASSColor(primaryHex, false)
+	if err != nil {
+		return "", err
+	}
+
+	var sb strings.Builder
+	for _, span := range spans {
+		escaped := verselineEscapeASSText(span.Text)
+		if span.StyleID == "" {
+			sb.WriteString(escaped)
+			continue
+		}
+		style, ok := stylesByID[span.StyleID]
+		if !ok || strings.TrimSpace(style.Color) == "" {
+			sb.WriteString(escaped)
+			continue
+		}
+		assColor, err := reelHexToASSColor(style.Color, false)
+		if err != nil {
+			sb.WriteString(escaped)
+			continue
+		}
+		sb.WriteString("{\\1c")
+		sb.WriteString(assColor)
+		sb.WriteString("}")
+		sb.WriteString(escaped)
+		sb.WriteString("{\\1c")
+		sb.WriteString(primary)
+		sb.WriteString("}")
+	}
+	return sb.String(), nil
+}
+
+// verselineEscapeASSText escapes special ASS characters in plain text.
+func verselineEscapeASSText(text string) string {
+	var sb strings.Builder
+	for _, ch := range text {
+		switch ch {
+		case '\n':
+			sb.WriteString(`\N`)
+		case '{':
+			sb.WriteString(`\{`)
+		case '}':
+			sb.WriteString(`\}`)
+		case '\\':
+			sb.WriteString(`\\`)
+		default:
+			sb.WriteRune(ch)
+		}
+	}
+	return sb.String()
 }
 
 type verselineRenderPlan struct {
@@ -305,6 +447,7 @@ func resolveVerselineBlock(
 	resolved.Style = style
 	resolved.Placement = placement
 	resolved.FontFile = fontFileByStyleID[styleID]
+	resolved.StylesByID = styleByID
 	return resolved, nil
 }
 
@@ -440,18 +583,12 @@ func writeVerselineASS(plan verselineRenderPlan) error {
 	sb.WriteString("Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text\n")
 
 	for _, block := range plan.Blocks {
-		primary, err := reelHexToASSColor(firstNonEmpty(block.Style.Color, "#FFFFFF"), false)
+		primaryColor := firstNonEmpty(block.Style.Color, "#FFFFFF")
+		assText, err := verselineSpansToASS(block.Text, primaryColor, block.StylesByID)
 		if err != nil {
 			return err
 		}
-		auxiliary := ""
-		if strings.TrimSpace(block.Style.AuxiliaryColor) != "" {
-			auxiliary, err = reelHexToASSColor(block.Style.AuxiliaryColor, false)
-			if err != nil {
-				return err
-			}
-		}
-		text := verselinePlacementTag(plan.Width, plan.Height, block.Placement) + reelEscapeASSText(block.Text, primary, auxiliary)
+		text := verselinePlacementTag(plan.Width, plan.Height, block.Placement) + assText
 		sb.WriteString(fmt.Sprintf(
 			"Dialogue: 0,%s,%s,%s,,0,0,0,,%s\n",
 			reelMillisToASSTs(block.Start),

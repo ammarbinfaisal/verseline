@@ -279,8 +279,6 @@ func verselineOpsUpdateStyle(project *VerselineProject, index int, field string,
 		s.Size = n
 	case "color":
 		s.Color = value
-	case "auxiliary_color":
-		s.AuxiliaryColor = value
 	case "outline_color":
 		s.OutlineColor = value
 	case "outline":

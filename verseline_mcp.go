@@ -257,7 +257,7 @@ The project.json schema:
   "fonts": [{ "id": "string", "family": "string", "files": ["path to .ttf/.otf file"] }],
   "styles": [{
     "id": "string", "font": "string — references a font id", "size": int,
-    "color": "#RRGGBB (optional)", "auxiliary_color": "#RRGGBB (optional)",
+    "color": "#RRGGBB (optional)",
     "outline_color": "#RRGGBB (optional)", "outline": int pixels (optional),
     "shadow_color": "#RRGGBB or #RRGGBBAA (optional)", "shadow": int pixels (optional),
     "text_bg": "#RRGGBB or #RRGGBBAA (optional) — background color for a rounded box behind the text",
@@ -275,6 +275,8 @@ The project.json schema:
 
 A timeline JSONL file has one segment per line:
 {"id":"string","start":"HH:MM:SS.mmm","end":"HH:MM:SS.mmm","status":"draft|approved|needs_fix","blocks":[{"text":"string","style":"style-id","placement":"placement-id"},...]}
+
+Inline style tags: block text can contain <styleID>...</styleID> tags to render portions in a different style's color. Example: "Glorified <aux>(and Exalted)</aux> be He" renders "(and Exalted)" using the "aux" style's color. The tag name must match a style ID in the project. Tags do not nest.
 
 Multiple text cards can overlap in time: segment/overlay t1 from 0s-10s, t2 from 5s-40s, t3 from 0s to end — all render simultaneously when their time ranges overlap.
 

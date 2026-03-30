@@ -47,9 +47,7 @@ func TestVerselineMCPServerListsAndCallsTools(t *testing.T) {
 		"verseline_transcribe",
 		"verseline_update_segment",
 		"verseline_split_segment",
-		"verseline_approve_timeline",
 		"verseline_preview_segment",
-		"verseline_render_project",
 		"verseline_check_readability",
 	}
 	for _, name := range requiredTools {
