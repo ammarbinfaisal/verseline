@@ -25,11 +25,12 @@ import (
 )
 
 type verselineRasterLine struct {
-	Runs    []shaping.Output
-	Width   int
-	Ascent  int
-	Descent int
-	Height  int
+	Runs           []shaping.Output
+	Width          int
+	Ascent         int
+	Descent        int
+	Height         int
+	RuneOffset     int // offset of this line's paragraph in the full plain text (for runeColors indexing)
 }
 
 type verselineFontMap struct {
@@ -291,12 +292,20 @@ func verselineWrapTextLines(text string, face *textfont.Face, size int, maxWidth
 	}
 
 	lines := make([]verselineRasterLine, 0, len(paragraphs))
-	for _, paragraph := range paragraphs {
+	runeOffset := 0
+	for i, paragraph := range paragraphs {
 		paragraphLines, err := verselineWrapParagraph(paragraph, face, size, maxWidth)
 		if err != nil {
 			return nil, err
 		}
+		for j := range paragraphLines {
+			paragraphLines[j].RuneOffset = runeOffset
+		}
 		lines = append(lines, paragraphLines...)
+		runeOffset += len([]rune(paragraph))
+		if i < len(paragraphs)-1 {
+			runeOffset++ // account for the '\n'
+		}
 	}
 	return lines, nil
 }
@@ -384,10 +393,10 @@ func verselineDrawLine(renderer *textdraw.Renderer, line verselineRasterLine, im
 	}
 }
 
-// verselineDrawLineColored draws a line with per-run color switching based on
-// the runeColors slice (one hex color string per rune in the full plain text).
-// Each run's color is determined by its first rune's color entry. The fallback
-// is used when runeColors is nil or too short.
+// verselineDrawLineColored draws a line with per-glyph color switching based
+// on the runeColors slice (one hex color string per rune in the full plain
+// text). Each glyph's color is looked up via its ClusterIndex. The fallback
+// is used when runeColors is nil, too short, or a color fails to parse.
 func verselineDrawLineColored(renderer *textdraw.Renderer, line verselineRasterLine, img *image.NRGBA, x, baselineY int, fallback color.NRGBA, runeColors []string) {
 	if len(runeColors) == 0 {
 		renderer.Color = fallback
@@ -397,15 +406,38 @@ func verselineDrawLineColored(renderer *textdraw.Renderer, line verselineRasterL
 
 	cursor := x
 	for _, run := range line.Runs {
-		runColor := fallback
-		runeIdx := run.Runes.Offset
-		if runeIdx >= 0 && runeIdx < len(runeColors) {
-			if c, err := verselineParseHexColor(runeColors[runeIdx], 255); err == nil {
-				runColor = c
+		// Split the run into sub-runs of consecutive glyphs sharing the same
+		// color so each sub-run can be drawn with DrawShapedRunAt.
+		type colorRun struct {
+			start, end int // glyph indices [start, end)
+			color      color.NRGBA
+		}
+		var groups []colorRun
+		for i, g := range run.Glyphs {
+			idx := line.RuneOffset + g.ClusterIndex
+			c := fallback
+			if idx >= 0 && idx < len(runeColors) {
+				if parsed, err := verselineParseHexColor(runeColors[idx], 255); err == nil {
+					c = parsed
+				}
+			}
+			if len(groups) > 0 && groups[len(groups)-1].color == c {
+				groups[len(groups)-1].end = i + 1
+			} else {
+				groups = append(groups, colorRun{start: i, end: i + 1, color: c})
 			}
 		}
-		renderer.Color = runColor
-		cursor = renderer.DrawShapedRunAt(run, img, cursor, baselineY)
+
+		for _, gr := range groups {
+			sub := run
+			sub.Glyphs = run.Glyphs[gr.start:gr.end]
+			sub.Advance = 0
+			for _, g := range sub.Glyphs {
+				sub.Advance += g.Advance
+			}
+			renderer.Color = gr.color
+			cursor = renderer.DrawShapedRunAt(sub, img, cursor, baselineY)
+		}
 	}
 }
 
