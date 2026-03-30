@@ -479,7 +479,7 @@ func (v *verselineTimelineView) startRender(root *verselineTUIRoot, all bool) te
 	}
 
 	return v.startAsyncJob(root, func(ch chan<- verselineJobMsg) {
-		outputs, err := verselineRenderProjectProfiles(root.projectPath, profileIDs, func(progress verselineRenderProgress) {
+		outputs, err := verselineRenderProjectProfiles(root.projectPath, profileIDs, "", func(progress verselineRenderProgress) {
 			ch <- verselineJobMsg{progress: &progress}
 		})
 		status := ""

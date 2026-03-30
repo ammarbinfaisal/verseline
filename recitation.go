@@ -174,7 +174,7 @@ func init() {
 		},
 	}
 
-	Subcommands["render"] = Subcommand{
+	Subcommands["reel-render"] = Subcommand{
 		Description: "Render a recitation reel from the approved segment timeline",
 		Run: func(name string, args []string) bool {
 			subFlag := flag.NewFlagSet(name, flag.ContinueOnError)

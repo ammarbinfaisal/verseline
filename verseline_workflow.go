@@ -149,7 +149,7 @@ func verselinePreviewSegments(project VerselineProject, absProjectPath string, s
 	return plan.OutputPath, nil
 }
 
-func verselineRenderProjectProfiles(projectPath string, profileIDs []string, onProgress func(verselineRenderProgress)) ([]string, error) {
+func verselineRenderProjectProfiles(projectPath string, profileIDs []string, outputOverride string, onProgress func(verselineRenderProgress)) ([]string, error) {
 	project, absProjectPath, err := loadVerselineProject(projectPath)
 	if err != nil {
 		return nil, err
@@ -172,6 +172,9 @@ func verselineRenderProjectProfiles(projectPath string, profileIDs []string, onP
 		request, err := verselineRenderRequestFromProfile(project, absProjectPath, profile)
 		if err != nil {
 			return nil, err
+		}
+		if outputOverride != "" {
+			request.OutputPath = resolveReelPath(filepath.Dir(absProjectPath), outputOverride)
 		}
 		plan, err := buildVerselineRenderPlan(project, absProjectPath, segments, request)
 		if err != nil {

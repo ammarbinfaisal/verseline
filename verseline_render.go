@@ -194,12 +194,12 @@ type verselineRenderPlan struct {
 }
 
 func init() {
-	Subcommands["verseline-render"] = Subcommand{
-		Description: "Render one or more approved Verseline outputs using render profiles",
+	Subcommands["render"] = Subcommand{
+		Description: "Render a project: render <project.json> [-profile ids] [-o output.mp4]",
 		Run: func(name string, args []string) bool {
 			subFlag := flag.NewFlagSet(name, flag.ContinueOnError)
-			projectPtr := subFlag.String("project", "examples/verseline-project.json", "Path to the Verseline project JSON file")
 			profilesPtr := subFlag.String("profile", "", "Comma-separated render profile ids. Empty means all profiles")
+			outputPtr := subFlag.String("o", "", "Output file path override")
 
 			err := subFlag.Parse(args)
 			if err == flag.ErrHelp {
@@ -210,7 +210,13 @@ func init() {
 				return false
 			}
 
-			outputs, err := verselineRenderProjectProfiles(*projectPtr, verselineSplitCSV(*profilesPtr), nil)
+			projectPath := subFlag.Arg(0)
+			if projectPath == "" {
+				fmt.Println("Usage: render <project.json> [-profile ids] [-o output.mp4]")
+				return false
+			}
+
+			outputs, err := verselineRenderProjectProfiles(projectPath, verselineSplitCSV(*profilesPtr), strings.TrimSpace(*outputPtr), nil)
 			if err != nil {
 				fmt.Printf("ERROR: Could not render project outputs: %s\n", err)
 				return false
