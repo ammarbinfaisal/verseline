@@ -302,7 +302,9 @@ All arrays use objects with "id" fields, NOT objects keyed by id. Timestamps use
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name: "verseline_list_segments",
-		Description: `Return paginated segments from a project's draft or approved timeline. Each segment includes its 1-based number, start/end timestamps, status, block count, a text preview (first 160 characters), and source references. Defaults: timeline="draft", start_at=1, limit=50.`,
+		Description: `Return paginated segments from a project's draft or approved timeline. Each segment includes its 1-based number, start/end timestamps, status, block count, a text preview (first 160 characters), and source references. Defaults: timeline="draft", start_at=1, limit=50.
+
+Segments can overlap in time — multiple segments may cover the same time range and all render simultaneously as stacked layers. This is by design: use overlapping segments for parallel text cards (e.g., verse text from 0s-20s and a continuous attribution from 0s-60s spanning multiple verses).`,
 	}, verselineMCPListSegmentsTool)
 
 	mcp.AddTool(server, &mcp.Tool{
@@ -317,12 +319,16 @@ All arrays use objects with "id" fields, NOT objects keyed by id. Timestamps use
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name: "verseline_update_segment",
-		Description: `Update properties of a single segment in the draft or approved timeline. Can set start, end, status, notes, or a single block's text/style/placement. Identify the segment by 1-based segment_number or segment_id. Validates the full timeline after the edit. Set dry_run=true to preview the change without saving. Block text may contain inline style tags: <styleID>text</styleID> to render portions with a different style's color (the styleID must exist in the project's styles array — use verseline_update_project to add it first).`,
+		Description: `Update properties of a single segment in the draft or approved timeline. Can set start, end, status, notes, or a single block's text/style/placement. Identify the segment by 1-based segment_number or segment_id. Validates the full timeline after the edit. Set dry_run=true to preview the change without saving. Block text may contain inline style tags: <styleID>text</styleID> to render portions with a different style's color (the styleID must exist in the project's styles array — use verseline_update_project to add it first).
+
+Segments can overlap in time — you can set a segment's start/end to any range, even if it overlaps other segments. Overlapping segments render as stacked layers (later segments on top). This enables parallel text cards like a verse spanning 0s-10s with an attribution spanning 0s-60s.`,
 	}, verselineMCPUpdateSegmentTool)
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name: "verseline_split_segment",
-		Description: `Replace one timeline segment with multiple shorter segments by splitting a block's text. Provide the new text fragments in the texts array (minimum 2). Time is distributed proportionally to text length (longer fragments get more time). Identify the segment by segment_number or segment_id, and the block by block_index (1-based, default 1). Validates the result before saving. Set dry_run=true to preview.`,
+		Description: `Replace one timeline segment with multiple shorter segments by splitting a block's text. Provide the new text fragments in the texts array (minimum 2). Time is distributed proportionally to text length (longer fragments get more time). Identify the segment by segment_number or segment_id, and the block by block_index (1-based, default 1). Validates the result before saving. Set dry_run=true to preview.
+
+Note: segments can overlap in time. If you need a block (e.g., an attribution) to span the full duration of a verse that was split into multiple segments, create a separate overlapping segment covering the full verse time range rather than duplicating the block in each split segment.`,
 	}, verselineMCPSplitSegmentTool)
 
 	mcp.AddTool(server, &mcp.Tool{
