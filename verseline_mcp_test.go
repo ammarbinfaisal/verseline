@@ -47,6 +47,7 @@ func TestVerselineMCPServerListsAndCallsTools(t *testing.T) {
 		"verseline_transcribe",
 		"verseline_update_segment",
 		"verseline_split_segment",
+		"verseline_update_project",
 		"verseline_preview_segment",
 		"verseline_check_readability",
 	}

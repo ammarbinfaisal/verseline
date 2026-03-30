@@ -126,6 +126,21 @@ type verselineMCPSplitSegmentOutput struct {
 	Saved            bool                         `json:"saved"`
 }
 
+type verselineMCPUpdateProjectInput struct {
+	ProjectPath string             `json:"project_path"`
+	UpsertStyle *VerselineStyle    `json:"upsert_style,omitempty"`
+	RemoveStyle string             `json:"remove_style,omitempty"`
+	UpsertPlacement *VerselinePlacement `json:"upsert_placement,omitempty"`
+	RemovePlacement string             `json:"remove_placement,omitempty"`
+}
+
+type verselineMCPUpdateProjectOutput struct {
+	ProjectPath string `json:"project_path"`
+	Action      string `json:"action"`
+	ID          string `json:"id"`
+	Saved       bool   `json:"saved"`
+}
+
 type verselineMCPPreviewInput struct {
 	ProjectPath   string `json:"project_path"`
 	Timeline      string `json:"timeline,omitempty"`
@@ -217,6 +232,7 @@ func printVerselineMCPDescription() {
 	fmt.Printf("- verseline_transcribe\n")
 	fmt.Printf("- verseline_update_segment\n")
 	fmt.Printf("- verseline_split_segment\n")
+	fmt.Printf("- verseline_update_project\n")
 	fmt.Printf("- verseline_preview_segment\n")
 	fmt.Printf("- verseline_check_readability\n")
 	fmt.Printf("Claude Code add command:\n")
@@ -301,13 +317,18 @@ All arrays use objects with "id" fields, NOT objects keyed by id. Timestamps use
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name: "verseline_update_segment",
-		Description: `Update properties of a single segment in the draft or approved timeline. Can set start, end, status, notes, or a single block's text/style/placement. Identify the segment by 1-based segment_number or segment_id. Validates the full timeline after the edit. Set dry_run=true to preview the change without saving.`,
+		Description: `Update properties of a single segment in the draft or approved timeline. Can set start, end, status, notes, or a single block's text/style/placement. Identify the segment by 1-based segment_number or segment_id. Validates the full timeline after the edit. Set dry_run=true to preview the change without saving. Block text may contain inline style tags: <styleID>text</styleID> to render portions with a different style's color (the styleID must exist in the project's styles array — use verseline_update_project to add it first).`,
 	}, verselineMCPUpdateSegmentTool)
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name: "verseline_split_segment",
 		Description: `Replace one timeline segment with multiple shorter segments by splitting a block's text. Provide the new text fragments in the texts array (minimum 2). Time is distributed proportionally to text length (longer fragments get more time). Identify the segment by segment_number or segment_id, and the block by block_index (1-based, default 1). Validates the result before saving. Set dry_run=true to preview.`,
 	}, verselineMCPSplitSegmentTool)
+
+	mcp.AddTool(server, &mcp.Tool{
+		Name: "verseline_update_project",
+		Description: `Add, update, or remove a style or placement in the project JSON file. Exactly one action per call: set upsert_style to add or replace a style by ID, remove_style to delete by ID, upsert_placement to add or replace a placement by ID, or remove_placement to delete by ID. The project file is saved after the change. Use this to define new styles for inline <styleID>...</styleID> tags in block text.`,
+	}, verselineMCPUpdateProjectTool)
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name: "verseline_preview_segment",
@@ -608,6 +629,97 @@ func verselineMCPSplitSegmentTool(_ context.Context, _ *mcp.CallToolRequest, in 
 		Saved:            !in.DryRun,
 	}
 	summary := fmt.Sprintf("Split %s timeline segment %d into %d segments in %s", timelineKind, index+1, replacementCount, filepath.Base(absProjectPath))
+	return verselineMCPTextResult(summary), output, nil
+}
+
+func verselineMCPUpdateProjectTool(_ context.Context, _ *mcp.CallToolRequest, in verselineMCPUpdateProjectInput) (*mcp.CallToolResult, verselineMCPUpdateProjectOutput, error) {
+	project, absProjectPath, err := loadVerselineProject(in.ProjectPath)
+	if err != nil {
+		return nil, verselineMCPUpdateProjectOutput{}, err
+	}
+
+	var action, id string
+
+	switch {
+	case in.UpsertStyle != nil:
+		s := *in.UpsertStyle
+		if strings.TrimSpace(s.ID) == "" {
+			return nil, verselineMCPUpdateProjectOutput{}, fmt.Errorf("upsert_style.id is required")
+		}
+		replaced := false
+		for i, existing := range project.Styles {
+			if existing.ID == s.ID {
+				project.Styles[i] = s
+				replaced = true
+				break
+			}
+		}
+		if !replaced {
+			project.Styles = append(project.Styles, s)
+		}
+		action, id = "upsert_style", s.ID
+
+	case in.RemoveStyle != "":
+		found := false
+		for i, existing := range project.Styles {
+			if existing.ID == in.RemoveStyle {
+				project.Styles = append(project.Styles[:i], project.Styles[i+1:]...)
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, verselineMCPUpdateProjectOutput{}, fmt.Errorf("style %q not found", in.RemoveStyle)
+		}
+		action, id = "remove_style", in.RemoveStyle
+
+	case in.UpsertPlacement != nil:
+		p := *in.UpsertPlacement
+		if strings.TrimSpace(p.ID) == "" {
+			return nil, verselineMCPUpdateProjectOutput{}, fmt.Errorf("upsert_placement.id is required")
+		}
+		replaced := false
+		for i, existing := range project.Placements {
+			if existing.ID == p.ID {
+				project.Placements[i] = p
+				replaced = true
+				break
+			}
+		}
+		if !replaced {
+			project.Placements = append(project.Placements, p)
+		}
+		action, id = "upsert_placement", p.ID
+
+	case in.RemovePlacement != "":
+		found := false
+		for i, existing := range project.Placements {
+			if existing.ID == in.RemovePlacement {
+				project.Placements = append(project.Placements[:i], project.Placements[i+1:]...)
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, verselineMCPUpdateProjectOutput{}, fmt.Errorf("placement %q not found", in.RemovePlacement)
+		}
+		action, id = "remove_placement", in.RemovePlacement
+
+	default:
+		return nil, verselineMCPUpdateProjectOutput{}, fmt.Errorf("exactly one of upsert_style, remove_style, upsert_placement, or remove_placement is required")
+	}
+
+	if err := saveVerselineProject(absProjectPath, project); err != nil {
+		return nil, verselineMCPUpdateProjectOutput{}, err
+	}
+
+	output := verselineMCPUpdateProjectOutput{
+		ProjectPath: absProjectPath,
+		Action:      action,
+		ID:          id,
+		Saved:       true,
+	}
+	summary := fmt.Sprintf("%s %q in %s", action, id, filepath.Base(absProjectPath))
 	return verselineMCPTextResult(summary), output, nil
 }
 
