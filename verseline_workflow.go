@@ -475,6 +475,7 @@ func renderVerselineParallel(plan verselineRenderPlan, partitions []verselineTim
 
 	var progressMu sync.Mutex
 	partPercents := make([]float64, len(partitions))
+	var reportedPercent float64
 	totalDuration := plan.ClipEnd
 	if plan.Duration > 0 {
 		totalDuration = plan.Duration
@@ -500,9 +501,6 @@ func renderVerselineParallel(plan verselineRenderPlan, partitions []verselineTim
 					continue
 				}
 				partErrors[pi] = runVerselineFFmpeg(args, partTotal, subPlan, func(p verselineRenderProgress) {
-					if onProgress == nil {
-						return
-					}
 					progressMu.Lock()
 					partPercents[pi] = p.Percent
 					var weightedTotal float64
@@ -510,14 +508,23 @@ func renderVerselineParallel(plan verselineRenderPlan, partitions []verselineTim
 						dur := float64(partitions[i].End - partitions[i].Start)
 						weightedTotal += pct * dur / float64(totalDuration)
 					}
+					pct := min(weightedTotal, 99)
+					// Only report if progress increased — avoids out-of-order updates
+					// from concurrent goroutines.
+					shouldReport := onProgress != nil && p.Stage != "done" && pct > reportedPercent
+					if shouldReport {
+						reportedPercent = pct
+					}
 					progressMu.Unlock()
-					onProgress(verselineRenderProgress{
-						JobID:      plan.Label,
-						JobLabel:   plan.Label,
-						OutputPath: plan.OutputPath,
-						Percent:    min(weightedTotal, 99),
-						Stage:      "rendering",
-					})
+					if shouldReport {
+						onProgress(verselineRenderProgress{
+							JobID:      plan.Label,
+							JobLabel:   plan.Label,
+							OutputPath: plan.OutputPath,
+							Percent:    pct,
+							Stage:      "rendering",
+						})
+					}
 				})
 			}
 		}()
