@@ -439,3 +439,22 @@ func (km verselineDefaultHelpKeyMap) FullHelp() [][]key.Binding {
 		{km.keys.Save, km.keys.Quit, km.keys.Help},
 	}
 }
+
+func normalizeDraftField(value string, fallback string) string {
+	if strings.TrimSpace(value) == "" {
+		return fallback
+	}
+	return value
+}
+
+func truncateDraftText(text string, max int) string {
+	text = strings.ReplaceAll(text, "\n", " ")
+	runes := []rune(text)
+	if len(runes) <= max {
+		return text
+	}
+	if max <= 1 {
+		return string(runes[:max])
+	}
+	return string(runes[:max-1]) + "…"
+}

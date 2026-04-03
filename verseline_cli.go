@@ -21,34 +21,27 @@ var verselineNestedCommands = map[string]verselineNestedCommand{
 	"preview": {
 		Description: "Render a low-quality preview for one segment",
 		Run: func(name string, args []string) bool {
-			return runVerselineLegacyAlias("verseline-preview", name, args)
+			return runVerselineSubcommand("verseline-preview", name, args)
 		},
 	},
 	"render": {
 		Description: "Render project outputs",
 		Run: func(name string, args []string) bool {
-			return runVerselineLegacyAlias("render", name, args)
+			return runVerselineSubcommand("render", name, args)
 		},
 	},
 	"tui": {
 		Description: "Open the timeline review and approval TUI",
 		Run: func(name string, args []string) bool {
-			return runVerselineLegacyAlias("verseline-edit", name, args)
+			return runVerselineSubcommand("verseline-edit", name, args)
 		},
 	},
 	"validate": {
 		Description: "Validate a project and timeline",
 		Run: func(name string, args []string) bool {
-			return runVerselineLegacyAlias("verseline-validate", name, args)
+			return runVerselineSubcommand("verseline-validate", name, args)
 		},
 	},
-}
-
-func init() {
-	Subcommands["verseline"] = Subcommand{
-		Description: "Reduced Verseline surface: tui, render, mcp",
-		Run:         runVerselineCommand,
-	}
 }
 
 func currentProgramName() string {
@@ -59,11 +52,6 @@ func currentProgramName() string {
 	return name
 }
 
-func isVerselineExecutableName(name string) bool {
-	base := strings.TrimSuffix(strings.ToLower(filepath.Base(name)), filepath.Ext(name))
-	return base == "verseline"
-}
-
 func isVerselineHelpArg(arg string) bool {
 	switch strings.TrimSpace(arg) {
 	case "help", "-h", "--help":
@@ -71,11 +59,6 @@ func isVerselineHelpArg(arg string) bool {
 	default:
 		return false
 	}
-}
-
-func isVerselineNestedCommand(name string) bool {
-	_, ok := verselineNestedCommands[strings.TrimSpace(name)]
-	return ok
 }
 
 func printVerselineUsage(program string) {
@@ -104,12 +87,7 @@ func printVerselineUsage(program string) {
 	fmt.Printf("    %s render -project examples/verseline-project.json\n", program)
 }
 
-func runVerselineCommand(name string, args []string) bool {
-	program := "verseline"
-	if isVerselineExecutableName(currentProgramName()) {
-		program = currentProgramName()
-	}
-
+func runVerselineCommand(program string, args []string) bool {
 	if len(args) == 0 {
 		printVerselineUsage(program)
 		fmt.Printf("ERROR: No Verseline command is provided\n")
@@ -131,10 +109,10 @@ func runVerselineCommand(name string, args []string) bool {
 	return command.Run(commandName, args[1:])
 }
 
-func runVerselineLegacyAlias(legacyName string, name string, args []string) bool {
-	subcommand, ok := Subcommands[legacyName]
+func runVerselineSubcommand(subcommandKey string, name string, args []string) bool {
+	subcommand, ok := Subcommands[subcommandKey]
 	if !ok {
-		fmt.Printf("ERROR: missing legacy command backing %s\n", name)
+		fmt.Printf("ERROR: missing subcommand backing %s\n", name)
 		return false
 	}
 	return subcommand.Run(name, withImplicitProjectFlag(args))
