@@ -11,8 +11,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type verselineRenderProgress struct {
@@ -382,11 +384,218 @@ func renderVerselineWithProgress(plan verselineRenderPlan, onProgress func(verse
 	if err := renderVerselineBlockImages(&plan); err != nil {
 		return err
 	}
-	args, total, err := buildVerselineFFmpegArgs(plan)
+
+	partitions := verselinePartitionBlocks(plan.Blocks, plan.ClipEnd)
+	if len(partitions) <= 1 {
+		// Single partition or no blocks — render in one pass.
+		args, total, err := buildVerselineFFmpegArgs(plan)
+		if err != nil {
+			return err
+		}
+		return runVerselineFFmpeg(args, total, plan, onProgress)
+	}
+
+	return renderVerselineParallel(plan, partitions, onProgress)
+}
+
+// verselineTimePartition is a contiguous time range with a subset of blocks.
+type verselineTimePartition struct {
+	Start  Millis
+	End    Millis
+	Blocks []verselineResolvedBlock // times are absolute
+}
+
+// verselinePartitionBlocks splits blocks into disjoint time ranges separated by
+// gaps where no block is active. Blocks within each partition keep their
+// absolute timestamps. Partitions are sorted by start time.
+func verselinePartitionBlocks(blocks []verselineResolvedBlock, clipEnd Millis) []verselineTimePartition {
+	if len(blocks) == 0 {
+		return nil
+	}
+
+	sorted := make([]verselineResolvedBlock, len(blocks))
+	copy(sorted, blocks)
+	sort.Slice(sorted, func(i, j int) bool {
+		return sorted[i].Start < sorted[j].Start
+	})
+
+	var partitions []verselineTimePartition
+	current := verselineTimePartition{
+		Start: sorted[0].Start,
+		End:   sorted[0].End,
+	}
+	current.Blocks = append(current.Blocks, sorted[0])
+
+	for _, block := range sorted[1:] {
+		if block.Start >= current.End {
+			// Gap found — close current partition, start new one.
+			partitions = append(partitions, current)
+			current = verselineTimePartition{
+				Start: block.Start,
+				End:   block.End,
+			}
+			current.Blocks = append(current.Blocks, block)
+		} else {
+			// Overlaps — extend current partition.
+			if block.End > current.End {
+				current.End = block.End
+			}
+			current.Blocks = append(current.Blocks, block)
+		}
+	}
+	partitions = append(partitions, current)
+
+	// Extend the first partition back to time 0 so background/audio start from the beginning.
+	if len(partitions) > 0 && partitions[0].Start > 0 {
+		partitions[0].Start = 0
+	}
+
+	// Extend the last partition to clipEnd so the final video has full length.
+	if len(partitions) > 0 && clipEnd > partitions[len(partitions)-1].End {
+		partitions[len(partitions)-1].End = clipEnd
+	}
+
+	return partitions
+}
+
+// renderVerselineParallel renders each disjoint partition as an independent
+// ffmpeg job, then concatenates them into the final output.
+func renderVerselineParallel(plan verselineRenderPlan, partitions []verselineTimePartition, onProgress func(verselineRenderProgress)) error {
+	partsDir := strings.TrimSuffix(plan.OutputPath, filepath.Ext(plan.OutputPath)) + ".parts"
+	if err := os.MkdirAll(partsDir, 0755); err != nil {
+		return err
+	}
+
+	partOutputs := make([]string, len(partitions))
+	partErrors := make([]error, len(partitions))
+
+	workers := min(runtime.NumCPU(), len(partitions))
+	var wg sync.WaitGroup
+	jobs := make(chan int, len(partitions))
+
+	var progressMu sync.Mutex
+	partPercents := make([]float64, len(partitions))
+	totalDuration := plan.ClipEnd
+	if plan.Duration > 0 {
+		totalDuration = plan.Duration
+	}
+
+	for w := 0; w < workers; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for pi := range jobs {
+				partition := partitions[pi]
+				partPath := filepath.Join(partsDir, fmt.Sprintf("part-%03d.mp4", pi+1))
+				partOutputs[pi] = partPath
+
+				subPlan := verselinePartitionSubPlan(plan, partition, partPath, pi)
+				if err := writeVerselineASS(subPlan); err != nil {
+					partErrors[pi] = err
+					continue
+				}
+				args, partTotal, err := buildVerselineFFmpegArgs(subPlan)
+				if err != nil {
+					partErrors[pi] = err
+					continue
+				}
+				partErrors[pi] = runVerselineFFmpeg(args, partTotal, subPlan, func(p verselineRenderProgress) {
+					if onProgress == nil {
+						return
+					}
+					progressMu.Lock()
+					partPercents[pi] = p.Percent
+					var weightedTotal float64
+					for i, pct := range partPercents {
+						dur := float64(partitions[i].End - partitions[i].Start)
+						weightedTotal += pct * dur / float64(totalDuration)
+					}
+					progressMu.Unlock()
+					onProgress(verselineRenderProgress{
+						JobID:      plan.Label,
+						JobLabel:   plan.Label,
+						OutputPath: plan.OutputPath,
+						Percent:    min(weightedTotal, 99),
+						Stage:      "rendering",
+					})
+				})
+			}
+		}()
+	}
+
+	for i := range partitions {
+		jobs <- i
+	}
+	close(jobs)
+	wg.Wait()
+
+	for _, err := range partErrors {
+		if err != nil {
+			return err
+		}
+	}
+
+	// Write the concat list and merge.
+	concatListPath := filepath.Join(partsDir, "concat.txt")
+	if err := verselineWriteConcatList(concatListPath, partOutputs); err != nil {
+		return err
+	}
+	if err := ffmpegConcatFiles(concatListPath, plan.OutputPath); err != nil {
+		return err
+	}
+
+	// Write the full ASS for the combined output.
+	if err := writeVerselineASS(plan); err != nil {
+		return err
+	}
+
+	if onProgress != nil {
+		onProgress(verselineRenderProgress{
+			JobID:      plan.Label,
+			JobLabel:   plan.Label,
+			OutputPath: plan.OutputPath,
+			Percent:    100,
+			Stage:      "done",
+		})
+	}
+	return nil
+}
+
+// verselinePartitionSubPlan creates a render plan for a single time partition.
+// Block timestamps are shifted to be relative to the partition start.
+func verselinePartitionSubPlan(plan verselineRenderPlan, partition verselineTimePartition, outputPath string, index int) verselineRenderPlan {
+	sub := plan
+	sub.OutputPath = outputPath
+	sub.ASSPath = strings.TrimSuffix(outputPath, filepath.Ext(outputPath)) + ".ass"
+	sub.InputOffset = plan.InputOffset + partition.Start
+	sub.Duration = partition.End - partition.Start
+	sub.ClipEnd = sub.Duration
+	sub.Label = fmt.Sprintf("%s part %d", plan.Label, index+1)
+
+	// Shift block timestamps relative to partition start.
+	sub.Blocks = make([]verselineResolvedBlock, len(partition.Blocks))
+	for i, block := range partition.Blocks {
+		block.Start -= partition.Start
+		block.End -= partition.Start
+		sub.Blocks[i] = block
+	}
+	return sub
+}
+
+func verselineWriteConcatList(path string, files []string) error {
+	f, err := os.Create(path)
 	if err != nil {
 		return err
 	}
-	return runVerselineFFmpeg(args, total, plan, onProgress)
+	defer f.Close()
+	for _, file := range files {
+		absFile, err := filepath.Abs(file)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(f, "file '%s'\n", absFile)
+	}
+	return nil
 }
 
 func buildVerselineFFmpegArgs(plan verselineRenderPlan) ([]string, Millis, error) {
