@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type verselineResolvedBlock struct {
@@ -745,13 +747,44 @@ func renderVerselineBlockImages(plan *verselineRenderPlan) error {
 		return err
 	}
 
+	// Pre-assign output paths so they are available before rendering.
 	for index := range plan.Blocks {
 		outputPath := filepath.Join(cacheDir, fmt.Sprintf("block-%03d.png", index+1))
-		_ = os.Remove(strings.TrimSuffix(outputPath, ".png") + ".txt")
-		if err := renderVerselineBlockImage(plan.Blocks[index], plan.Width, outputPath); err != nil {
+		plan.Blocks[index].ImagePath = outputPath
+	}
+
+	n := len(plan.Blocks)
+	if n == 0 {
+		return nil
+	}
+
+	workers := min(runtime.NumCPU(), n)
+	errs := make([]error, n)
+	var wg sync.WaitGroup
+	jobs := make(chan int, n)
+
+	for w := 0; w < workers; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for index := range jobs {
+				outputPath := plan.Blocks[index].ImagePath
+				_ = os.Remove(strings.TrimSuffix(outputPath, ".png") + ".txt")
+				errs[index] = renderVerselineBlockImage(plan.Blocks[index], plan.Width, outputPath)
+			}
+		}()
+	}
+
+	for i := 0; i < n; i++ {
+		jobs <- i
+	}
+	close(jobs)
+	wg.Wait()
+
+	for _, err := range errs {
+		if err != nil {
 			return err
 		}
-		plan.Blocks[index].ImagePath = outputPath
 	}
 	return nil
 }
