@@ -2,9 +2,7 @@
 
 Verseline is a timed-text video renderer for recitations, readings, poems, and other audio-led clips.
 
-It started as a fork of [markut](https://github.com/tsoding/markut), a markup-driven video editing tool. The original goal was to adapt markut's scripting approach for timed recitation overlays, but the use case diverged enough that the project was redesigned from scratch with Claude Code -- replacing the DSL-first workflow with a simpler JSON project format, a TUI editor, and an MCP server for AI-assisted timeline editing.
-
-The legacy markut subcommands (`cut`, `chunk`, `final`, `summary`, `watch`, `prune`, `chapters`, etc.) still ship in the binary and work as before.
+It takes a JSON project file describing canvas dimensions, fonts, text styles, placements, and a JSONL timeline of timed segments, then composites styled text overlays onto a background video or image using ffmpeg.
 
 ## Setup
 
@@ -60,6 +58,12 @@ Run the MCP server (for AI-assisted editing via Claude Code or other MCP clients
 
 ```console
 $ ./verseline mcp serve
+```
+
+Validate a project and timeline:
+
+```console
+$ ./verseline validate -project path/to/project.json
 ```
 
 ## TUI
