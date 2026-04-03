@@ -1,0 +1,178 @@
+{
+  "name": "al-baqarah-2-5",
+  "output": "al-baqarah-2-5.mp4",
+  "canvas": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30
+  },
+  "assets": {
+    "audio": "audio/clip.mp3",
+    "background": {
+      "type": "image",
+      "path": "assets/background.jpg",
+      "loop": true,
+      "fit": "cover"
+    }
+  },
+  "fonts": [
+    {
+      "id": "latin-main",
+      "family": "Helvetica"
+    },
+    {
+      "id": "arabic-main",
+      "family": "Geeza Pro"
+    }
+  ],
+  "styles": [
+    {
+      "id": "translation",
+      "font": "latin-main",
+      "size": 64,
+      "color": "#FFFFFF",
+      "outline_color": "#000000",
+      "outline": 3,
+      "shadow": 1
+    },
+    {
+      "id": "translation-large",
+      "font": "latin-main",
+      "size": 84,
+      "color": "#FFFFFF",
+      "outline_color": "#000000",
+      "outline": 3,
+      "shadow": 1
+    },
+    {
+      "id": "aux",
+      "font": "latin-main",
+      "size": 64,
+      "color": "#B7B7B7"
+    },
+    {
+      "id": "arabic-main",
+      "font": "arabic-main",
+      "size": 72,
+      "color": "#FFFFFF",
+      "outline_color": "#000000",
+      "outline": 3,
+      "shadow": 1
+    },
+    {
+      "id": "meta",
+      "font": "latin-main",
+      "size": 28,
+      "color": "#F2F2F2",
+      "outline_color": "#000000",
+      "outline": 2,
+      "shadow": 1
+    }
+  ],
+  "placements": [
+    {
+      "id": "lower-center",
+      "anchor": "bottom_center",
+      "margin_x": 108,
+      "margin_y": 360
+    },
+    {
+      "id": "meta-above",
+      "anchor": "bottom_center",
+      "margin_x": 108,
+      "margin_y": 540
+    },
+    {
+      "id": "upper-safe",
+      "anchor": "top_center",
+      "margin_x": 108,
+      "margin_y": 180
+    }
+  ],
+  "sources": [
+    {
+      "id": "sahih",
+      "type": "jsonl",
+      "path": "translations.sahih.jsonl",
+      "language": "en"
+    },
+    {
+      "id": "arabic-kfqpc",
+      "type": "jsonl",
+      "path": "translations.arabic.jsonl",
+      "language": "ar"
+    }
+  ],
+  "overlays": [
+    {
+      "id": "meta",
+      "blocks": [
+        {
+          "id": "meta",
+          "kind": "literal",
+          "text": "surah al-baqarah 2-5\ntranslation: sahih international",
+          "style": "meta",
+          "placement": "meta-above"
+        }
+      ]
+    }
+  ],
+  "preview": {
+    "player": "vlc",
+    "directory": "previews",
+    "padding_ms": 400,
+    "width": 540,
+    "height": 960,
+    "fps": 24,
+    "crf": 32,
+    "preset": "veryfast"
+  },
+  "render_profiles": [
+    {
+      "id": "sdr-fhd",
+      "label": "SDR FHD",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30,
+      "output_suffix": "sdr-fhd",
+      "video_codec": "libx264",
+      "audio_codec": "aac",
+      "audio_bitrate": "192k",
+      "crf": 21,
+      "preset": "medium",
+      "pix_fmt": "yuv420p"
+    },
+    {
+      "id": "sdr-4k",
+      "label": "SDR 4K",
+      "width": 2160,
+      "height": 3840,
+      "fps": 30,
+      "output_suffix": "sdr-4k",
+      "video_codec": "libx264",
+      "audio_codec": "aac",
+      "audio_bitrate": "256k",
+      "crf": 20,
+      "preset": "slow",
+      "pix_fmt": "yuv420p"
+    },
+    {
+      "id": "hdr-4k",
+      "label": "HDR 4K",
+      "width": 2160,
+      "height": 3840,
+      "fps": 30,
+      "output_suffix": "hdr-4k",
+      "video_codec": "libx265",
+      "audio_codec": "aac",
+      "audio_bitrate": "256k",
+      "crf": 18,
+      "preset": "slow",
+      "pix_fmt": "yuv420p10le",
+      "color_primaries": "bt2020",
+      "color_trc": "smpte2084",
+      "colorspace": "bt2020nc"
+    }
+  ],
+  "timeline": "verseline.timeline.jsonl"
+}
