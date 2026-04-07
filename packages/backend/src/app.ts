@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { websocket } from "hono/bun";
 import { corsMiddleware } from "./middleware/cors.js";
+import { geoMiddleware } from "./middleware/geo.js";
 import { authMiddleware } from "./middleware/auth.js";
 import authRouter from "./routes/auth.js";
 import projectsRouter from "./routes/projects.js";
@@ -22,6 +23,7 @@ export { websocket as bunWebsocket };
 
 // Global middleware
 app.use("*", corsMiddleware);
+app.use("*", geoMiddleware);
 
 // Health check
 app.get("/health", (c) => c.json({ status: "ok", ts: new Date().toISOString() }));

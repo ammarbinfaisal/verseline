@@ -17,6 +17,7 @@
     "@napi-rs/canvas": "^0.1.97",
     "@verseline/shared": "workspace:*",
     "drizzle-orm": "^0.40.0",
+    "geoip-country": "^5.0.202604032350",
     "hono": "^4.7.0",
     "jose": "^6.0.0",
     "postgres": "^3.4.0",
