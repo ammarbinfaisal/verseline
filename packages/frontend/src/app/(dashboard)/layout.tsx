@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/stores/auth-store";
 import { useMountEffect } from "@/hooks/useMountEffect";
+import { MobileGate } from "@/components/common/MobileGate";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -47,7 +48,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </nav>
 
       {/* Page content */}
-      <main className="flex-1">{children}</main>
+      <main className="flex-1">
+        <MobileGate>{children}</MobileGate>
+      </main>
     </div>
   );
 }

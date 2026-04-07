@@ -13,11 +13,13 @@ interface AssetUploaderProps {
   currentValue: string | undefined;
   /** Accepted MIME types, e.g. "audio/*" or "video/*,image/*" */
   accept?: string;
+  /** Asset type sent to the backend to determine R2 path prefix */
+  assetType: "audio" | "background" | "font";
 }
 
 type UploadState = "idle" | "uploading" | "done" | "error";
 
-export function AssetUploader({ label, fieldPath, currentValue, accept }: AssetUploaderProps) {
+export function AssetUploader({ label, fieldPath, currentValue, accept, assetType }: AssetUploaderProps) {
   const { project, updateField } = useProjectStore();
   const [state, setState] = useState<UploadState>("idle");
   const [progress, setProgress] = useState(0);
@@ -40,7 +42,7 @@ export function AssetUploader({ label, fieldPath, currentValue, accept }: AssetU
           `/projects/${projectId}/assets/upload-url`,
           {
             method: "POST",
-            body: JSON.stringify({ filename: file.name, contentType: file.type }),
+            body: JSON.stringify({ filename: file.name, contentType: file.type, assetType }),
           }
         );
 
@@ -67,7 +69,7 @@ export function AssetUploader({ label, fieldPath, currentValue, accept }: AssetU
         // 3. Confirm with API and update local store
         await apiFetch(`/projects/${projectId}/assets/confirm`, {
           method: "POST",
-          body: JSON.stringify({ key, fieldPath }),
+          body: JSON.stringify({ key, assetType, filename: file.name }),
         });
 
         updateField(fieldPath, key);
@@ -77,7 +79,7 @@ export function AssetUploader({ label, fieldPath, currentValue, accept }: AssetU
         setState("error");
       }
     },
-    [projectId, fieldPath, updateField]
+    [projectId, fieldPath, assetType, updateField]
   );
 
   const handleFiles = (files: FileList | null) => {

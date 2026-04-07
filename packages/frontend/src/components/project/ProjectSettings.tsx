@@ -314,6 +314,7 @@ export function ProjectSettings() {
             fieldPath="assets.audio"
             currentValue={project.assets.audio}
             accept="audio/*"
+            assetType="audio"
           />
 
           <div className="grid grid-cols-2 gap-3">
@@ -344,6 +345,7 @@ export function ProjectSettings() {
             fieldPath="assets.background.path"
             currentValue={project.assets.background?.path}
             accept="video/*,image/*"
+            assetType="background"
           />
         </Section>
 

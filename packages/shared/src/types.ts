@@ -187,7 +187,6 @@ export const SegmentSchema = z.object({
   id: z.string().optional(),
   start: z.string().min(1),
   end: z.string().min(1),
-  status: z.string().optional(),
   confidence: z.number().optional(),
   notes: z.string().optional(),
   blocks: z.array(BlockSchema).min(1),
@@ -199,7 +198,6 @@ export type Segment = z.infer<typeof SegmentSchema>;
 export interface SegmentUpdates {
   start?: string;
   end?: string;
-  status?: string;
   notes?: string;
   blockIndex?: number;
   blockText?: string;

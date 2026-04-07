@@ -17,7 +17,7 @@ import { renderBlockImageToFile } from "./rasterizer.js";
 import { buildFFmpegArgs, runFFmpeg, probeMediaDuration } from "./ffmpeg.js";
 import type { RenderBlock, RenderPlan } from "./ffmpeg.js";
 import { resolveFontPath } from "./font-resolver.js";
-import { uploadToR2, getPresignedDownloadUrl } from "./storage.js";
+import { uploadToR2, getPresignedDownloadUrl, downloadFromR2 } from "./storage.js";
 
 // ---- DB row types (from schema) ---------------------------------------------
 // These mirror the JSONB-stored project fields as they come out of Postgres.
@@ -27,7 +27,7 @@ export interface ProjectRow {
   name: string;
   canvas: { width: number; height: number; fps: number };
   assets: {
-    audio?: string;
+    audio?: string | { path?: string; filename?: string };
     background: { type?: string; path: string; loop?: boolean; fit?: string };
   };
   fonts: Font[];
@@ -127,6 +127,75 @@ async function makeTempDir(prefix: string): Promise<string> {
     path.join(os.tmpdir(), `verseline-${prefix}-`),
   );
   return dir;
+}
+
+// ---- Asset resolution -------------------------------------------------------
+
+const ASSET_CACHE_DIR =
+  process.env.ASSET_CACHE_DIR ??
+  path.join(os.tmpdir(), "verseline-assets");
+
+/**
+ * Resolve a project asset (background image/video, audio) to an absolute local
+ * file path, downloading from R2 if necessary.
+ *
+ * Resolution order:
+ *   1. Absolute path that exists on disk → use directly
+ *   2. On-disk cache in ASSET_CACHE_DIR
+ *   3. Download from R2 (try key as-is, then under projects/{projectId}/assets/)
+ */
+async function resolveAssetPath(
+  assetPath: string,
+  projectId: string,
+): Promise<string> {
+  // 1. Absolute path on disk
+  if (path.isAbsolute(assetPath) && fs.existsSync(assetPath)) {
+    return assetPath;
+  }
+
+  // Determine local cache path from the basename
+  const basename = path.basename(assetPath);
+  const localCached = path.join(ASSET_CACHE_DIR, projectId, basename);
+
+  // 2. On-disk cache
+  if (fs.existsSync(localCached)) {
+    return localCached;
+  }
+
+  // 3. Download from R2
+  await fs.promises.mkdir(path.dirname(localCached), { recursive: true });
+
+  // Try the path as a direct R2 key first (e.g. "projects/.../assets/background/bg.jpg")
+  const keysToTry = [assetPath];
+
+  // If it doesn't look like a full R2 key, also try under the project assets prefix
+  if (!assetPath.startsWith("projects/")) {
+    keysToTry.push(`projects/${projectId}/assets/${basename}`);
+    keysToTry.push(`projects/${projectId}/assets/background/${basename}`);
+    keysToTry.push(`projects/${projectId}/assets/audio/${basename}`);
+  }
+
+  for (const r2Key of keysToTry) {
+    try {
+      const stream = await downloadFromR2(r2Key);
+      const chunks: Buffer[] = [];
+      const reader = stream.getReader();
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(Buffer.from(value));
+      }
+      await fs.promises.writeFile(localCached, Buffer.concat(chunks));
+      return localCached;
+    } catch {
+      // try next key
+    }
+  }
+
+  throw new Error(
+    `Cannot resolve asset "${assetPath}" for project ${projectId}. ` +
+    `Upload it via the assets API or provide an absolute path.`,
+  );
 }
 
 // ---- Core plan builder ------------------------------------------------------
@@ -320,15 +389,34 @@ export async function buildRenderPlan(
     });
   }
 
+  // Resolve background and audio to absolute local paths
+  const bgPath = await resolveAssetPath(
+    project.assets.background.path,
+    project.id,
+  );
+
+  let audioPath: string | undefined;
+  const rawAudio = project.assets.audio;
+  if (rawAudio) {
+    // audio may be a string path or an object { path, filename } from the assets confirm route
+    const audioStr =
+      typeof rawAudio === "string"
+        ? rawAudio
+        : (rawAudio as { path?: string }).path;
+    if (audioStr) {
+      audioPath = await resolveAssetPath(audioStr, project.id);
+    }
+  }
+
   return {
     outputPath,
     background: {
       type: project.assets.background.type ?? "image",
-      path: project.assets.background.path,
+      path: bgPath,
       fit: project.assets.background.fit ?? "cover",
       loop: project.assets.background.loop,
     },
-    audio: project.assets.audio || undefined,
+    audio: audioPath,
     canvas: { width: canvasW, height: canvasH, fps },
     profile,
     blocks: renderBlocks,

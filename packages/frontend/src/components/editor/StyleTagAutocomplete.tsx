@@ -1,0 +1,141 @@
+"use client";
+
+import { useState, useCallback, useMemo } from "react";
+import type { Style, Font } from "@verseline/shared";
+import { generateStyleLabel } from "@verseline/shared";
+
+// ---------------------------------------------------------------------------
+// Hook
+// ---------------------------------------------------------------------------
+
+export function useStyleTagAutocomplete(styles: Style[], fonts: Font[]) {
+  const [visible, setVisible] = useState(false);
+  const [partial, setPartial] = useState("");
+  const [highlightIndex, setHighlightIndex] = useState(0);
+
+  const filtered = useMemo(
+    () => styles.filter((s) => s.id.toLowerCase().startsWith(partial.toLowerCase())),
+    [styles, partial],
+  );
+
+  const filteredWithLabels = useMemo(
+    () => filtered.map((s) => ({ ...s, label: generateStyleLabel(s, fonts) })),
+    [filtered, fonts],
+  );
+
+  /** Call from textarea onChange to detect < trigger. */
+  const onTextChange = useCallback((text: string, cursorPos: number) => {
+    const before = text.slice(0, cursorPos);
+    const lastOpen = before.lastIndexOf("<");
+    const lastClose = before.lastIndexOf(">");
+
+    if (lastOpen > lastClose && lastOpen >= 0) {
+      const p = before.slice(lastOpen + 1);
+      if (!/[\s/>]/.test(p)) {
+        setPartial(p);
+        setVisible(true);
+        setHighlightIndex(0);
+        return;
+      }
+    }
+    setVisible(false);
+  }, []);
+
+  /**
+   * Call from the textarea's onKeyDown.
+   * Returns the selected style ID string when Enter is pressed on a match,
+   * `true` when the key was handled but no selection was made,
+   * or `false` when the key was not handled.
+   */
+  const onKeyDown = useCallback(
+    (e: React.KeyboardEvent): string | boolean => {
+      if (!visible) return false;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setHighlightIndex((i) => Math.min(i + 1, filtered.length - 1));
+        return true;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setHighlightIndex((i) => Math.max(i - 1, 0));
+        return true;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setVisible(false);
+        return true;
+      }
+      if (e.key === "Enter" && filtered.length > 0) {
+        e.preventDefault();
+        const selected = filtered[highlightIndex]?.id;
+        if (selected) {
+          setVisible(false);
+          return selected;
+        }
+      }
+      return false;
+    },
+    [visible, filtered, highlightIndex],
+  );
+
+  const dismiss = useCallback(() => setVisible(false), []);
+
+  return {
+    visible,
+    filtered: filteredWithLabels,
+    highlightIndex,
+    partial,
+    onTextChange,
+    onKeyDown,
+    dismiss,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Dropdown UI
+// ---------------------------------------------------------------------------
+
+interface StyleTagDropdownProps {
+  styles: Array<Style & { label: string }>;
+  highlightIndex: number;
+  onSelect: (styleId: string) => void;
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+}
+
+export function StyleTagDropdown({
+  styles,
+  highlightIndex,
+  onSelect,
+  textareaRef,
+}: StyleTagDropdownProps) {
+  if (styles.length === 0) return null;
+
+  const offsetTop = textareaRef.current?.offsetHeight ?? 0;
+
+  return (
+    <div
+      className="absolute left-0 z-50 max-h-48 overflow-y-auto bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg shadow-lg"
+      style={{ top: offsetTop }}
+    >
+      {styles.map((style, i) => (
+        <button
+          key={style.id}
+          type="button"
+          className={
+            "flex w-full items-baseline gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700" +
+            (i === highlightIndex ? " bg-zinc-100 dark:bg-zinc-700" : "")
+          }
+          onMouseDown={(e) => {
+            // Use mousedown so the textarea doesn't lose focus before we handle it
+            e.preventDefault();
+            onSelect(style.id);
+          }}
+        >
+          <span className="font-bold text-zinc-900 dark:text-zinc-100">{style.id}</span>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">{style.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}

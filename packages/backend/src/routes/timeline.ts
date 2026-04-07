@@ -90,7 +90,6 @@ timeline.post("/:projectId/segments", async (c) => {
       sortOrder: typeof body.sortOrder === "number" ? body.sortOrder : nextOrder,
       startMs: body.startMs as number,
       endMs: body.endMs as number,
-      status: typeof body.status === "string" ? body.status : "draft",
       confidence: typeof body.confidence === "number" ? body.confidence : null,
       notes: typeof body.notes === "string" ? body.notes : null,
       blocks: (body.blocks as object[]) ?? [],
@@ -127,7 +126,6 @@ timeline.put("/:projectId/segments/:segId", async (c) => {
   const updates: Partial<typeof segments.$inferInsert> = {};
   if (typeof body.startMs === "number") updates.startMs = body.startMs;
   if (typeof body.endMs === "number") updates.endMs = body.endMs;
-  if (typeof body.status === "string") updates.status = body.status;
   if (typeof body.notes === "string" || body.notes === null)
     updates.notes = body.notes as string | null;
   if (Array.isArray(body.blocks)) updates.blocks = body.blocks;

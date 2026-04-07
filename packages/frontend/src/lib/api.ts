@@ -147,7 +147,6 @@ function dbSegmentToFrontend(row: DbSegment): Segment {
     id: row.id,
     start: millisToTs(row.startMs),
     end: millisToTs(row.endMs),
-    status: row.status,
     confidence: row.confidence ?? undefined,
     notes: row.notes ?? undefined,
     blocks: row.blocks as Segment["blocks"],

@@ -6,14 +6,12 @@ interface TimelineState {
   segments: Segment[];
   loading: boolean;
   dirty: boolean;
-  timelineKind: "draft" | "approved";
 
-  loadSegments: (projectId: string, kind?: "draft" | "approved") => Promise<void>;
+  loadSegments: (projectId: string) => Promise<void>;
   updateSegment: (segId: string, updates: SegmentUpdates) => Promise<void>;
   splitSegment: (segId: string, blockIndex: number, texts: string[]) => Promise<void>;
   deleteSegment: (segId: string) => Promise<void>;
   createSegment: (projectId: string, data: Partial<Segment>) => Promise<void>;
-  approveTimeline: (projectId: string) => Promise<void>;
 }
 
 // Store project ID alongside so actions can reference it without needing it passed again
@@ -23,13 +21,12 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
   segments: [],
   loading: false,
   dirty: false,
-  timelineKind: "draft",
 
-  async loadSegments(projectId, kind = "draft") {
+  async loadSegments(projectId) {
     _projectId = projectId;
-    set({ loading: true, timelineKind: kind });
+    set({ loading: true });
     try {
-      const segs = await api.segments.list(projectId, kind);
+      const segs = await api.segments.list(projectId, "draft");
       set({ segments: segs, loading: false, dirty: false });
     } catch (err) {
       set({ loading: false });
@@ -76,11 +73,4 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     set((state) => ({ segments: [...state.segments, seg], dirty: true }));
   },
 
-  async approveTimeline(projectId) {
-    _projectId = projectId;
-    set({ loading: true });
-    await api.segments.approve(projectId);
-    const segs = await api.segments.list(projectId, "approved");
-    set({ segments: segs, timelineKind: "approved", loading: false, dirty: false });
-  },
 }));

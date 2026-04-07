@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import type { Segment, Block, Style, Placement, Canvas } from "@verseline/shared";
+import type { Segment, Block, Style, Placement, Font, Canvas } from "@verseline/shared";
 import { useTimelineStore } from "@/stores/timeline-store";
 import { useProjectStore } from "@/stores/project-store";
 import BlockEditor from "./BlockEditor";
@@ -13,14 +13,6 @@ import { apiFetch } from "@/lib/api";
 interface TimelinePanelProps {
   projectId: string;
 }
-
-type StatusValue = "draft" | "approved" | "needs_fix";
-
-const STATUS_BADGE: Record<string, string> = {
-  draft:      "bg-zinc-700 text-zinc-300",
-  approved:   "bg-green-900/60 text-green-300",
-  needs_fix:  "bg-red-900/60 text-red-300",
-};
 
 function formatRange(start: string, end: string) {
   // Show compact MM:SS.s form
@@ -121,6 +113,7 @@ export default function TimelinePanel({ projectId }: TimelinePanelProps) {
   const { project } = useProjectStore();
   const styles: Style[] = project?.styles ?? [];
   const placements: Placement[] = project?.placements ?? [];
+  const fonts: Font[] = project?.fonts ?? [];
   const canvas: Canvas = project?.canvas ?? { width: 1920, height: 1080, fps: 30 };
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -136,7 +129,7 @@ export default function TimelinePanel({ projectId }: TimelinePanelProps) {
 
   // ---- Segment field update helpers ----
 
-  const updateField = useCallback(async (field: "start" | "end" | "status" | "notes", value: string) => {
+  const updateField = useCallback(async (field: "start" | "end" | "notes", value: string) => {
     if (!effectiveSelected?.id) return;
     setSaving(true);
     setError(null);
@@ -177,7 +170,6 @@ export default function TimelinePanel({ projectId }: TimelinePanelProps) {
       await createSegment(projectId, {
         start: last?.end ?? "00:00:00.000",
         end:   last?.end ?? "00:00:03.000",
-        status: "draft",
         blocks: [{ text: "", style: styles[0]?.id, placement: placements[0]?.id }],
       });
     } catch (e: unknown) {
@@ -271,7 +263,6 @@ export default function TimelinePanel({ projectId }: TimelinePanelProps) {
               segments.map((seg, i) => {
                 const isActive = seg.id === (effectiveSelected?.id);
                 const preview = seg.blocks.map((b) => b.text).filter(Boolean).join(" / ");
-                const statusClass = STATUS_BADGE[seg.status ?? "draft"] ?? STATUS_BADGE.draft;
 
                 return (
                   <button
@@ -284,9 +275,6 @@ export default function TimelinePanel({ projectId }: TimelinePanelProps) {
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs font-mono text-zinc-600 dark:text-zinc-500 shrink-0">{String(i + 1).padStart(2, "0")}</span>
-                      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${statusClass}`}>
-                        {seg.status ?? "draft"}
-                      </span>
                     </div>
                     <div className="text-xs font-mono text-zinc-700 dark:text-zinc-300 mb-0.5">
                       {formatRange(seg.start, seg.end)}
@@ -307,7 +295,7 @@ export default function TimelinePanel({ projectId }: TimelinePanelProps) {
             </div>
           ) : (
             <>
-              {/* Timing + status */}
+              {/* Timing */}
               <div className="flex flex-wrap gap-4 items-end">
                 <TimestampInput
                   label="Start"
@@ -319,18 +307,6 @@ export default function TimelinePanel({ projectId }: TimelinePanelProps) {
                   value={effectiveSelected.end}
                   onChange={(v) => updateField("end", v)}
                 />
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs text-zinc-500 dark:text-zinc-400">Status</label>
-                  <select
-                    value={effectiveSelected.status ?? "draft"}
-                    onChange={(e) => updateField("status", e.target.value)}
-                    className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-400 dark:border-zinc-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  >
-                    {(["draft", "approved", "needs_fix"] as StatusValue[]).map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </div>
               </div>
 
               {/* Notes */}
@@ -373,6 +349,7 @@ export default function TimelinePanel({ projectId }: TimelinePanelProps) {
                     index={i}
                     styles={styles}
                     placements={placements}
+                    fonts={fonts}
                     onChange={(updates) => updateBlock(i, updates)}
                   />
                 ))}
