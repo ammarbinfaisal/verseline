@@ -9,19 +9,20 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 const BUCKET = process.env.R2_BUCKET_NAME ?? "verseline";
 
 export function getR2Client(): S3Client {
-  const accountId = process.env.R2_ACCOUNT_ID;
-  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+  const endpoint = process.env.R2_ENDPOINT;
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID ?? process.env.R2_ACCOUNT_ID;
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY ?? process.env.R2_SECRET_KEY;
 
-  if (!accountId || !accessKeyId || !secretAccessKey) {
+  if (!endpoint || !accessKeyId || !secretAccessKey) {
     throw new Error(
-      "R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, and R2_SECRET_ACCESS_KEY environment variables are required",
+      "R2_ENDPOINT, R2_ACCESS_KEY_ID (or R2_ACCOUNT_ID), and R2_SECRET_ACCESS_KEY (or R2_SECRET_KEY) environment variables are required",
     );
   }
 
   return new S3Client({
     region: "auto",
-    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+    endpoint,
+    forcePathStyle: true,
     credentials: {
       accessKeyId,
       secretAccessKey,

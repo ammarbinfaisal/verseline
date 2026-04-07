@@ -10,6 +10,8 @@ import fontsRouter from "./routes/fonts.js";
 import renderRouter from "./routes/render.js";
 import assetsRouter from "./routes/assets.js";
 import importExportRouter from "./routes/import-export.js";
+import libraryRouter from "./routes/library.js";
+import pexelsRouter from "./routes/pexels.js";
 import renderProgressRouter from "./ws/render-progress.js";
 
 type AuthEnv = {
@@ -51,6 +53,14 @@ app.route("/projects", assetsRouter);
 
 // Import/export routes
 app.route("/projects", importExportRouter);
+
+// Protected library routes
+app.use("/library/*", authMiddleware);
+app.route("/library", libraryRouter);
+
+// Protected Pexels routes
+app.use("/pexels/*", authMiddleware);
+app.route("/pexels", pexelsRouter);
 
 // WebSocket render progress (no HTTP auth — jobId is the implicit secret)
 app.route("/ws/render", renderProgressRouter);

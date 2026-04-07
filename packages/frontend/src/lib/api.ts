@@ -2,6 +2,49 @@ import type { Project, Segment, SegmentUpdates, SplitRequest } from "@verseline/
 import { tsToMillis, millisToTs } from "@verseline/shared";
 import { getToken } from "./auth";
 
+export interface LibraryAsset {
+  id: string;
+  name: string;
+  assetType: string;
+  r2Key: string | null;
+  filename: string;
+  contentType: string | null;
+  metadata: Record<string, unknown>;
+  pexelsId: string | null;
+  pexelsUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PexelsPhoto {
+  id: number;
+  width: number;
+  height: number;
+  url: string;
+  photographer: string;
+  alt: string;
+  src: { original: string; large2x: string; large: string; medium: string; small: string; portrait: string; landscape: string; tiny: string };
+}
+
+export interface PexelsVideo {
+  id: number;
+  width: number;
+  height: number;
+  url: string;
+  image: string;
+  duration: number;
+  user: { name: string; url: string };
+  video_files: { id: number; quality: string; file_type: string; width: number; height: number; link: string }[];
+}
+
+export interface SavedSearch {
+  id: string;
+  query: string;
+  searchType: string;
+  resultCount: number | null;
+  createdAt: string;
+}
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 // --- Core fetch wrapper ---
@@ -245,7 +288,65 @@ const importExport = {
   },
 };
 
+// --- Library ---
+
+const library = {
+  async list(filter?: { type?: string; q?: string; page?: number; limit?: number }) {
+    const params = new URLSearchParams();
+    if (filter?.type) params.set("type", filter.type);
+    if (filter?.q) params.set("q", filter.q);
+    if (filter?.page) params.set("page", String(filter.page));
+    if (filter?.limit) params.set("limit", String(filter.limit));
+    const qs = params.toString();
+    return apiFetch<{ assets: LibraryAsset[]; total: number }>(`/library${qs ? `?${qs}` : ""}`);
+  },
+  async get(id: string) {
+    return apiFetch<{ asset: LibraryAsset; projects: { id: string; name: string }[] }>(`/library/${id}`);
+  },
+  async getUploadUrl(data: { filename: string; contentType: string; assetType: string }) {
+    return apiFetch<{ uploadUrl: string; key: string }>("/library/upload-url", { method: "POST", body: JSON.stringify(data) });
+  },
+  async confirm(data: { key: string; assetType: string; filename: string; contentType: string; name?: string; metadata?: Record<string, unknown> }) {
+    return apiFetch<{ asset: LibraryAsset }>("/library/confirm", { method: "POST", body: JSON.stringify(data) });
+  },
+  async update(id: string, data: { name?: string; metadata?: Record<string, unknown> }) {
+    return apiFetch<{ asset: LibraryAsset }>(`/library/${id}`, { method: "PUT", body: JSON.stringify(data) });
+  },
+  async delete(id: string) {
+    return apiFetch<void>(`/library/${id}`, { method: "DELETE" });
+  },
+  async linkToProject(assetId: string, projectId: string) {
+    return apiFetch<{ linked: boolean }>(`/library/${assetId}/link/${projectId}`, { method: "POST" });
+  },
+  async unlinkFromProject(assetId: string, projectId: string) {
+    return apiFetch<void>(`/library/${assetId}/link/${projectId}`, { method: "DELETE" });
+  },
+};
+
+// --- Pexels ---
+
+const pexels = {
+  async searchPhotos(query: string, page = 1, perPage = 20) {
+    return apiFetch<{ photos: PexelsPhoto[]; totalResults: number; libraryIds: Record<string, string> }>(`/pexels/photos?query=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`);
+  },
+  async searchVideos(query: string, page = 1, perPage = 20) {
+    return apiFetch<{ videos: PexelsVideo[]; totalResults: number; libraryIds: Record<string, string> }>(`/pexels/videos?query=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`);
+  },
+  async saveToLibrary(data: { pexelsId: string; url: string; type: "photo" | "video"; name?: string; photographer?: string }) {
+    return apiFetch<{ asset: LibraryAsset }>("/pexels/save", { method: "POST", body: JSON.stringify(data) });
+  },
+  async listSearches() {
+    return apiFetch<{ searches: SavedSearch[] }>("/pexels/searches");
+  },
+  async saveSearch(data: { query: string; searchType?: string; resultCount?: number }) {
+    return apiFetch<{ search: SavedSearch }>("/pexels/searches", { method: "POST", body: JSON.stringify(data) });
+  },
+  async deleteSearch(id: string) {
+    return apiFetch<void>(`/pexels/searches/${id}`, { method: "DELETE" });
+  },
+};
+
 // --- Exported API object ---
 
-export const api = { auth, projects, segments, importExport };
+export const api = { auth, projects, segments, importExport, library, pexels };
 export { apiFetch };

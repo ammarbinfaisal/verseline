@@ -32,6 +32,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Link href="/projects" className="text-sm font-semibold text-zinc-900 dark:text-white tracking-tight">
           Verseline
         </Link>
+        <Link
+          href="/projects"
+          className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
+        >
+          Projects
+        </Link>
+        <Link
+          href="/library"
+          className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
+        >
+          Library
+        </Link>
         <div className="flex-1" />
         {user && (
           <span className="text-xs text-zinc-600 dark:text-zinc-500 hidden sm:block">{user.email}</span>

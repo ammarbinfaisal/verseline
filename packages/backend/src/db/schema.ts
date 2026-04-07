@@ -8,6 +8,7 @@ import {
   real,
   text,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -83,6 +84,71 @@ export const segments = pgTable(
       t.sortOrder,
     ),
   ],
+);
+
+// ---- library assets ----
+
+export const libraryAssets = pgTable(
+  "library_assets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    name: varchar("name", { length: 255 }).notNull(),
+    assetType: varchar("asset_type", { length: 50 }).notNull(),
+    r2Key: varchar("r2_key", { length: 500 }),
+    filename: varchar("filename", { length: 255 }).notNull(),
+    contentType: varchar("content_type", { length: 100 }),
+    metadata: jsonb("metadata").default(sql`'{}'::jsonb`),
+    pexelsId: varchar("pexels_id", { length: 50 }),
+    pexelsUrl: varchar("pexels_url", { length: 500 }),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => [
+    index("idx_library_assets_user").on(t.userId),
+    index("idx_library_assets_user_type").on(t.userId, t.assetType),
+    index("idx_library_assets_pexels").on(t.pexelsId),
+  ],
+);
+
+// ---- library asset <-> project join ----
+
+export const libraryAssetProjects = pgTable(
+  "library_asset_projects",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    libraryAssetId: uuid("library_asset_id")
+      .notNull()
+      .references(() => libraryAssets.id),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id),
+    linkedAt: timestamp("linked_at").defaultNow(),
+  },
+  (t) => [
+    index("idx_lap_library_asset").on(t.libraryAssetId),
+    index("idx_lap_project").on(t.projectId),
+    uniqueIndex("idx_lap_unique").on(t.libraryAssetId, t.projectId),
+  ],
+);
+
+// ---- saved searches ----
+
+export const savedSearches = pgTable(
+  "saved_searches",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    query: varchar("query", { length: 255 }).notNull(),
+    searchType: varchar("search_type", { length: 20 }).notNull().default("photo"),
+    resultCount: integer("result_count"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => [index("idx_saved_searches_user").on(t.userId)],
 );
 
 // ---- renderJobs ----

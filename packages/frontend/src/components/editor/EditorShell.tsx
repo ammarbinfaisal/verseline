@@ -500,11 +500,12 @@ function SettingsPanel({ project, projectId, onUpdateField }: {
   projectId: string;
   onUpdateField: (path: string, value: unknown) => void;
 }) {
+  const bg = project.assets?.background;
   const [bgMode, setBgMode] = useState<"upload" | "url">(
-    project.assets.background.path?.startsWith("projects/") ? "upload" : "url"
+    bg?.path?.startsWith("projects/") ? "upload" : "url"
   );
   const [audioMode, setAudioMode] = useState<"upload" | "url">(
-    (project.assets.audio ?? "")?.startsWith("projects/") ? "upload" : "url"
+    (project.assets?.audio ?? "").startsWith("projects/") ? "upload" : "url"
   );
 
   return (
@@ -543,14 +544,14 @@ function SettingsPanel({ project, projectId, onUpdateField }: {
             <AssetUploader
               label="Background image/video"
               fieldPath="assets.background.path"
-              currentValue={project.assets.background.path}
+              currentValue={bg?.path}
               accept="image/*,video/*"
               assetType="background"
             />
           ) : (
             <Field
               label="Background URL"
-              value={project.assets.background.path}
+              value={bg?.path ?? ""}
               onChange={(v) => onUpdateField("assets.background.path", v)}
               placeholder="https://example.com/bg.jpg"
             />
@@ -558,7 +559,7 @@ function SettingsPanel({ project, projectId, onUpdateField }: {
           <div className="flex flex-col gap-1">
             <label className="text-xs text-zinc-500 dark:text-zinc-400">Fit</label>
             <select
-              value={project.assets.background.fit ?? "cover"}
+              value={bg?.fit ?? "cover"}
               onChange={(e) => onUpdateField("assets.background.fit", e.target.value)}
               className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-400 dark:border-zinc-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
             >
@@ -586,14 +587,14 @@ function SettingsPanel({ project, projectId, onUpdateField }: {
             <AssetUploader
               label="Audio file"
               fieldPath="assets.audio"
-              currentValue={project.assets.audio ?? ""}
+              currentValue={project.assets?.audio ?? ""}
               accept="audio/*"
               assetType="audio"
             />
           ) : (
             <Field
               label="Audio URL"
-              value={project.assets.audio ?? ""}
+              value={project.assets?.audio ?? ""}
               onChange={(v) => onUpdateField("assets.audio", v || undefined)}
               placeholder="https://example.com/audio.mp3"
             />
