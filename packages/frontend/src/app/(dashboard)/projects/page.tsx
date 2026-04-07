@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useState, useRef } from "react";
+import { useMountEffect } from "@/hooks/useMountEffect";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api, type ProjectRecord } from "@/lib/api";
@@ -14,13 +15,13 @@ export default function ProjectsPage() {
   const [importing, setImporting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  useMountEffect(() => {
     api.projects
       .list()
       .then(setProjects)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, []);
+  });
 
   async function handleNewProject() {
     setCreating(true);

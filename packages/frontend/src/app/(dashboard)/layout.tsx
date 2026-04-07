@@ -1,21 +1,20 @@
 "use client";
 
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/stores/auth-store";
+import { useMountEffect } from "@/hooks/useMountEffect";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, loading, loadUser, logout } = useAuthStore();
 
-  useEffect(() => {
+  useMountEffect(() => {
     loadUser().then(() => {
       const { user } = useAuthStore.getState();
       if (!user) router.replace("/login");
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  });
 
   if (loading && !user) {
     return (

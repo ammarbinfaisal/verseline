@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useMountEffect } from "./useMountEffect";
 
 export interface RenderProgressState {
   percent: number;
@@ -23,26 +24,18 @@ const INITIAL_STATE: RenderProgressState = {
  * progress updates until the job reaches a terminal state.
  *
  * Pass `null` for jobId to stay disconnected (e.g. before a job is started).
+ * If jobId is null the hook does nothing — no connection is opened.
+ *
+ * Callers must use `key={jobId}` on the component that calls this hook so
+ * that a jobId change forces a remount, which tears down the old WebSocket
+ * and opens a new one. This avoids needing useEffect with a dependency array.
  */
 export function useRenderProgress(jobId: string | null): RenderProgressState {
   const [state, setState] = useState<RenderProgressState>(INITIAL_STATE);
   const wsRef = useRef<WebSocket | null>(null);
 
-  useEffect(() => {
-    // Clean up any previous connection
-    if (wsRef.current) {
-      wsRef.current.onopen = null;
-      wsRef.current.onmessage = null;
-      wsRef.current.onerror = null;
-      wsRef.current.onclose = null;
-      wsRef.current.close();
-      wsRef.current = null;
-    }
-
-    if (!jobId) {
-      setState(INITIAL_STATE);
-      return;
-    }
+  useMountEffect(() => {
+    if (!jobId) return;
 
     // Build the WebSocket URL from the HTTP API base URL
     const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
@@ -98,7 +91,7 @@ export function useRenderProgress(jobId: string | null): RenderProgressState {
       ws.close();
       wsRef.current = null;
     };
-  }, [jobId]);
+  });
 
   return state;
 }

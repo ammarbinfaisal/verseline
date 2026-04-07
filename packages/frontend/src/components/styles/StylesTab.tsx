@@ -57,6 +57,7 @@ export function StylesTab() {
       {/* Right: editor */}
       <div className="flex-1 min-w-0">
         <StyleEditor
+          key={isNew ? "__new__" : (selectedId ?? "__none__")}
           style={isNew ? null : selected}
           isNew={isNew}
           fonts={fonts}

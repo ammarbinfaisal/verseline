@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 
 interface TimestampInputProps {
   value: string;
@@ -27,10 +27,9 @@ export default function TimestampInput({ value, onChange, label, className = "" 
   const [error, setError] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Sync display when external value changes (and not currently editing)
-  useEffect(() => {
-    if (!editing) setDraft(value);
-  }, [value, editing]);
+  // When not editing, the displayed value is always the external value.
+  // When editing, we show the local draft. No effect needed — derive directly.
+  const displayValue = editing ? draft : value;
 
   function handleFocus() {
     setEditing(true);
@@ -65,7 +64,7 @@ export default function TimestampInput({ value, onChange, label, className = "" 
       <input
         ref={inputRef}
         type="text"
-        value={draft}
+        value={displayValue}
         placeholder="00:00:00.000"
         onChange={(e) => setDraft(e.target.value)}
         onFocus={handleFocus}

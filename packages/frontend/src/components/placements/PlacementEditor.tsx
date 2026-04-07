@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { Placement, Anchor } from "@verseline/shared";
 import { AnchorPicker } from "./AnchorPicker";
 
@@ -50,11 +50,9 @@ function NumberField({
 }
 
 export function PlacementEditor({ placement, isNew, onSave, onDelete, onCancel }: PlacementEditorProps) {
+  // State is initialized from props; the parent uses key={placement?.id ?? '__new__'} to remount
+  // this component whenever the selected placement changes, so no sync effect is needed.
   const [form, setForm] = useState<Placement>(placement ?? EMPTY);
-
-  useEffect(() => {
-    setForm(placement ?? EMPTY);
-  }, [placement]);
 
   if (!placement && !isNew) {
     return (
