@@ -4,3 +4,12 @@
 *.txt
 *.layers/
 verseline
+.vercel
+node_modules/
+.next/
+.env
+.env.local
+packages/backend/.env
+packages/frontend/.env.local
+packages/backend/drizzle/*.sql
+dist/

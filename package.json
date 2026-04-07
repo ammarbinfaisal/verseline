@@ -1,0 +1,5 @@
+{
+  "name": "verseline",
+  "private": true,
+  "workspaces": ["packages/*"]
+}
