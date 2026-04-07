@@ -1,4 +1,5 @@
 import type { Project, Segment, SegmentUpdates, SplitRequest } from "@verseline/shared";
+import { tsToMillis, millisToTs } from "@verseline/shared";
 import { getToken } from "./auth";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
@@ -127,35 +128,83 @@ const projects = {
 
 // --- Segments ---
 
+// The backend stores startMs/endMs as numbers, but the frontend Segment type
+// uses start/end as timestamp strings. These helpers convert between the two.
+
+interface DbSegment {
+  id?: string;
+  startMs: number;
+  endMs: number;
+  status?: string;
+  confidence?: number | null;
+  notes?: string | null;
+  blocks: unknown[];
+  [key: string]: unknown;
+}
+
+function dbSegmentToFrontend(row: DbSegment): Segment {
+  return {
+    id: row.id,
+    start: millisToTs(row.startMs),
+    end: millisToTs(row.endMs),
+    status: row.status,
+    confidence: row.confidence ?? undefined,
+    notes: row.notes ?? undefined,
+    blocks: row.blocks as Segment["blocks"],
+  };
+}
+
 const segments = {
   async list(projectId: string, kind?: "draft" | "approved"): Promise<Segment[]> {
     const qs = kind ? `?kind=${kind}` : "";
-    const res = await apiFetch<{ segments: Segment[] }>(`/projects/${projectId}/segments${qs}`);
-    return res.segments;
+    const res = await apiFetch<{ segments: DbSegment[] }>(`/projects/${projectId}/segments${qs}`);
+    return res.segments.map(dbSegmentToFrontend);
   },
 
   async create(projectId: string, data: Partial<Segment>): Promise<Segment> {
-    const res = await apiFetch<{ segment: Segment }>(`/projects/${projectId}/segments`, {
+    // Convert frontend start/end strings to backend startMs/endMs numbers
+    const body: Record<string, unknown> = { ...data };
+    if (typeof data.start === "string") {
+      body.startMs = tsToMillis(data.start);
+      delete body.start;
+    }
+    if (typeof data.end === "string") {
+      body.endMs = tsToMillis(data.end);
+      delete body.end;
+    }
+
+    const res = await apiFetch<{ segment: DbSegment }>(`/projects/${projectId}/segments`, {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify(body),
     });
-    return res.segment;
+    return dbSegmentToFrontend(res.segment);
   },
 
   async update(projectId: string, segId: string, data: SegmentUpdates): Promise<Segment> {
-    const res = await apiFetch<{ segment: Segment }>(`/projects/${projectId}/segments/${segId}`, {
+    // Convert frontend start/end strings to backend startMs/endMs numbers
+    const body: Record<string, unknown> = { ...data };
+    if (typeof data.start === "string") {
+      body.startMs = tsToMillis(data.start);
+      delete body.start;
+    }
+    if (typeof data.end === "string") {
+      body.endMs = tsToMillis(data.end);
+      delete body.end;
+    }
+
+    const res = await apiFetch<{ segment: DbSegment }>(`/projects/${projectId}/segments/${segId}`, {
       method: "PUT",
-      body: JSON.stringify(data),
+      body: JSON.stringify(body),
     });
-    return res.segment;
+    return dbSegmentToFrontend(res.segment);
   },
 
   async split(projectId: string, segId: string, data: SplitRequest): Promise<Segment[]> {
-    const res = await apiFetch<{ segments: Segment[] }>(`/projects/${projectId}/segments/${segId}/split`, {
+    const res = await apiFetch<{ segments: DbSegment[] }>(`/projects/${projectId}/segments/${segId}/split`, {
       method: "POST",
       body: JSON.stringify(data),
     });
-    return res.segments;
+    return res.segments.map(dbSegmentToFrontend);
   },
 
   delete(projectId: string, segId: string): Promise<void> {
