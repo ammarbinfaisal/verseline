@@ -1,12 +1,16 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Suspense } from "react";
 import { useAuthStore } from "@/stores/auth-store";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const resetSuccess = searchParams.get("reset") === "success";
+
   const login = useAuthStore((s) => s.login);
   const loading = useAuthStore((s) => s.loading);
 
@@ -28,6 +32,12 @@ export default function LoginPage() {
   return (
     <>
       <h2 className="text-xl font-semibold text-white mb-6">Log in</h2>
+
+      {resetSuccess && (
+        <p className="text-sm text-green-400 bg-green-950/40 border border-green-900 rounded-lg px-3 py-2 mb-4">
+          Password reset successfully. You can now log in with your new password.
+        </p>
+      )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
@@ -77,12 +87,26 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-zinc-500">
+      <p className="mt-4 text-center text-sm">
+        <Link href="/forgot-password" className="text-zinc-400 hover:text-white transition-colors">
+          Forgot password?
+        </Link>
+      </p>
+
+      <p className="mt-3 text-center text-sm text-zinc-500">
         No account?{" "}
         <Link href="/signup" className="text-zinc-300 hover:text-white transition-colors">
           Sign up
         </Link>
       </p>
     </>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

@@ -3,15 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { api } from "@/lib/api";
-import type { Project } from "@verseline/shared";
-
-interface ProjectRecord {
-  id: string;
-  data: Project;
-  created_at: string;
-  updated_at: string;
-}
+import { api, type ProjectRecord } from "@/lib/api";
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -161,14 +153,14 @@ export default function ProjectsPage() {
               className="group block bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-zinc-600 transition-colors"
             >
               <h2 className="font-medium text-white text-sm truncate group-hover:text-zinc-100 mb-2">
-                {p.data.name ?? "Untitled project"}
+                {p.name ?? "Untitled project"}
               </h2>
               <p className="text-xs text-zinc-500">
-                {p.data.canvas.width} &times; {p.data.canvas.height} &middot;{" "}
-                {p.data.canvas.fps} fps
+                {p.canvas?.width} &times; {p.canvas?.height} &middot;{" "}
+                {p.canvas?.fps} fps
               </p>
               <p className="text-xs text-zinc-600 mt-3">
-                {new Date(p.updated_at).toLocaleDateString(undefined, {
+                {new Date(p.updatedAt ?? p.createdAt).toLocaleDateString(undefined, {
                   year: "numeric",
                   month: "short",
                   day: "numeric",

@@ -8,7 +8,6 @@ import {
   isLegacyProject,
   UnifiedFormatSchema,
   type VerselineFile,
-  type VerselineFileSegment,
   encodeVerseline,
   decodeVerseline,
   isVerselineBinary,
@@ -175,11 +174,10 @@ importExport.post("/import", async (c) => {
   return c.json({ project }, 201);
 });
 
-// GET /projects/:id/export — export as .verseline (binary), .verseline.json, or legacy
+// GET /projects/:id/export — export as .verseline binary
 importExport.get("/:id/export", async (c) => {
   const userId = getUserId(c);
   const id = c.req.param("id");
-  const format = c.req.query("format") ?? "binary";
 
   const [project] = await db
     .select()
@@ -218,51 +216,13 @@ importExport.get("/:id/export", async (c) => {
   };
 
   const slug = project.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "project";
-
-  if (format === "binary") {
-    const bytes = encodeVerseline(fileData);
-    return new Response(bytes as unknown as BodyInit, {
-      headers: {
-        "Content-Type": "application/octet-stream",
-        "Content-Disposition": `attachment; filename="${slug}.verseline"`,
-      },
-    });
-  }
-
-  if (format === "json") {
-    const json = JSON.stringify(fileData, null, 2);
-    return new Response(json, {
-      headers: {
-        "Content-Type": "application/json",
-        "Content-Disposition": `attachment; filename="${slug}.verseline.json"`,
-      },
-    });
-  }
-
-  // legacy format — return both as JSON envelope
-  const { millisToTs } = await import("@verseline/shared");
-  const legacyProject = {
-    name: project.name,
-    canvas: project.canvas,
-    assets: project.assets,
-    fonts: project.fonts,
-    styles: project.styles,
-    placements: project.placements,
-    sources: project.sources,
-    overlays: project.overlays,
-    render_profiles: project.renderProfiles,
-    timeline: { draft: "timeline.jsonl" },
-  };
-  const legacySegments = segs.map((s) => ({
-    start: millisToTs(s.startMs),
-    end: millisToTs(s.endMs),
-    status: s.status,
-    confidence: s.confidence,
-    notes: s.notes,
-    blocks: s.blocks,
-  }));
-
-  return c.json({ project: legacyProject, timeline: legacySegments });
+  const bytes = encodeVerseline(fileData);
+  return new Response(bytes as unknown as BodyInit, {
+    headers: {
+      "Content-Type": "application/octet-stream",
+      "Content-Disposition": `attachment; filename="${slug}.verseline"`,
+    },
+  });
 });
 
 export default importExport;

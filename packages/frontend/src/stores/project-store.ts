@@ -39,7 +39,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     set({ loading: true });
     try {
       const record = await api.projects.get(id);
-      set({ project: { ...record.data, id: record.id }, loading: false, dirty: false });
+      set({ project: { ...record, id: record.id } as any, loading: false, dirty: false });
     } catch (err) {
       set({ loading: false });
       throw err;
@@ -53,7 +53,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     try {
       const { id, ...data } = project;
       const record = await api.projects.update(id, data as Project);
-      set({ project: { ...record.data, id: record.id }, loading: false, dirty: false });
+      set({ project: { ...record, id: record.id } as any, loading: false, dirty: false });
     } catch (err) {
       set({ loading: false });
       throw err;

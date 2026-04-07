@@ -56,41 +56,68 @@ const auth = {
     });
   },
 
-  me(): Promise<{ id: string; email: string }> {
-    return apiFetch("/auth/me");
+  async me(): Promise<{ id: string; email: string }> {
+    const res = await apiFetch<{ user: { id: string; email: string } }>("/auth/me");
+    return res.user;
+  },
+
+  forgotPassword(email: string): Promise<{ message: string }> {
+    return apiFetch("/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  resetPassword(token: string, password: string): Promise<{ message: string }> {
+    return apiFetch("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ token, password }),
+    });
   },
 };
 
 // --- Projects ---
 
-interface ProjectRecord {
+export interface ProjectRecord {
   id: string;
-  data: Project;
-  created_at: string;
-  updated_at: string;
+  name: string;
+  canvas: { width: number; height: number; fps: number };
+  assets: Record<string, unknown>;
+  fonts: Record<string, unknown>[];
+  styles: Record<string, unknown>[];
+  placements: Record<string, unknown>[];
+  sources: Record<string, unknown>[];
+  overlays: Record<string, unknown>[];
+  renderProfiles: Record<string, unknown>[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 const projects = {
-  list(): Promise<ProjectRecord[]> {
-    return apiFetch("/projects");
+  async list(): Promise<ProjectRecord[]> {
+    const res = await apiFetch<{ projects: ProjectRecord[] }>("/projects");
+    return res.projects;
   },
 
-  get(id: string): Promise<ProjectRecord> {
-    return apiFetch(`/projects/${id}`);
+  async get(id: string): Promise<ProjectRecord> {
+    const res = await apiFetch<{ project: ProjectRecord }>(`/projects/${id}`);
+    return res.project;
   },
 
-  create(data: Partial<Project>): Promise<ProjectRecord> {
-    return apiFetch("/projects", {
+  async create(data: Partial<Project>): Promise<ProjectRecord> {
+    const res = await apiFetch<{ project: ProjectRecord }>("/projects", {
       method: "POST",
       body: JSON.stringify(data),
     });
+    return res.project;
   },
 
-  update(id: string, data: Partial<Project>): Promise<ProjectRecord> {
-    return apiFetch(`/projects/${id}`, {
+  async update(id: string, data: Partial<Project>): Promise<ProjectRecord> {
+    const res = await apiFetch<{ project: ProjectRecord }>(`/projects/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
     });
+    return res.project;
   },
 
   delete(id: string): Promise<void> {
@@ -101,30 +128,34 @@ const projects = {
 // --- Segments ---
 
 const segments = {
-  list(projectId: string, kind?: "draft" | "approved"): Promise<Segment[]> {
+  async list(projectId: string, kind?: "draft" | "approved"): Promise<Segment[]> {
     const qs = kind ? `?kind=${kind}` : "";
-    return apiFetch(`/projects/${projectId}/segments${qs}`);
+    const res = await apiFetch<{ segments: Segment[] }>(`/projects/${projectId}/segments${qs}`);
+    return res.segments;
   },
 
-  create(projectId: string, data: Partial<Segment>): Promise<Segment> {
-    return apiFetch(`/projects/${projectId}/segments`, {
+  async create(projectId: string, data: Partial<Segment>): Promise<Segment> {
+    const res = await apiFetch<{ segment: Segment }>(`/projects/${projectId}/segments`, {
       method: "POST",
       body: JSON.stringify(data),
     });
+    return res.segment;
   },
 
-  update(projectId: string, segId: string, data: SegmentUpdates): Promise<Segment> {
-    return apiFetch(`/projects/${projectId}/segments/${segId}`, {
-      method: "PATCH",
+  async update(projectId: string, segId: string, data: SegmentUpdates): Promise<Segment> {
+    const res = await apiFetch<{ segment: Segment }>(`/projects/${projectId}/segments/${segId}`, {
+      method: "PUT",
       body: JSON.stringify(data),
     });
+    return res.segment;
   },
 
-  split(projectId: string, segId: string, data: SplitRequest): Promise<Segment[]> {
-    return apiFetch(`/projects/${projectId}/segments/${segId}/split`, {
+  async split(projectId: string, segId: string, data: SplitRequest): Promise<Segment[]> {
+    const res = await apiFetch<{ segments: Segment[] }>(`/projects/${projectId}/segments/${segId}/split`, {
       method: "POST",
       body: JSON.stringify(data),
     });
+    return res.segments;
   },
 
   delete(projectId: string, segId: string): Promise<void> {
@@ -167,8 +198,8 @@ const importExport = {
     return res.json();
   },
 
-  exportUrl(projectId: string, format: "binary" | "json" | "legacy" = "binary"): string {
-    return `${BASE_URL}/projects/${projectId}/export?format=${format}`;
+  exportUrl(projectId: string): string {
+    return `${BASE_URL}/projects/${projectId}/export`;
   },
 };
 
