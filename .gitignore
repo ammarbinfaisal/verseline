@@ -5,6 +5,7 @@
 *.layers/
 verseline
 .vercel
+raw-projects/
 node_modules/
 .next/
 .env
