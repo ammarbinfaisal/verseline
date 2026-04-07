@@ -1,5 +1,5 @@
-import type { Block, Project, Segment } from "./types.js";
-import { tsToMillis } from "./timestamps.js";
+import type { Block, Project, Segment } from "./types";
+import { tsToMillis } from "./timestamps";
 
 export function validateProject(project: Project): string | null {
   if (project.canvas.width <= 0 || project.canvas.height <= 0) {

@@ -9,7 +9,7 @@ import {
   OverlaySchema,
   RenderProfileSchema,
   BlockSchema,
-} from "./types.js";
+} from "./types";
 
 // --- Unified .verseline format (v1) ---
 

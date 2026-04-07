@@ -1,5 +1,5 @@
 import { pack, unpack } from "msgpackr";
-import type { Block, Style, Placement, Font, Source, Overlay, RenderProfile } from "./types.js";
+import type { Block, Style, Placement, Font, Source, Overlay, RenderProfile } from "./types";
 
 /**
  * Verseline binary format (.verseline)
