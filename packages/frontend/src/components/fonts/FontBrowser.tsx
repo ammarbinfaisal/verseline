@@ -23,6 +23,33 @@ const CATEGORY_COLORS: Record<string, string> = {
   monospace: "bg-green-900/50 text-green-300",
 };
 
+const SAMPLE_TEXT = "Aḥādīth of Rasūllullāh صلى الله عليه وسلم";
+
+/** Injects a Google Fonts CSS <link> and renders sample text in that font. */
+function GoogleFontPreview({ family }: { family: string }) {
+  useEffect(() => {
+    const id = `gf-${family.replace(/\s+/g, "-")}`;
+    if (document.getElementById(id)) return;
+    const link = document.createElement("link");
+    link.id = id;
+    link.rel = "stylesheet";
+    link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}&display=swap`;
+    document.head.appendChild(link);
+    return () => {
+      document.getElementById(id)?.remove();
+    };
+  }, [family]);
+
+  return (
+    <span
+      className="text-xs text-zinc-600 dark:text-zinc-500 italic"
+      style={{ fontFamily: `"${family}", sans-serif` }}
+    >
+      {SAMPLE_TEXT}
+    </span>
+  );
+}
+
 export function FontBrowser({ onClose }: FontBrowserProps) {
   const { project, upsertFont } = useProjectStore();
   const [query, setQuery] = useState("");
@@ -140,10 +167,8 @@ export function FontBrowser({ onClose }: FontBrowserProps) {
                         {font.category}
                       </span>
                     </div>
-                    {/* Sample text */}
-                    <span className="text-xs text-zinc-600 dark:text-zinc-500 italic">
-                      The quick brown fox jumps over the lazy dog
-                    </span>
+                    {/* Sample text rendered in actual font */}
+                    <GoogleFontPreview family={font.family} />
                   </div>
 
                   {/* Download button */}
