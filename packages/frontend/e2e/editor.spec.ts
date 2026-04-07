@@ -28,8 +28,7 @@ test.describe("Editor", () => {
     await injectAuth(page, token);
     await page.goto(`/projects/${projectId}`);
 
-    await expect(page.getByRole("button", { name: "Timeline" })).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByRole("button", { name: "Styles" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Styles" })).toBeVisible({ timeout: 10_000 });
     await expect(page.getByRole("button", { name: "Placements" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Fonts" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Settings" })).toBeVisible();
@@ -38,7 +37,7 @@ test.describe("Editor", () => {
   test("empty timeline shows no segments message", async ({ page }) => {
     await injectAuth(page, token);
     await page.goto(`/projects/${projectId}`);
-    await expect(page.getByText(/no segments/i)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("No segments yet")).toBeVisible({ timeout: 10_000 });
   });
 
   test("add new segment via button", async ({ page }) => {
@@ -46,7 +45,7 @@ test.describe("Editor", () => {
     await page.goto(`/projects/${projectId}`);
     await page.waitForLoadState("networkidle");
 
-    await page.getByRole("button", { name: /new segment/i }).click();
+    await page.getByRole("button", { name: "+ New" }).click();
 
     // New segment shows time range like "00:00.000 – 00:03.000" (formatRange strips leading 00:)
     await expect(page.getByText(/00:00\.000/)).toBeVisible({ timeout: 10_000 });
@@ -59,19 +58,27 @@ test.describe("Editor", () => {
 
     // Click Styles tab
     await page.getByRole("button", { name: "Styles" }).click();
-    await expect(page.getByRole("button", { name: /new/i })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/new style/i)).toBeVisible({ timeout: 5000 });
 
     // Click Placements tab
     await page.getByRole("button", { name: "Placements" }).click();
-    await expect(page.getByRole("button", { name: /new/i })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/new placement/i)).toBeVisible({ timeout: 5000 });
 
     // Click Settings tab
     await page.getByRole("button", { name: "Settings" }).click();
     await expect(page.getByText(/project settings/i)).toBeVisible({ timeout: 5000 });
 
-    // Back to Timeline
-    await page.getByRole("button", { name: "Timeline" }).click();
-    await expect(page.getByRole("button", { name: /new segment/i })).toBeVisible({ timeout: 5000 });
+    // Click Fonts tab
+    await page.getByRole("button", { name: "Fonts" }).click();
+    await expect(page.getByText(/project fonts/i)).toBeVisible({ timeout: 5000 });
+
+    // Click Settings again to toggle back to editor panel
+    await page.getByRole("button", { name: "Settings" }).click();
+    await page.getByRole("button", { name: "Settings" }).click();
+    // Either the segment editor or "No segment selected" should be visible
+    await expect(
+      page.getByText("No segment selected").or(page.locator("textarea"))
+    ).toBeVisible({ timeout: 5000 });
   });
 
   test("segment with blocks renders in timeline", async ({ page }) => {
