@@ -31,6 +31,8 @@ export interface VerselineFile {
   overlays: Overlay[];
   render_profiles: RenderProfile[];
   segments: VerselineFileSegment[];
+  /** Embedded source assets — maps asset key (e.g. "audio.mp3") to raw bytes. */
+  assets_data?: Record<string, Uint8Array>;
 }
 
 export interface VerselineFileSegment {
@@ -77,4 +79,3 @@ export function isVerselineBinary(bytes: Uint8Array): boolean {
 }
 
 export const VERSELINE_EXT = ".verseline";
-export const VERSELINE_JSON_EXT = ".verseline.json";

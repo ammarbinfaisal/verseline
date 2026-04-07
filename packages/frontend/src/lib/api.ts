@@ -223,16 +223,10 @@ const segments = {
 // --- Import/Export ---
 
 const importExport = {
-  async importFile(file: File, format?: "unified" | "legacy", timelineFile?: File): Promise<ProjectRecord> {
+  async importFile(file: File): Promise<ProjectRecord> {
     const token = getToken();
     const form = new FormData();
-    if (format === "legacy") {
-      form.set("format", "legacy");
-      form.set("project", file);
-      if (timelineFile) form.set("timeline", timelineFile);
-    } else {
-      form.set("file", file);
-    }
+    form.set("file", file);
     const headers: Record<string, string> = {};
     if (token) headers["Authorization"] = `Bearer ${token}`;
     const res = await fetch(`${BASE_URL}/projects/import`, {
