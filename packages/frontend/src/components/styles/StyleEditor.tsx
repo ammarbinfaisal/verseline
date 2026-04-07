@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { Style, Font } from "@verseline/shared";
 
 interface StyleEditorProps {
@@ -89,11 +89,9 @@ const EMPTY_STYLE: Style = {
 };
 
 export function StyleEditor({ style, isNew, fonts, onSave, onDelete, onCancel }: StyleEditorProps) {
+  // State is initialized from props; the parent uses key={style?.id ?? '__new__'} to remount
+  // this component whenever the selected style changes, so no sync effect is needed.
   const [form, setForm] = useState<Style>(style ?? EMPTY_STYLE);
-
-  useEffect(() => {
-    setForm(style ?? EMPTY_STYLE);
-  }, [style]);
 
   if (!style && !isNew) {
     return (

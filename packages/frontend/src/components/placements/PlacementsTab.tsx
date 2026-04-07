@@ -53,6 +53,7 @@ export function PlacementsTab() {
       </div>
       <div className="flex-1 min-w-0">
         <PlacementEditor
+          key={isNew ? "__new__" : (selectedId ?? "__none__")}
           placement={isNew ? null : selected}
           isNew={isNew}
           onSave={handleSave}

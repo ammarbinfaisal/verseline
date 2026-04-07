@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
+import { useMountEffect } from "@/hooks/useMountEffect";
 import { apiFetch } from "@/lib/api";
 import { useProjectStore } from "@/stores/project-store";
 import type { Font } from "@verseline/shared";
@@ -34,30 +35,34 @@ export function FontBrowser({ onClose }: FontBrowserProps) {
 
   const projectFontFamilies = new Set((project?.fonts ?? []).map((f) => f.family));
 
-  // Seed with already-added families
-  useEffect(() => {
+  // Seed with already-added families on mount
+  useMountEffect(() => {
     setDownloaded(new Set(projectFontFamilies));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  });
+
+  // Perform a search request (shared by mount and onChange)
+  const doSearch = useCallback((q: string) => {
+    setLoading(true);
+    apiFetch<{ fonts: GoogleFontMeta[] }>(
+      `/fonts/google?q=${encodeURIComponent(q.trim())}&limit=40`
+    )
+      .then((data) => setResults(data.fonts))
+      .catch(() => setResults([]))
+      .finally(() => setLoading(false));
   }, []);
 
-  // Search whenever query changes (debounced)
-  useEffect(() => {
+  // Fire initial search on mount so results show up immediately
+  useMountEffect(() => {
+    doSearch("");
+  });
+
+  // Debounced search triggered from the onChange handler
+  const runSearch = useCallback((q: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      const q = query.trim();
-      setLoading(true);
-      apiFetch<{ fonts: GoogleFontMeta[] }>(
-        `/fonts/google?q=${encodeURIComponent(q)}&limit=40`
-      )
-        .then((data) => setResults(data.fonts))
-        .catch(() => setResults([]))
-        .finally(() => setLoading(false));
+      doSearch(q);
     }, 300);
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [query]);
+  }, [doSearch]);
 
   const handleDownload = async (font: GoogleFontMeta) => {
     if (downloading.has(font.family)) return;
@@ -108,7 +113,7 @@ export function FontBrowser({ onClose }: FontBrowserProps) {
         <input
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => { setQuery(e.target.value); runSearch(e.target.value); }}
           placeholder="Search fonts..."
           autoFocus
           className="w-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition-colors"

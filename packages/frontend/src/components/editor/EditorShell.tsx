@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
+import { useMountEffect } from "@/hooks/useMountEffect";
 import { useProjectStore } from "@/stores/project-store";
 import { useTimelineStore } from "@/stores/timeline-store";
 import TimelinePanel from "./TimelinePanel";
@@ -44,10 +45,10 @@ export default function EditorShell({ projectId }: EditorShellProps) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
+  useMountEffect(() => {
     loadProject(projectId);
     loadSegments(projectId, "draft");
-  }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
+  });
 
   const handleSave = useCallback(async () => {
     setIsSaving(true);
@@ -61,17 +62,21 @@ export default function EditorShell({ projectId }: EditorShellProps) {
     }
   }, [saveProject]);
 
-  // Ctrl+S / Cmd+S keyboard shortcut
-  useEffect(() => {
+  // Keep a stable ref to handleSave so the keyboard listener never needs to re-register
+  const handleSaveRef = useRef(handleSave);
+  handleSaveRef.current = handleSave;
+
+  // Ctrl+S / Cmd+S keyboard shortcut — attached once on mount via ref pattern
+  useMountEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if ((e.ctrlKey || e.metaKey) && e.key === "s") {
         e.preventDefault();
-        handleSave();
+        handleSaveRef.current();
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [handleSave]);
+  });
 
   const isDirty = projectDirty || timelineDirty;
   const isLoading = projectLoading || timelineLoading;
