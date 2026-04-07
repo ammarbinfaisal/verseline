@@ -91,38 +91,38 @@ export function FontBrowser({ onClose }: FontBrowserProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b border-zinc-800 flex items-center gap-2">
-        <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest flex-1">
+      <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 flex items-center gap-2">
+        <h2 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest flex-1">
           Google Fonts
         </h2>
         <button
           onClick={onClose}
-          className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+          className="text-xs text-zinc-600 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 transition-colors"
         >
           Close
         </button>
       </div>
 
       {/* Search */}
-      <div className="px-4 py-3 border-b border-zinc-800">
+      <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800">
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search fonts..."
           autoFocus
-          className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition-colors"
+          className="w-full bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition-colors"
         />
       </div>
 
       {/* Results */}
       <div className="flex-1 overflow-y-auto">
         {loading ? (
-          <p className="px-4 py-6 text-xs text-zinc-500 text-center">Searching...</p>
+          <p className="px-4 py-6 text-xs text-zinc-600 dark:text-zinc-500 text-center">Searching...</p>
         ) : results.length === 0 ? (
-          <p className="px-4 py-6 text-xs text-zinc-600 text-center">No results.</p>
+          <p className="px-4 py-6 text-xs text-zinc-400 dark:text-zinc-600 text-center">No results.</p>
         ) : (
-          <ul className="divide-y divide-zinc-800">
+          <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
             {results.map((font) => {
               const isDone = downloaded.has(font.family);
               const isLoading = downloading.has(font.family);
@@ -133,7 +133,7 @@ export function FontBrowser({ onClose }: FontBrowserProps) {
                   <div className="flex-1 min-w-0">
                     {/* Name + badge */}
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-medium text-zinc-200 truncate">
+                      <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
                         {font.family}
                       </span>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${catClass}`}>
@@ -141,7 +141,7 @@ export function FontBrowser({ onClose }: FontBrowserProps) {
                       </span>
                     </div>
                     {/* Sample text */}
-                    <span className="text-xs text-zinc-500 italic">
+                    <span className="text-xs text-zinc-600 dark:text-zinc-500 italic">
                       The quick brown fox jumps over the lazy dog
                     </span>
                   </div>
@@ -152,10 +152,10 @@ export function FontBrowser({ onClose }: FontBrowserProps) {
                     disabled={isDone || isLoading}
                     className={`shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                       isDone
-                        ? "text-green-400 bg-green-900/30 cursor-default"
+                        ? "text-green-600 dark:text-green-400 bg-green-900/30 cursor-default"
                         : isLoading
-                        ? "text-zinc-500 bg-zinc-800 cursor-wait"
-                        : "text-zinc-300 bg-zinc-800 hover:bg-zinc-700 hover:text-white"
+                        ? "text-zinc-600 dark:text-zinc-500 bg-zinc-100 dark:bg-zinc-800 cursor-wait"
+                        : "text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white"
                     }`}
                   >
                     {isDone ? "Added" : isLoading ? "..." : "Download"}

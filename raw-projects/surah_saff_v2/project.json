@@ -1,0 +1,96 @@
+{
+  "name": "Surah As-Saff - Translation v2",
+  "output": "surah_saff_v2.mp4",
+  "canvas": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30
+  },
+  "assets": {
+    "audio": "../surah_saff/husary_surah_saff.m4a",
+    "background": {
+      "type": "image",
+      "path": "../surah_saff/bg.jpg",
+      "fit": "cover"
+    }
+  },
+  "fonts": [
+    {
+      "id": "merriweather",
+      "family": "Merriweather",
+      "files": [
+        "../static/Merriweather_48pt-SemiBold.ttf"
+      ]
+    }
+  ],
+  "styles": [
+    {
+      "id": "main",
+      "font": "merriweather",
+      "size": 42,
+      "color": "#FFFFFF",
+      "outline_color": "#000000",
+      "outline": 3,
+      "shadow_color": "#00000088",
+      "shadow": 4,
+      "text_bg": "#00000066",
+      "text_bg_pad": 24,
+      "text_bg_radius": 12,
+      "align": "center",
+      "line_height": 60
+    },
+    {
+      "id": "muted",
+      "font": "merriweather",
+      "size": 42,
+      "color": "#FFFFFFBB",
+      "outline_color": "#00000044",
+      "outline": 2,
+      "shadow_color": "#00000044",
+      "shadow": 3,
+      "align": "left",
+      "line_height": 60
+    },
+    {
+      "id": "label",
+      "font": "merriweather",
+      "size": 28,
+      "color": "#FFFFFF99",
+      "shadow_color": "#00000066",
+      "shadow": 3,
+      "align": "center",
+      "line_height": 36
+    },
+    {
+      "id": "attribution",
+      "font": "merriweather",
+      "size": 24,
+      "color": "#FFFFFF77",
+      "shadow_color": "#00000066",
+      "shadow": 3,
+      "align": "center",
+      "line_height": 32
+    }
+  ],
+  "placements": [
+    {
+      "id": "center",
+      "anchor": "center",
+      "margin_x": 120,
+      "margin_y": 80,
+      "max_width": 1680
+    },
+    {
+      "id": "bottom-label",
+      "anchor": "bottom-center",
+      "margin_y": 108
+    },
+    {
+      "id": "bottom-attribution",
+      "anchor": "bottom-center",
+      "margin_y": 72
+    }
+  ],
+  "preview": {},
+  "timeline": "timeline.jsonl"
+}

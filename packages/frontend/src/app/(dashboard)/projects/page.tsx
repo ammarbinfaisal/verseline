@@ -73,13 +73,13 @@ export default function ProjectsPage() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-semibold text-white">Projects</h1>
+        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-white">Projects</h1>
         <div className="flex items-center gap-3">
           <input ref={fileRef} type="file" accept=".verseline,.verseline.json,.json" className="hidden" onChange={handleImport} />
           <button
             onClick={() => fileRef.current?.click()}
             disabled={importing}
-            className="px-4 py-2 rounded-lg bg-zinc-800 text-white font-medium text-sm hover:bg-zinc-700 transition-colors border border-zinc-700 disabled:opacity-50"
+            className="px-4 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white font-medium text-sm hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors border border-zinc-300 dark:border-zinc-700 disabled:opacity-50"
           >
             {importing ? "Importing..." : "Import"}
           </button>
@@ -97,26 +97,26 @@ export default function ProjectsPage() {
       <div className="mb-6">
         <button
           onClick={() => setShowLegacy(!showLegacy)}
-          className="text-xs text-zinc-500 hover:text-zinc-400 transition-colors"
+          className="text-xs text-zinc-600 dark:text-zinc-500 hover:text-zinc-500 dark:hover:text-zinc-400 transition-colors"
         >
           {showLegacy ? "Hide" : "Import legacy format"}
         </button>
         {showLegacy && (
-          <div className="mt-3 p-4 bg-zinc-900 border border-zinc-800 rounded-lg space-y-3">
-            <p className="text-xs text-zinc-400">Import a project.json + timeline.jsonl from the old format.</p>
+          <div className="mt-3 p-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-3">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">Import a project.json + timeline.jsonl from the old format.</p>
             <div className="flex items-center gap-3">
-              <label className="text-xs text-zinc-500">
+              <label className="text-xs text-zinc-600 dark:text-zinc-500">
                 project.json
-                <input ref={legacyProjectRef} type="file" accept=".json" className="ml-2 text-xs text-zinc-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-zinc-800 file:text-zinc-300" />
+                <input ref={legacyProjectRef} type="file" accept=".json" className="ml-2 text-xs text-zinc-500 dark:text-zinc-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-zinc-100 dark:file:bg-zinc-800 file:text-zinc-700 dark:file:text-zinc-300" />
               </label>
-              <label className="text-xs text-zinc-500">
+              <label className="text-xs text-zinc-600 dark:text-zinc-500">
                 timeline.jsonl
-                <input ref={legacyTimelineRef} type="file" accept=".jsonl,.json" className="ml-2 text-xs text-zinc-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-zinc-800 file:text-zinc-300" />
+                <input ref={legacyTimelineRef} type="file" accept=".jsonl,.json" className="ml-2 text-xs text-zinc-500 dark:text-zinc-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-zinc-100 dark:file:bg-zinc-800 file:text-zinc-700 dark:file:text-zinc-300" />
               </label>
               <button
                 onClick={handleLegacyImport}
                 disabled={importing}
-                className="px-3 py-1.5 rounded bg-zinc-800 text-white text-xs hover:bg-zinc-700 border border-zinc-700 disabled:opacity-50"
+                className="px-3 py-1.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white text-xs hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-300 dark:border-zinc-700 disabled:opacity-50"
               >
                 Import
               </button>
@@ -126,40 +126,40 @@ export default function ProjectsPage() {
       </div>
 
       {error && (
-        <p className="text-sm text-red-400 bg-red-950/40 border border-red-900 rounded-lg px-4 py-3 mb-6">
+        <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-lg px-4 py-3 mb-6">
           {error}
         </p>
       )}
 
       {loading ? (
-        <div className="text-zinc-500 text-sm">Loading projects...</div>
+        <div className="text-zinc-600 dark:text-zinc-500 text-sm">Loading projects...</div>
       ) : projects.length === 0 ? (
         <div className="text-center py-20">
-          <p className="text-zinc-500 text-sm mb-4">No projects yet.</p>
+          <p className="text-zinc-600 dark:text-zinc-500 text-sm mb-4">No projects yet.</p>
           <button
             onClick={handleNewProject}
             disabled={creating}
-            className="px-4 py-2 rounded-lg bg-zinc-800 text-white font-medium text-sm hover:bg-zinc-700 transition-colors border border-zinc-700 disabled:opacity-50"
+            className="px-4 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white font-medium text-sm hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors border border-zinc-300 dark:border-zinc-700 disabled:opacity-50"
           >
             Create your first project
           </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {projects.map((p) => (
+          {(Array.isArray(projects) ? projects : []).map((p) => (
             <Link
               key={p.id}
               href={`/projects/${p.id}`}
-              className="group block bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-zinc-600 transition-colors"
+              className="group block bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors"
             >
-              <h2 className="font-medium text-white text-sm truncate group-hover:text-zinc-100 mb-2">
+              <h2 className="font-medium text-zinc-900 dark:text-white text-sm truncate group-hover:text-zinc-800 dark:group-hover:text-zinc-100 mb-2">
                 {p.name ?? "Untitled project"}
               </h2>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-zinc-600 dark:text-zinc-500">
                 {p.canvas?.width} &times; {p.canvas?.height} &middot;{" "}
                 {p.canvas?.fps} fps
               </p>
-              <p className="text-xs text-zinc-600 mt-3">
+              <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-3">
                 {new Date(p.updatedAt ?? p.createdAt).toLocaleDateString(undefined, {
                   year: "numeric",
                   month: "short",

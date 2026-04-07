@@ -43,7 +43,7 @@ export function PlacementsTab() {
 
   return (
     <div className="flex h-full">
-      <div className="w-56 shrink-0 border-r border-zinc-800 flex flex-col">
+      <div className="w-56 shrink-0 border-r border-zinc-200 dark:border-zinc-800 flex flex-col">
         <PlacementList
           placements={placements}
           selectedId={selectedId}

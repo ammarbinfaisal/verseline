@@ -78,7 +78,7 @@ export default function EditorShell({ projectId }: EditorShellProps) {
 
   if (isLoading && !project) {
     return (
-      <div className="flex items-center justify-center h-64 text-zinc-500 text-sm">
+      <div className="flex items-center justify-center h-64 text-zinc-600 dark:text-zinc-500 text-sm">
         Loading project…
       </div>
     );
@@ -86,17 +86,17 @@ export default function EditorShell({ projectId }: EditorShellProps) {
 
   if (!project) {
     return (
-      <div className="flex items-center justify-center h-64 text-zinc-500 text-sm">
+      <div className="flex items-center justify-center h-64 text-zinc-600 dark:text-zinc-500 text-sm">
         Project not found.
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-zinc-950 overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-white dark:bg-zinc-950 overflow-hidden">
       {/* Tab bar */}
-      <div className="flex items-center border-b border-zinc-800 bg-zinc-900 shrink-0 px-2">
-        <span className="text-sm font-medium text-zinc-200 px-3 py-3 mr-2 truncate max-w-48" title={project.name}>
+      <div className="flex items-center border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 shrink-0 px-2">
+        <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200 px-3 py-3 mr-2 truncate max-w-48" title={project.name}>
           {project.name ?? "Untitled"}
         </span>
         <div className="flex gap-1">
@@ -107,8 +107,8 @@ export default function EditorShell({ projectId }: EditorShellProps) {
               className={[
                 "px-3 py-2.5 text-xs font-medium transition-colors relative",
                 activeTab === tab.id
-                  ? "text-white after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-indigo-500"
-                  : "text-zinc-400 hover:text-zinc-200",
+                  ? "text-zinc-900 dark:text-white after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-indigo-500"
+                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200",
               ].join(" ")}
             >
               {tab.label}
@@ -127,14 +127,14 @@ export default function EditorShell({ projectId }: EditorShellProps) {
       </div>
 
       {/* Status bar */}
-      <div className="h-7 bg-zinc-900 border-t border-zinc-800 flex items-center px-4 gap-4 shrink-0">
-        <span className="text-xs text-zinc-500">
+      <div className="h-7 bg-zinc-50 dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex items-center px-4 gap-4 shrink-0">
+        <span className="text-xs text-zinc-600 dark:text-zinc-500">
           {project.canvas.width}&times;{project.canvas.height} &middot; {project.canvas.fps} fps
         </span>
         <div className="flex-1" />
-        {saveError && <span className="text-xs text-red-400">{saveError}</span>}
+        {saveError && <span className="text-xs text-red-600 dark:text-red-400">{saveError}</span>}
         {isSaving ? (
-          <span className="text-xs text-zinc-400">Saving…</span>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">Saving…</span>
         ) : isDirty ? (
           <button
             onClick={handleSave}
@@ -143,7 +143,7 @@ export default function EditorShell({ projectId }: EditorShellProps) {
             Unsaved changes — Save (Ctrl+S)
           </button>
         ) : (
-          <span className="text-xs text-zinc-600">All changes saved</span>
+          <span className="text-xs text-zinc-400 dark:text-zinc-600">All changes saved</span>
         )}
       </div>
     </div>
@@ -161,11 +161,11 @@ function FontsTab() {
   return (
     <div className="flex h-full">
       {/* Left: project font list */}
-      <div className="w-56 shrink-0 border-r border-zinc-800 flex flex-col">
+      <div className="w-56 shrink-0 border-r border-zinc-200 dark:border-zinc-800 flex flex-col">
         <div className="flex-1 min-h-0 overflow-hidden">
           <FontList fonts={fonts} selectedId={selectedId} onSelect={setSelectedId} />
         </div>
-        <div className="px-4 py-3 border-t border-zinc-800 flex gap-2">
+        <div className="px-4 py-3 border-t border-zinc-200 dark:border-zinc-800 flex gap-2">
           <button
             onClick={() => setShowBrowser(true)}
             className="flex-1 text-xs px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors"
@@ -191,7 +191,7 @@ function FontsTab() {
         ) : selectedId ? (
           <FontDetail font={fonts.find((f) => f.id === selectedId)} />
         ) : (
-          <div className="flex items-center justify-center h-full text-zinc-500 text-sm">
+          <div className="flex items-center justify-center h-full text-zinc-600 dark:text-zinc-500 text-sm">
             Select a font or browse Google Fonts
           </div>
         )}
@@ -206,15 +206,15 @@ function FontDetail({ font }: { font: Font | undefined }) {
   if (!font) return null;
   return (
     <div className="p-6">
-      <h3 className="text-sm font-semibold text-zinc-200 mb-4">{font.id}</h3>
+      <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-4">{font.id}</h3>
       <div className="flex flex-col gap-2">
-        <div><span className="text-xs text-zinc-500">Family:</span> <span className="text-sm text-zinc-200 ml-2">{font.family}</span></div>
+        <div><span className="text-xs text-zinc-600 dark:text-zinc-500">Family:</span> <span className="text-sm text-zinc-800 dark:text-zinc-200 ml-2">{font.family}</span></div>
         {font.files && font.files.length > 0 && (
           <div>
-            <span className="text-xs text-zinc-500">Files:</span>
+            <span className="text-xs text-zinc-600 dark:text-zinc-500">Files:</span>
             <ul className="mt-1 ml-2">
               {font.files.map((f, i) => (
-                <li key={i} className="text-xs text-zinc-400 font-mono truncate">{f}</li>
+                <li key={i} className="text-xs text-zinc-500 dark:text-zinc-400 font-mono truncate">{f}</li>
               ))}
             </ul>
           </div>
@@ -232,7 +232,7 @@ function SettingsPanel({ project, onUpdateField }: {
 }) {
   return (
     <div className="p-6 overflow-y-auto h-full max-w-xl">
-      <h2 className="text-sm font-semibold text-zinc-200 mb-6">Project Settings</h2>
+      <h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-6">Project Settings</h2>
 
       <div className="flex flex-col gap-5">
         <Section title="General">
@@ -251,11 +251,11 @@ function SettingsPanel({ project, onUpdateField }: {
         <Section title="Background">
           <Field label="Path / URL" value={project.assets.background.path} onChange={(v) => onUpdateField("assets.background.path", v)} />
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-zinc-400">Fit</label>
+            <label className="text-xs text-zinc-500 dark:text-zinc-400">Fit</label>
             <select
               value={project.assets.background.fit ?? "cover"}
               onChange={(e) => onUpdateField("assets.background.fit", e.target.value)}
-              className="bg-zinc-800 border border-zinc-600 rounded px-2 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-400 dark:border-zinc-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
             >
               {["cover","contain","fill","none"].map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
@@ -275,7 +275,7 @@ function SettingsPanel({ project, onUpdateField }: {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-3">{title}</h3>
+      <h3 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3">{title}</h3>
       <div className="flex flex-col gap-3">{children}</div>
     </div>
   );
@@ -289,13 +289,13 @@ function Field({ label, value, onChange, placeholder }: {
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs text-zinc-400">{label}</label>
+      <label className="text-xs text-zinc-500 dark:text-zinc-400">{label}</label>
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="bg-zinc-800 border border-zinc-600 rounded px-2 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-400 dark:border-zinc-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
       />
     </div>
   );
@@ -308,12 +308,12 @@ function FieldNum({ label, value, onChange }: {
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs text-zinc-400">{label}</label>
+      <label className="text-xs text-zinc-500 dark:text-zinc-400">{label}</label>
       <input
         type="number"
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="bg-zinc-800 border border-zinc-600 rounded px-2 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 w-24"
+        className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-400 dark:border-zinc-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 w-24"
       />
     </div>
   );

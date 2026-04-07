@@ -64,12 +64,12 @@ function SplitModal({ segment, onClose, onSplit }: SplitModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-6 w-full max-w-md shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-sm font-semibold text-white mb-4">Split Segment</h3>
+      <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl p-6 w-full max-w-md shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-4">Split Segment</h3>
 
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-zinc-400">Block to split</label>
+            <label className="text-xs text-zinc-500 dark:text-zinc-400">Block to split</label>
             <select
               value={blockIndex}
               onChange={(e) => {
@@ -77,7 +77,7 @@ function SplitModal({ segment, onClose, onSplit }: SplitModalProps) {
                 setBlockIndex(idx);
                 setRawText(segment.blocks[idx]?.text ?? "");
               }}
-              className="bg-zinc-800 border border-zinc-600 rounded px-2 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-400 dark:border-zinc-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
             >
               {segment.blocks.map((b, i) => (
                 <option key={i} value={i}>Block {i + 1}: {(b.text ?? "").slice(0, 40)}</option>
@@ -86,20 +86,20 @@ function SplitModal({ segment, onClose, onSplit }: SplitModalProps) {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-zinc-400">Text parts (separate with blank lines)</label>
+            <label className="text-xs text-zinc-500 dark:text-zinc-400">Text parts (separate with blank lines)</label>
             <textarea
               value={rawText}
               onChange={(e) => setRawText(e.target.value)}
               rows={8}
-              className="bg-zinc-800 border border-zinc-600 rounded px-2 py-1.5 text-sm text-white font-mono resize-y focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-400 dark:border-zinc-600 rounded px-2 py-1.5 text-sm font-mono resize-y focus:outline-none focus:ring-1 focus:ring-indigo-500"
             />
-            <p className="text-xs text-zinc-500">{lines.length} part{lines.length !== 1 ? "s" : ""} detected</p>
+            <p className="text-xs text-zinc-600 dark:text-zinc-500">{lines.length} part{lines.length !== 1 ? "s" : ""} detected</p>
           </div>
 
-          {error && <p className="text-xs text-red-400">{error}</p>}
+          {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
 
           <div className="flex gap-2 justify-end mt-2">
-            <button onClick={onClose} className="px-3 py-1.5 text-xs text-zinc-300 hover:text-white transition-colors">
+            <button onClick={onClose} className="px-3 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors">
               Cancel
             </button>
             <button
@@ -250,7 +250,7 @@ export default function TimelinePanel({ projectId }: TimelinePanelProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center flex-1 text-zinc-500 text-sm">
+      <div className="flex items-center justify-center flex-1 text-zinc-600 dark:text-zinc-500 text-sm">
         Loading segments…
       </div>
     );
@@ -261,10 +261,10 @@ export default function TimelinePanel({ projectId }: TimelinePanelProps) {
       {/* Main area: list + detail */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Left: segment list */}
-        <div className="w-64 shrink-0 border-r border-zinc-700 flex flex-col overflow-hidden">
+        <div className="w-64 shrink-0 border-r border-zinc-300 dark:border-zinc-700 flex flex-col overflow-hidden">
           <div className="overflow-y-auto flex-1">
             {segments.length === 0 ? (
-              <div className="flex items-center justify-center h-32 text-zinc-500 text-xs">
+              <div className="flex items-center justify-center h-32 text-zinc-600 dark:text-zinc-500 text-xs">
                 No segments yet
               </div>
             ) : (
@@ -278,20 +278,20 @@ export default function TimelinePanel({ projectId }: TimelinePanelProps) {
                     key={seg.id ?? i}
                     onClick={() => setSelectedId(seg.id ?? null)}
                     className={[
-                      "w-full text-left px-3 py-2.5 border-b border-zinc-800 hover:bg-zinc-800/70 transition-colors",
-                      isActive ? "bg-zinc-800" : "",
+                      "w-full text-left px-3 py-2.5 border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/70 transition-colors",
+                      isActive ? "bg-zinc-100 dark:bg-zinc-800" : "",
                     ].join(" ")}
                   >
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-mono text-zinc-500 shrink-0">{String(i + 1).padStart(2, "0")}</span>
+                      <span className="text-xs font-mono text-zinc-600 dark:text-zinc-500 shrink-0">{String(i + 1).padStart(2, "0")}</span>
                       <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${statusClass}`}>
                         {seg.status ?? "draft"}
                       </span>
                     </div>
-                    <div className="text-xs font-mono text-zinc-300 mb-0.5">
+                    <div className="text-xs font-mono text-zinc-700 dark:text-zinc-300 mb-0.5">
                       {formatRange(seg.start, seg.end)}
                     </div>
-                    <div className="text-xs text-zinc-500 truncate">{preview || "(empty)"}</div>
+                    <div className="text-xs text-zinc-600 dark:text-zinc-500 truncate">{preview || "(empty)"}</div>
                   </button>
                 );
               })
@@ -302,7 +302,7 @@ export default function TimelinePanel({ projectId }: TimelinePanelProps) {
         {/* Right: detail panel */}
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 min-w-0">
           {!effectiveSelected ? (
-            <div className="flex items-center justify-center flex-1 text-zinc-500 text-sm">
+            <div className="flex items-center justify-center flex-1 text-zinc-600 dark:text-zinc-500 text-sm">
               Select a segment to edit
             </div>
           ) : (
@@ -320,11 +320,11 @@ export default function TimelinePanel({ projectId }: TimelinePanelProps) {
                   onChange={(v) => updateField("end", v)}
                 />
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-zinc-400">Status</label>
+                  <label className="text-xs text-zinc-500 dark:text-zinc-400">Status</label>
                   <select
                     value={effectiveSelected.status ?? "draft"}
                     onChange={(e) => updateField("status", e.target.value)}
-                    className="bg-zinc-800 border border-zinc-600 rounded px-2 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-400 dark:border-zinc-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   >
                     {(["draft", "approved", "needs_fix"] as StatusValue[]).map((s) => (
                       <option key={s} value={s}>{s}</option>
@@ -335,13 +335,13 @@ export default function TimelinePanel({ projectId }: TimelinePanelProps) {
 
               {/* Notes */}
               <div className="flex flex-col gap-1">
-                <label className="text-xs text-zinc-400">Notes</label>
+                <label className="text-xs text-zinc-500 dark:text-zinc-400">Notes</label>
                 <input
                   type="text"
                   value={effectiveSelected.notes ?? ""}
                   onChange={(e) => updateField("notes", e.target.value)}
                   placeholder="Optional notes…"
-                  className="bg-zinc-800 border border-zinc-600 rounded px-2 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-400 dark:border-zinc-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 />
               </div>
 
@@ -356,7 +356,7 @@ export default function TimelinePanel({ projectId }: TimelinePanelProps) {
               {/* Blocks */}
               <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-zinc-300 uppercase tracking-wider">Blocks</span>
+                  <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Blocks</span>
                   <button
                     onClick={handleAddBlock}
                     disabled={saving}
@@ -382,10 +382,10 @@ export default function TimelinePanel({ projectId }: TimelinePanelProps) {
               {previewUrl && (
                 <div className="mt-2">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-zinc-400">Preview</span>
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400">Preview</span>
                     <button
                       onClick={() => setPreviewUrl(null)}
-                      className="text-xs text-zinc-500 hover:text-zinc-300"
+                      className="text-xs text-zinc-600 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                     >
                       Close
                     </button>
@@ -395,7 +395,7 @@ export default function TimelinePanel({ projectId }: TimelinePanelProps) {
               )}
 
               {error && (
-                <p className="text-xs text-red-400 bg-red-950/30 border border-red-900/40 rounded px-3 py-2">
+                <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 rounded px-3 py-2">
                   {error}
                 </p>
               )}
@@ -405,7 +405,7 @@ export default function TimelinePanel({ projectId }: TimelinePanelProps) {
       </div>
 
       {/* Bottom toolbar */}
-      <div className="border-t border-zinc-700 px-4 py-2 flex items-center gap-2 bg-zinc-900 shrink-0">
+      <div className="border-t border-zinc-300 dark:border-zinc-700 px-4 py-2 flex items-center gap-2 bg-zinc-50 dark:bg-zinc-900 shrink-0">
         <button
           onClick={handleNewSegment}
           disabled={saving}
@@ -438,7 +438,7 @@ export default function TimelinePanel({ projectId }: TimelinePanelProps) {
           {previewLoading ? "Rendering…" : "Preview"}
         </button>
 
-        {saving && <span className="text-xs text-zinc-500 ml-2">Saving…</span>}
+        {saving && <span className="text-xs text-zinc-600 dark:text-zinc-500 ml-2">Saving…</span>}
       </div>
 
       {/* Split modal */}

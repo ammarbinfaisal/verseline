@@ -1,0 +1,1037 @@
+[
+  {
+    "key": "v1",
+    "start": "00:00:00.000",
+    "end": "00:00:07.080",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v2",
+    "start": "00:00:07.080",
+    "end": "00:00:14.480",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v3",
+    "start": "00:00:14.480",
+    "end": "00:00:21.480",
+    "reciter_differs": true,
+    "reciter_text": "غَدْرٍ",
+    "source_text": "خِدْرٍ",
+    "diff_note": "recitation has: ذات غدر\nsource text has: ذَاتَ خِدْرٍ\nWhisper transcribed 'غدر' (treachery) but source has 'خِدْرٍ' (curtain/seclusion). This is likely an actual reciter difference — the reciter may have said 'غَدْرٍ' instead of 'خِدْرٍ'."
+  },
+  {
+    "key": "v4",
+    "start": "00:00:21.480",
+    "end": "00:00:28.780",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v5",
+    "start": "00:00:28.780",
+    "end": "00:00:36.500",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Verse spans clip boundary (clip 1 -> clip 2). First hemistich starts at end of clip 1 ('فكم ذا أنت'), continues with 'مخدوع وحتى' at start of clip 2."
+  },
+  {
+    "key": "v6",
+    "start": "00:00:36.500",
+    "end": "00:00:44.500",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'إن عقلت' instead of 'لَوْ عَقَلْتَا' — minor Whisper transcription variance, not a reciter difference."
+  },
+  {
+    "key": "v7",
+    "start": "00:00:44.500",
+    "end": "00:00:52.500",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v8",
+    "start": "00:00:52.500",
+    "end": "00:01:00.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Last segment of clip 2 is a repeated fragment of this verse's second hemistich (echo/overlap at clip boundary). Verse ends at start of clip 3."
+  },
+  {
+    "key": "v9",
+    "start": "00:01:00.000",
+    "end": "00:01:06.939",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'اقتربت' instead of 'عَرِيتَا' — this is a Whisper transcription error, not a reciter difference. The words sound quite different; Whisper likely misheard."
+  },
+  {
+    "key": "v10",
+    "start": "00:01:06.939",
+    "end": "00:01:14.180",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'ذخره' instead of 'ذِكْرُهُ' — likely Whisper error (similar sounding). Not flagged as reciter difference."
+  },
+  {
+    "key": "v11",
+    "start": "00:01:14.180",
+    "end": "00:01:22.340",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'العقب' instead of 'الْعَضْبُ' and 'ضربت' instead of 'أَرَدتَّا' — likely Whisper misrecognition errors rather than reciter differences."
+  },
+  {
+    "key": "v12",
+    "start": "00:01:22.340",
+    "end": "00:01:29.920",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v13",
+    "start": "00:01:30.000",
+    "end": "00:01:37.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper merged both hemistichs into one segment. Transcription matches source well."
+  },
+  {
+    "key": "v14",
+    "start": "00:01:37.000",
+    "end": "00:01:45.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'التعلما وجتهتا' — garbled transcription of 'التَّعَلُّمَ وَاجْتَهَدْتَا'. Whisper error, not reciter difference."
+  },
+  {
+    "key": "v15",
+    "start": "00:01:45.000",
+    "end": "00:01:52.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'بزخر فيها فتنتا' for 'بِزُخْرُفِهَا فُتِنْتَا' — minor Whisper garbling."
+  },
+  {
+    "key": "v16",
+    "start": "00:01:52.000",
+    "end": "00:01:59.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'عنيق روض' for 'أَنِيقُ رَوْضٍ' and 'خذر بربر به كنفتا' for 'خِدْرٍ بِزِينَتِهَا كَلِفْتَا' — Whisper badly garbled the second hemistich but likely Whisper error."
+  },
+  {
+    "key": "v17",
+    "start": "00:02:00.000",
+    "end": "00:02:07.879",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v18",
+    "start": "00:02:07.879",
+    "end": "00:02:15.560",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'أخذت' instead of 'انْتَفَعْتَا' — likely Whisper error. The source has 'انْتَفَعْتَا'."
+  },
+  {
+    "key": "v19",
+    "start": "00:02:15.560",
+    "end": "00:02:23.920",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'أوتيت' for 'أُعْطِيتَ' (synonymous) and 'سبقت' for 'عَلِمْتَا'. The 'سبقت'/'عَلِمْتَا' difference could be Whisper error."
+  },
+  {
+    "key": "v20",
+    "start": "00:02:23.920",
+    "end": "00:02:32.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Verse spans clip boundary (clip 5 -> clip 6). Second hemistich split: 'بتوبيخ علمت' at end of clip 5, 'فهل عملتا' at start of clip 6."
+  },
+  {
+    "key": "v21",
+    "start": "00:02:32.000",
+    "end": "00:02:39.500",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v22",
+    "start": "00:02:39.500",
+    "end": "00:02:47.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'وضاف ثوبك الإحسان لا أن / ترى ثوب الإساة قد لبستا'. Source has 'وَأَفْضَلُ ثَوْبِكَ الْإِحْسَانُ لَكِنْ / نَرَى ثَوْبَ الإِسَاءَةِ قَدْ لَبِسْتَا'. Whisper misheard 'أَفْضَلُ' as 'ضاف' and 'لَكِنْ' as 'لا أن' — Whisper errors."
+  },
+  {
+    "key": "v23",
+    "start": "00:02:47.000",
+    "end": "00:02:54.500",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'يفذك' for 'يُفِدْكَ' and 'ألو' for 'أَنْ لَوْ' — minor Whisper garbling."
+  },
+  {
+    "key": "v24",
+    "start": "00:02:54.500",
+    "end": "00:03:00.500",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Verse spans clip boundary (clip 6 -> clip 7). Second hemistich fragment 'فليتك ثم لا' at end of clip 6, continues into clip 7 combined segment."
+  },
+  {
+    "key": "v25",
+    "start": "00:03:00.000",
+    "end": "00:03:07.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Clip 7 has a single long segment covering verses 25-27. Estimated split: v25 gets first ~7 seconds."
+  },
+  {
+    "key": "v26",
+    "start": "00:03:07.000",
+    "end": "00:03:14.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Estimated from clip 7's combined segment."
+  },
+  {
+    "key": "v27",
+    "start": "00:03:14.000",
+    "end": "00:03:21.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'وتغبطها إذا عنها شغلت' for second hemistich. Source has 'إِذَا حَقًّا بِهَا يَوْمًا عَمِلْتَا'. Possible Whisper error, but the wording is quite different — could not confirm reciter difference from Whisper alone."
+  },
+  {
+    "key": "v28",
+    "start": "00:03:21.000",
+    "end": "00:03:24.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Verse 28 is not clearly separated in the transcription. The reciter may have combined or abbreviated it. Best-guess timestamp from position between v27 and v29 in clip 7's combined segment. Source: 'وَإِنْ أَهْمَلْتَهَا وَنَبَذْتَ نُصْحًا / وَمِلْتَ إِلَى حُطَامٍ قَدْ جَمَعْتَا'. The Whisper text does not clearly separate this verse."
+  },
+  {
+    "key": "v29",
+    "start": "00:03:24.000",
+    "end": "00:03:30.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'لسوف تعظ من ندم عليها وما تضن الندام'. Source has 'فَسَوفَ تَعَضُّ مِن نَدَمٍ عَلَيْهَا / وَمَا تُغْنِي النَّدَامَةُ إِن نَدِمْتَا'. Whisper garbled ending but meaning matches."
+  },
+  {
+    "key": "v30",
+    "start": "00:03:30.000",
+    "end": "00:03:39.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Matches clip 8 first segment: 'إذا أبصرت صحبك في سماء قد ارتفعوا عليك وقد سفلتا'."
+  },
+  {
+    "key": "v31",
+    "start": "00:03:39.000",
+    "end": "00:03:39.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Verse 31 ('فَرَاجِعْهَا وَدَعْ عَنْكَ الْهُوَيْنَى / فَمَا بِالبُطْءِ تُدْرِكُ مَا طَلَبْتَا') is not present in the transcription. The reciter appears to have skipped this verse. Timestamp is a placeholder at the boundary between v30 and v32."
+  },
+  {
+    "key": "v32",
+    "start": "00:03:39.000",
+    "end": "00:03:46.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'ولا تحفل بمالك وله عنه'. Source has 'وَلَا تَخْتَلْ بِمَالِكَ وَالْهَ عَنْهُ'. Whisper heard 'تحفل' instead of 'تَخْتَلْ' — likely Whisper error."
+  },
+  {
+    "key": "v33",
+    "start": "00:03:46.000",
+    "end": "00:03:53.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'معنا' instead of 'مُغْنٍ' — Whisper error."
+  },
+  {
+    "key": "v34",
+    "start": "00:03:53.000",
+    "end": "00:04:00.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'في ندي ويكتب عنك رسالة'. Source has 'فِي مَلَاءٍ / وَيُكْتَبُ عَنْكَ يَوْمًا إِنْ كَتَبْتَا'. Whisper garbled 'مَلَاءٍ' as 'ندي' and cut off the ending."
+  },
+  {
+    "key": "v35",
+    "start": "00:04:00.000",
+    "end": "00:04:07.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'تشيد المباني' for 'تَشْيِيدُ الْمَبَانِي' — matches well."
+  },
+  {
+    "key": "v36",
+    "start": "00:04:07.000",
+    "end": "00:04:14.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v37",
+    "start": "00:04:14.000",
+    "end": "00:04:21.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v38",
+    "start": "00:04:21.000",
+    "end": "00:04:30.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper cuts off at 'لأنت لواء علمك' — the 'قَد رَفَعْتَا' ending is missing from clip 9, likely bleeds into clip 10 gap."
+  },
+  {
+    "key": "v39",
+    "start": "00:04:30.000",
+    "end": "00:04:37.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v40",
+    "start": "00:04:37.000",
+    "end": "00:04:45.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v41",
+    "start": "00:04:45.000",
+    "end": "00:04:51.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v42",
+    "start": "00:04:51.000",
+    "end": "00:04:58.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v43",
+    "start": "00:04:58.000",
+    "end": "00:05:07.199",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Verse spans clip boundary (clip 10 -> clip 11). Clip 10 ends with 'فماذا ستفعل' and clip 11 starts with 'ماذا عنده لك من جميل / إذا بفناء طاعته أنختا'."
+  },
+  {
+    "key": "v44",
+    "start": "00:05:07.199",
+    "end": "00:05:14.399",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'صحيح نصحي' for 'لِنُصْحِ قَوْلِي' and 'عرضت' for 'أَعْرَضْتَ' — Whisper transcription differences, not reciter differences."
+  },
+  {
+    "key": "v45",
+    "start": "00:05:14.399",
+    "end": "00:05:22.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v46",
+    "start": "00:05:22.000",
+    "end": "00:05:29.199",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'تسوك' for 'تَسُوؤُكَ' — minor Whisper simplification."
+  },
+  {
+    "key": "v47",
+    "start": "00:05:29.199",
+    "end": "00:05:36.439",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Verse spans clip boundary (clip 11 -> clip 12). Clip 11 ends with 'وفقا' (fragment of 'وَغَايَتُهَا'), clip 12 starts with 'إذا فكرت فيها كفيئك أو كحلمك إن حلمت'."
+  },
+  {
+    "key": "v48",
+    "start": "00:05:36.439",
+    "end": "00:05:44.240",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v49",
+    "start": "00:05:44.240",
+    "end": "00:05:51.600",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'ستطعم منك ما منها طعمت'. Source has 'سَتَطْعَمُ مِنْكَ مَا فِيهَا طَعِمْتَا'. Whisper has 'منها' for 'فِيهَا' — minor Whisper variation."
+  },
+  {
+    "key": "v50",
+    "start": "00:05:51.600",
+    "end": "00:05:58.639",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v51",
+    "start": "00:05:58.639",
+    "end": "00:06:05.800",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Verse spans clip boundary (clip 12 -> clip 13). Clip 12 ends with 'وتشهد كل شيء', clip 13 starts with 'ليوم دفن خل كأنك لا تراد بما شهدتا'. Whisper garbled the first hemistich slightly. Source: 'وَتَشْهَدُ كُلَّ يَوْمٍ دَفْنَ خِلٍّ / كَأَنَّكَ لَا تُرَادُ لِمَا شَهِدْتَا'."
+  },
+  {
+    "key": "v52",
+    "start": "00:06:05.800",
+    "end": "00:06:14.300",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v53",
+    "start": "00:06:14.300",
+    "end": "00:06:21.399",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'وحص أمر دينك' for 'وَحَصِّنْ أَمْرَ دِينِكَ' — Whisper dropped the 'ن' in 'حَصِّنْ'. Whisper error."
+  },
+  {
+    "key": "v54",
+    "start": "00:06:21.399",
+    "end": "00:06:28.600",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'بخراك' for 'أُخْرَاكَ' — Whisper error."
+  },
+  {
+    "key": "v55",
+    "start": "00:06:28.600",
+    "end": "00:06:35.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Verse spans clip boundary (clip 13 -> clip 14). Clip 13 ends with 'فليس بنافع', clip 14 starts with 'مانلت منها من الفاني إذا الباقي حرمتا'."
+  },
+  {
+    "key": "v56",
+    "start": "00:06:35.000",
+    "end": "00:06:42.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'لهوا' instead of 'يَوْمًا'. Source: 'وَلا تَضْحَكْ مَعَ السُّفَهَاءِ يَوْمًا'. Whisper heard 'لهوا' (diversion) instead of 'يَوْمًا' (one day). Could be Whisper error or minor reciter variation."
+  },
+  {
+    "key": "v57",
+    "start": "00:06:42.000",
+    "end": "00:06:49.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'وكيف لك السرور' for 'وَمَنْ لَكَ بِالسُرُورِ'. Source starts with 'وَمَنْ' (and who), Whisper has 'وكيف' (and how). Also 'غلقتا' for 'غُلِلْتَا'. Likely Whisper errors."
+  },
+  {
+    "key": "v58",
+    "start": "00:06:49.000",
+    "end": "00:07:00.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'وسلم ربك التوفيق' for 'وَسَلْ مِن رَبِّكَ التَّوْفِيقَ'. Whisper merged 'سَلْ مِن' into 'سلم'. Whisper error."
+  },
+  {
+    "key": "v59",
+    "start": "00:07:00.000",
+    "end": "00:07:09.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'ذنون' for 'ذُو النُّونِ' — Whisper simplification."
+  },
+  {
+    "key": "v60",
+    "start": "00:07:09.000",
+    "end": "00:07:16.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v61",
+    "start": "00:07:16.000",
+    "end": "00:07:24.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v62",
+    "start": "00:07:24.000",
+    "end": "00:07:30.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'مجال' for 'امْتِهَالٌ'. Source: 'وَلَا تَقُلْ الصِّبَا فِيهِ امْتِهَالٌ'. Whisper misheard 'امْتِهَالٌ' as 'مجال'. Likely Whisper error. Verse spans into clip 16 boundary — 'وفكر كم صغير قدر' trails off at end of clip 15."
+  },
+  {
+    "key": "v63",
+    "start": "00:07:30.000",
+    "end": "00:07:37.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'وقل يا نصيح لأنت أولى'. Source has 'وَقُلْ يَا نَاصِحِي بَلْ أَنْتَ أَوْلَى'. Whisper garbled 'نَاصِحِي بَلْ' into 'نصيح لـ'. Whisper error."
+  },
+  {
+    "key": "v64",
+    "start": "00:07:37.000",
+    "end": "00:07:44.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v65",
+    "start": "00:07:44.000",
+    "end": "00:07:51.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'وما تجري ببالك حين شختا'. Source has 'وَمَا تَدْرِي بِحَالِكَ حَيْثُ شِخْتَا'. Whisper misheard 'تَدْرِي بِحَالِكَ' as 'تجري ببالك'. Likely Whisper error."
+  },
+  {
+    "key": "v66",
+    "start": "00:07:51.000",
+    "end": "00:07:58.000",
+    "reciter_differs": true,
+    "reciter_text": "نَكَسْتَ",
+    "source_text": "نَكَثْتَا",
+    "diff_note": "recitation has: نكستا\nsource text has: نَكَثْتَا\nWhisper has 'نكستا' (reversed/relapsed). Source has 'نَكَثْتَا' (broken covenant). These are two distinct Arabic words with different meanings. The reciter likely said 'نَكَسْتَا' instead of 'نَكَثْتَا'."
+  },
+  {
+    "key": "v67",
+    "start": "00:08:00.000",
+    "end": "00:08:07.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'لم أخب بحر' for 'لَمْ أَخُضْ بَحْرَ'. Whisper misheard 'أَخُضْ' as 'أخب'. Whisper error."
+  },
+  {
+    "key": "v68",
+    "start": "00:08:07.000",
+    "end": "00:08:14.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v69",
+    "start": "00:08:21.000",
+    "end": "00:08:27.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Reciter swapped v69 and v70 order. In the audio, v70 content appears first (00:08:14-00:08:21: 'ولم أحل البواد فيه ظلم'), then v69 content (00:08:21-00:08:27: 'ولم أنشأ بعصر فيه نفع'). Timestamps reflect actual audio position of this verse's text."
+  },
+  {
+    "key": "v70",
+    "start": "00:08:14.000",
+    "end": "00:08:21.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Reciter recited v70 before v69 (swapped order). Timestamps reflect actual audio position. Whisper has 'وانهملتا' for 'وَانْتَهَكْتَا' — likely Whisper error."
+  },
+  {
+    "key": "v71",
+    "start": "00:08:27.000",
+    "end": "00:08:34.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Verse spans clip boundary (clip 17 -> clip 18). Clip 17 ends with 'وقد صاحبت علام كبير' (first hemistich), clip 18 starts with 'ولم أركق تديت بمن صحبتا' (garbled second hemistich). Source: 'لَقَدْ صَاحَبْتَ أَعْلَامًا كِبَارًا / وَلَمْ أَرَكَ اقْتَدَيْتَ بِمَنْ صَحِبْتَا'."
+  },
+  {
+    "key": "v72",
+    "start": "00:08:34.000",
+    "end": "00:08:41.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'ونهنهك المشيب' for 'وَنَبَّهَكَ الْمَشِيبُ'. Whisper heard 'نهنهك' instead of 'نَبَّهَكَ'. These are different words. Could be Whisper error since they sound somewhat similar."
+  },
+  {
+    "key": "v73",
+    "start": "00:08:41.000",
+    "end": "00:08:48.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'ليقبح بالفتا' for 'وَيَقْبُحُ بِالفَتَى'. Whisper has 'لـ' instead of 'و'. Minor Whisper variation."
+  },
+  {
+    "key": "v74",
+    "start": "00:08:55.000",
+    "end": "00:09:03.879",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Note: verses 74 and 75 appear swapped in the recitation compared to source order. The reciter says v75 content first (at 00:08:48-00:08:55) then v74 content (at 00:08:55-00:09:03). Timestamps here reflect where v74's text actually appears in the audio."
+  },
+  {
+    "key": "v75",
+    "start": "00:08:48.000",
+    "end": "00:08:55.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'فأنت أحق بالتثنيذ مني / ولو سكت المسيء لما نطقتا'. Source has 'وَأَنتَ أَحَقُّ بِالتَّفْنِيدِ مِنِّي / وَلَوْ كُنْتَ اللَّبِيبَ لَمَا نَطَقْتَا'. Whisper has 'التثنيذ' for 'التَّفْنِيدِ' (Whisper error). More notably, Whisper has 'ولو سكت المسيء' for 'وَلَوْ كُنْتَ اللَّبِيبَ'. This is a significant difference — the reciter may be using a variant reading. Reciter appears to have recited v75 before v74."
+  },
+  {
+    "key": "v76",
+    "start": "00:09:03.879",
+    "end": "00:09:11.080",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'الدماء' for 'الدِّمَا' — same word, different transcription form."
+  },
+  {
+    "key": "v77",
+    "start": "00:09:11.080",
+    "end": "00:09:17.960",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v78",
+    "start": "00:09:17.960",
+    "end": "00:09:24.799",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'فقلت من الذنوب' for 'ثَقُلْتَ مِنَ الذُّنُوبِ'. Whisper misheard 'ثَقُلْتَ' as 'فقلت'. Whisper error."
+  },
+  {
+    "key": "v79",
+    "start": "00:09:24.799",
+    "end": "00:09:34.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Verse spans clip boundary (clip 19 -> clip 20). Clip 19 ends with 'وتشفق للمصر على المعاصي / وترحمه ونفسك'. The second hemistich 'ما رَحِمْتَا' is cut off."
+  },
+  {
+    "key": "v80",
+    "start": "00:09:30.000",
+    "end": "00:09:37.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'وخضت عشوى' for 'وَخَبَطْتَ عَشْوًا'. Whisper misheard 'خَبَطْتَ' as 'خضت'. Whisper error."
+  },
+  {
+    "key": "v81",
+    "start": "00:09:37.000",
+    "end": "00:09:43.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'وناقشك' for 'وَنُوقِشْتَ'. Whisper garbled the passive form. Whisper error."
+  },
+  {
+    "key": "v82",
+    "start": "00:09:43.000",
+    "end": "00:09:50.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v83",
+    "start": "00:09:50.000",
+    "end": "00:09:56.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'يوم الفصل' for 'يَوْمَ الحَشْرِ'. Source has 'الحَشْرِ' (Gathering), Whisper has 'الفصل' (Separation). These are different but both are valid eschatological terms. Could be reciter variant or Whisper error — marking as uncertain."
+  },
+  {
+    "key": "v84",
+    "start": "00:09:56.000",
+    "end": "00:10:03.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Verse spans clip boundary (clip 20 -> clip 21). Clip 20 ends with 'لأعظمت الندامة فيه لهفا', clip 21 starts with 'على ما في حياتك قد أضعتا'."
+  },
+  {
+    "key": "v85",
+    "start": "00:10:03.000",
+    "end": "00:10:10.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'فهلا عن جهنم' for 'فَهَلَّا مِنْ جَهَنَّمَ'. Whisper has 'عن' instead of 'مِنْ'. Likely Whisper error."
+  },
+  {
+    "key": "v86",
+    "start": "00:10:10.000",
+    "end": "00:10:16.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v87",
+    "start": "00:10:16.000",
+    "end": "00:10:23.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'فلا تكذب' for 'وَلَا تُنْكِرْ'. Source says 'do not deny' while Whisper heard 'do not lie'. Could be Whisper error or actual reciter variant — words are different but contextually similar. Marking as uncertain."
+  },
+  {
+    "key": "v88",
+    "start": "00:10:23.000",
+    "end": "00:10:29.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'انكشفت' for 'كَشَفْتَ'. Slight form difference — Whisper error."
+  },
+  {
+    "key": "v89",
+    "start": "00:10:29.000",
+    "end": "00:10:36.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Verse spans clip boundary (clip 21 -> clip 22). Clip 21 ends with 'فقل لي', clip 22 starts with 'ما شئت في من المخازي / وضاعفها فإنك قد صدقتا'."
+  },
+  {
+    "key": "v90",
+    "start": "00:10:36.000",
+    "end": "00:10:42.500",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v91",
+    "start": "00:10:42.500",
+    "end": "00:10:48.500",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'يورث الإنسان مقتا' for 'يُورِثُ المَحْبُوبَ مَقْتًا'. Source says 'the beloved' (المَحْبُوبَ), Whisper has 'الإنسان' (the person). This could be a reciter variant reading — some editions have 'الإنسان'. Uncertain whether reciter difference or manuscript variant."
+  },
+  {
+    "key": "v92",
+    "start": "00:10:48.500",
+    "end": "00:10:55.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'وتهوي' for 'وَيَهْوِي'. Minor vowel/pronoun difference — Whisper error."
+  },
+  {
+    "key": "v93",
+    "start": "00:10:55.000",
+    "end": "00:11:00.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Verse spans clip boundary (clip 22 -> clip 23). Clip 22 ends with 'كما الطاعة تنعلك الدراري / وتجعلك القريبة'. Whisper garbled 'تُبْدِلُكَ' as 'تنعلك'. Clip 23 likely contains continuation."
+  },
+  {
+    "key": "v94",
+    "start": "00:11:00.000",
+    "end": "00:11:06.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'فتلقى البر فيها حيث كنت'. Source has 'وَتَلْقَى الْبِرَّ فِيهَا حَيْثُ شِئْتَا'. Whisper has 'كنت' for 'شِئْتَا' — Whisper error."
+  },
+  {
+    "key": "v95",
+    "start": "00:11:06.000",
+    "end": "00:11:12.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'كريما' for 'عَزِيزًا'. Source says 'in honour/might' (عَزِيزًا), Whisper heard 'كريما' (generously). These are different words. Could be reciter variant or Whisper error — both are contextually plausible adjectives. Marking as uncertain."
+  },
+  {
+    "key": "v96",
+    "start": "00:11:12.000",
+    "end": "00:11:18.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'بعاب' for 'بِعَيْبٍ' — minor Whisper garbling."
+  },
+  {
+    "key": "v97",
+    "start": "00:11:18.000",
+    "end": "00:11:24.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v98",
+    "start": "00:11:24.000",
+    "end": "00:11:32.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Verse spans clip boundary (clip 23 -> clip 24). Clip 23 ends with 'ومن لك بالخلاص', clip 24 starts with 'إذا نشبتا'."
+  },
+  {
+    "key": "v99",
+    "start": "00:11:32.000",
+    "end": "00:11:40.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'ودنس ما تطهر' for 'تُدَنِّسُ مَا تَطَهَّرَ'. Form difference — Whisper simplified the verb form."
+  },
+  {
+    "key": "v100",
+    "start": "00:11:40.000",
+    "end": "00:11:46.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'وكيف لك الفكاك وقد غسلتا' for 'وَكَيْفَ لَكَ الفِكَاكُ وَقَدْ أُسِرْتَا'. Whisper has 'غسلتا' for 'أُسِرْتَا' — Whisper error, these words are very different."
+  },
+  {
+    "key": "v101",
+    "start": "00:11:46.000",
+    "end": "00:11:55.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'وخف' for 'فَخِفْ' and 'وخش' for 'وَاخْشَ'. Minor Whisper variations."
+  },
+  {
+    "key": "v102",
+    "start": "00:11:55.000",
+    "end": "00:12:00.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'وخالقهم وزائلهم' for 'وَخَالِطْهُمْ وَزَايِلْهُمْ'. Whisper misheard 'خَالِطْهُمْ' as 'خالقهم'. Whisper error. Verse spans into clip 25 boundary — clip 24 ends with 'وكن كالسامرين'."
+  },
+  {
+    "key": "v103",
+    "start": "00:12:00.000",
+    "end": "00:12:07.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'سلاما' for 'سَلَامٌ' — minor case ending difference."
+  },
+  {
+    "key": "v104",
+    "start": "00:12:07.000",
+    "end": "00:12:13.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v105",
+    "start": "00:12:13.000",
+    "end": "00:12:20.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v106",
+    "start": "00:12:20.000",
+    "end": "00:12:32.399",
+    "reciter_differs": true,
+    "reciter_text": "وَغَرِّبْ فَالْغَرِيبُ لَهُ نِفَاقٌ",
+    "source_text": "وَغَرِّبْ فَالتَّغَرُّبُ فِيهِ خَيْرٌ",
+    "diff_note": "recitation has: وغرب فالغريب له نفاق\nsource text has: وَغَرِّبْ فَالتَّغَرُّّبُ فِيهِ خَيْرٌ\nThe reciter uses a different first hemistich: 'الْغَرِيبُ لَهُ نِفَاقٌ' (the stranger has marketability) instead of 'التَّغَرُّبُ فِيهِ خَيْرٌ' (in exile there is good). This is a known variant reading of this verse. Spans clip 25 -> clip 26 boundary."
+  },
+  {
+    "key": "v107",
+    "start": "00:12:32.399",
+    "end": "00:12:38.639",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v108",
+    "start": "00:12:38.639",
+    "end": "00:12:45.360",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'سموا وافتخارا' for 'سُمُوًّا وَارْتِفَاعًا'. Source has 'ارْتِفَاعًا' (elevation), Whisper has 'افتخارا' (pride). These are different words. Could be Whisper error or reciter variant."
+  },
+  {
+    "key": "v109",
+    "start": "00:12:45.360",
+    "end": "00:12:51.600",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'فرقتها' for 'فَارَقْتَهَا'. Minor Whisper simplification."
+  },
+  {
+    "key": "v110",
+    "start": "00:12:51.600",
+    "end": "00:12:58.080",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'وإن كرمتها / بإجلال فنفسك قد أهنتا'. Source has 'وَإِنْ أَكْرَمْتَهَا وَنَظَرْتَ فِيهَا / بِإِكْرَامٍ فَنَفْسَكَ قَدْ أَهَنْتَا'. Whisper has 'بإجلال' for 'بِإِكْرَامٍ'. These are synonymous — likely Whisper error rather than reciter difference."
+  },
+  {
+    "key": "v111",
+    "start": "00:12:58.080",
+    "end": "00:13:05.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Verse spans clip boundary (clip 26 -> clip 27). Clip 26 ends with 'جمعت لك النصارى' (Whisper garbled 'النَّصَائِحَ' as 'النصارى'), clip 27 starts with 'فامتثلها حياتك فهي أفضل ما امتثلتا'."
+  },
+  {
+    "key": "v112",
+    "start": "00:13:05.000",
+    "end": "00:13:12.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": null
+  },
+  {
+    "key": "v113",
+    "start": "00:13:12.000",
+    "end": "00:13:20.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Whisper has 'فلا تأخذ بتقصيري وسهوي' for 'وَلَا يَغْرُرْكَ تَقْصِيرِي وَسَهْوِي'. Whisper misheard the opening. Whisper error."
+  },
+  {
+    "key": "v114",
+    "start": "00:13:20.000",
+    "end": "00:13:28.000",
+    "reciter_differs": true,
+    "reciter_text": "سِتًّا حِسَانًا",
+    "source_text": "تِسْعًا حِسَانًا",
+    "diff_note": "recitation has: أردفتها ستا حسانا\nsource text has: أَردَفْتُهَا تِسْعًا حِسَانًا\nThe reciter says 'ستا' (six) while the source has 'تِسْعًا' (nine). This is likely a genuine reciter difference — the reciter is using a variant that says the poem was followed by six (additional verses) rather than nine. The second hemistich 'وكانت قبل ذا مئة وستا' matches."
+  },
+  {
+    "key": "v115",
+    "start": "00:13:28.000",
+    "end": "00:13:35.000",
+    "reciter_differs": false,
+    "reciter_text": null,
+    "source_text": null,
+    "diff_note": "Verse spans clip boundary (clip 27 -> clip 28). Clip 27 ends with 'وصلي على تمامك', clip 28 starts with 'من رسل ربي وعطرته الكريمة ما ذكرتا'. Whisper has 'تمامك' for 'تَمَامِ الرُّسْلِ' and 'وعطرته' for 'وَعِتْرَتِهِ'. Minor Whisper garbling. After this verse, the reciter closes with dua: 'تم بحمد الله / الحمد لله رب العالمين / وسلام على المرسلين / وآخر دعوانا الحمد لله رب العالمين'."
+  }
+]

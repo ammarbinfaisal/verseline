@@ -9,8 +9,8 @@ import { AssetUploader } from "./AssetUploader";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-      <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">{title}</h3>
+    <section className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5">
+      <h3 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-4">{title}</h3>
       <div className="space-y-4">{children}</div>
     </section>
   );
@@ -31,14 +31,14 @@ function TextField({
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs text-zinc-400">{label}</label>
+      <label className="text-xs text-zinc-500 dark:text-zinc-400">{label}</label>
       <input
         type="text"
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
-        className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-200 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
+        className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
       />
     </div>
   );
@@ -57,13 +57,13 @@ function NumberField({
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs text-zinc-400">{label}</label>
+      <label className="text-xs text-zinc-500 dark:text-zinc-400">{label}</label>
       <input
         type="number"
         value={value ?? ""}
         onChange={(e) => onChange(parseInt(e.target.value, 10) || 0)}
         placeholder={placeholder ?? "0"}
-        className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-200 focus:outline-none focus:border-blue-500 transition-colors"
+        className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500 transition-colors"
       />
     </div>
   );
@@ -108,25 +108,25 @@ function RenderProfileRow({
     set(key, v === 0 ? undefined : v);
 
   return (
-    <div className="bg-zinc-800 border border-zinc-700 rounded-xl p-4 space-y-3">
+    <div className="bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-xl p-4 space-y-3">
       <div className="flex items-center gap-2">
         <input
           type="text"
           value={profile.id}
           onChange={(e) => set("id", e.target.value)}
           placeholder="profile-id"
-          className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-200 font-mono focus:outline-none focus:border-blue-500"
+          className="flex-1 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 text-sm font-mono focus:outline-none focus:border-blue-500"
         />
         <input
           type="text"
           value={profile.label ?? ""}
           onChange={(e) => set("label", e.target.value || undefined)}
           placeholder="Label"
-          className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-200 focus:outline-none focus:border-blue-500"
+          className="flex-1 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500"
         />
         <button
           onClick={onRemove}
-          className="shrink-0 text-xs text-red-500 hover:text-red-400 px-2 py-1 hover:bg-zinc-700 rounded transition-colors"
+          className="shrink-0 text-xs text-red-500 hover:text-red-400 px-2 py-1 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded transition-colors"
         >
           Remove
         </button>
@@ -134,76 +134,76 @@ function RenderProfileRow({
 
       <div className="grid grid-cols-3 gap-3">
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500">Width</label>
-          <input type="number" value={profile.width ?? ""} onChange={(e) => setNum("width")(parseInt(e.target.value, 10) || 0)} placeholder="inherit" className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 focus:outline-none focus:border-blue-500" />
+          <label className="text-xs text-zinc-600 dark:text-zinc-500">Width</label>
+          <input type="number" value={profile.width ?? ""} onChange={(e) => setNum("width")(parseInt(e.target.value, 10) || 0)} placeholder="inherit" className="bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-blue-500" />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500">Height</label>
-          <input type="number" value={profile.height ?? ""} onChange={(e) => setNum("height")(parseInt(e.target.value, 10) || 0)} placeholder="inherit" className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 focus:outline-none focus:border-blue-500" />
+          <label className="text-xs text-zinc-600 dark:text-zinc-500">Height</label>
+          <input type="number" value={profile.height ?? ""} onChange={(e) => setNum("height")(parseInt(e.target.value, 10) || 0)} placeholder="inherit" className="bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-blue-500" />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500">FPS</label>
-          <input type="number" value={profile.fps ?? ""} onChange={(e) => setNum("fps")(parseInt(e.target.value, 10) || 0)} placeholder="inherit" className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 focus:outline-none focus:border-blue-500" />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500">Output path</label>
-          <input type="text" value={profile.output ?? ""} onChange={(e) => set("output", e.target.value || undefined)} placeholder="output.mp4" className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 font-mono focus:outline-none focus:border-blue-500" />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500">Output suffix</label>
-          <input type="text" value={profile.output_suffix ?? ""} onChange={(e) => set("output_suffix", e.target.value || undefined)} placeholder="_4k" className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 font-mono focus:outline-none focus:border-blue-500" />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500">Video codec</label>
-          <input type="text" value={profile.video_codec ?? ""} onChange={(e) => set("video_codec", e.target.value || undefined)} placeholder="libx264" className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 font-mono focus:outline-none focus:border-blue-500" />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500">Audio codec</label>
-          <input type="text" value={profile.audio_codec ?? ""} onChange={(e) => set("audio_codec", e.target.value || undefined)} placeholder="aac" className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 font-mono focus:outline-none focus:border-blue-500" />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500">Audio bitrate</label>
-          <input type="text" value={profile.audio_bitrate ?? ""} onChange={(e) => set("audio_bitrate", e.target.value || undefined)} placeholder="192k" className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 font-mono focus:outline-none focus:border-blue-500" />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500">CRF</label>
-          <input type="number" value={profile.crf ?? ""} onChange={(e) => setNum("crf")(parseInt(e.target.value, 10) || 0)} placeholder="23" className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 focus:outline-none focus:border-blue-500" />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500">Preset</label>
-          <input type="text" value={profile.preset ?? ""} onChange={(e) => set("preset", e.target.value || undefined)} placeholder="medium" className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 font-mono focus:outline-none focus:border-blue-500" />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500">Pix fmt</label>
-          <input type="text" value={profile.pix_fmt ?? ""} onChange={(e) => set("pix_fmt", e.target.value || undefined)} placeholder="yuv420p" className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 font-mono focus:outline-none focus:border-blue-500" />
+          <label className="text-xs text-zinc-600 dark:text-zinc-500">FPS</label>
+          <input type="number" value={profile.fps ?? ""} onChange={(e) => setNum("fps")(parseInt(e.target.value, 10) || 0)} placeholder="inherit" className="bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-blue-500" />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500">Color primaries</label>
-          <input type="text" value={profile.color_primaries ?? ""} onChange={(e) => set("color_primaries", e.target.value || undefined)} placeholder="bt709" className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 font-mono focus:outline-none focus:border-blue-500" />
+          <label className="text-xs text-zinc-600 dark:text-zinc-500">Output path</label>
+          <input type="text" value={profile.output ?? ""} onChange={(e) => set("output", e.target.value || undefined)} placeholder="output.mp4" className="bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded px-2 py-1 text-xs font-mono focus:outline-none focus:border-blue-500" />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500">Color TRC</label>
-          <input type="text" value={profile.color_trc ?? ""} onChange={(e) => set("color_trc", e.target.value || undefined)} placeholder="bt709" className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 font-mono focus:outline-none focus:border-blue-500" />
+          <label className="text-xs text-zinc-600 dark:text-zinc-500">Output suffix</label>
+          <input type="text" value={profile.output_suffix ?? ""} onChange={(e) => set("output_suffix", e.target.value || undefined)} placeholder="_4k" className="bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded px-2 py-1 text-xs font-mono focus:outline-none focus:border-blue-500" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-zinc-600 dark:text-zinc-500">Video codec</label>
+          <input type="text" value={profile.video_codec ?? ""} onChange={(e) => set("video_codec", e.target.value || undefined)} placeholder="libx264" className="bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded px-2 py-1 text-xs font-mono focus:outline-none focus:border-blue-500" />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500">Colorspace</label>
-          <input type="text" value={profile.colorspace ?? ""} onChange={(e) => set("colorspace", e.target.value || undefined)} placeholder="bt709" className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 font-mono focus:outline-none focus:border-blue-500" />
+          <label className="text-xs text-zinc-600 dark:text-zinc-500">Audio codec</label>
+          <input type="text" value={profile.audio_codec ?? ""} onChange={(e) => set("audio_codec", e.target.value || undefined)} placeholder="aac" className="bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded px-2 py-1 text-xs font-mono focus:outline-none focus:border-blue-500" />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500">Color range</label>
-          <input type="text" value={profile.color_range ?? ""} onChange={(e) => set("color_range", e.target.value || undefined)} placeholder="tv" className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 font-mono focus:outline-none focus:border-blue-500" />
+          <label className="text-xs text-zinc-600 dark:text-zinc-500">Audio bitrate</label>
+          <input type="text" value={profile.audio_bitrate ?? ""} onChange={(e) => set("audio_bitrate", e.target.value || undefined)} placeholder="192k" className="bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded px-2 py-1 text-xs font-mono focus:outline-none focus:border-blue-500" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-zinc-600 dark:text-zinc-500">CRF</label>
+          <input type="number" value={profile.crf ?? ""} onChange={(e) => setNum("crf")(parseInt(e.target.value, 10) || 0)} placeholder="23" className="bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-blue-500" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-zinc-600 dark:text-zinc-500">Preset</label>
+          <input type="text" value={profile.preset ?? ""} onChange={(e) => set("preset", e.target.value || undefined)} placeholder="medium" className="bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded px-2 py-1 text-xs font-mono focus:outline-none focus:border-blue-500" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-zinc-600 dark:text-zinc-500">Pix fmt</label>
+          <input type="text" value={profile.pix_fmt ?? ""} onChange={(e) => set("pix_fmt", e.target.value || undefined)} placeholder="yuv420p" className="bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded px-2 py-1 text-xs font-mono focus:outline-none focus:border-blue-500" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-zinc-600 dark:text-zinc-500">Color primaries</label>
+          <input type="text" value={profile.color_primaries ?? ""} onChange={(e) => set("color_primaries", e.target.value || undefined)} placeholder="bt709" className="bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded px-2 py-1 text-xs font-mono focus:outline-none focus:border-blue-500" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-zinc-600 dark:text-zinc-500">Color TRC</label>
+          <input type="text" value={profile.color_trc ?? ""} onChange={(e) => set("color_trc", e.target.value || undefined)} placeholder="bt709" className="bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded px-2 py-1 text-xs font-mono focus:outline-none focus:border-blue-500" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-zinc-600 dark:text-zinc-500">Colorspace</label>
+          <input type="text" value={profile.colorspace ?? ""} onChange={(e) => set("colorspace", e.target.value || undefined)} placeholder="bt709" className="bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded px-2 py-1 text-xs font-mono focus:outline-none focus:border-blue-500" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-zinc-600 dark:text-zinc-500">Color range</label>
+          <input type="text" value={profile.color_range ?? ""} onChange={(e) => set("color_range", e.target.value || undefined)} placeholder="tv" className="bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded px-2 py-1 text-xs font-mono focus:outline-none focus:border-blue-500" />
         </div>
       </div>
     </div>
@@ -251,10 +251,10 @@ export function ProjectSettings() {
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
-      <div className="px-6 py-4 border-b border-zinc-800 flex items-center gap-3">
-        <h2 className="text-sm font-semibold text-zinc-200 flex-1">Project Settings</h2>
+      <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center gap-3">
+        <h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 flex-1">Project Settings</h2>
         {saveError && (
-          <span className="text-xs text-red-400">{saveError}</span>
+          <span className="text-xs text-red-600 dark:text-red-400">{saveError}</span>
         )}
         <button
           onClick={handleSave}
@@ -324,11 +324,11 @@ export function ProjectSettings() {
               placeholder="video"
             />
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-zinc-400">Background fit</label>
+              <label className="text-xs text-zinc-500 dark:text-zinc-400">Background fit</label>
               <select
                 value={project.assets.background?.fit ?? ""}
                 onChange={(e) => updateField("assets.background.fit", e.target.value || undefined)}
-                className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-200 focus:outline-none focus:border-blue-500 transition-colors"
+                className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500 transition-colors"
               >
                 <option value="">-- none --</option>
                 <option value="cover">Cover</option>
@@ -350,7 +350,7 @@ export function ProjectSettings() {
         {/* Render profiles */}
         <Section title="Render Profiles">
           {profiles.length === 0 ? (
-            <p className="text-xs text-zinc-600">No render profiles yet.</p>
+            <p className="text-xs text-zinc-400 dark:text-zinc-600">No render profiles yet.</p>
           ) : (
             <div className="space-y-3">
               {profiles.map((profile, idx) => (
@@ -365,7 +365,7 @@ export function ProjectSettings() {
           )}
           <button
             onClick={addProfile}
-            className="w-full py-2 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors"
+            className="w-full py-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-colors"
           >
             + Add Profile
           </button>

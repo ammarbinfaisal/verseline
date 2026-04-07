@@ -1,1 +1,21 @@
 @import "tailwindcss";
+
+/*
+ * Light/dark theming uses Tailwind v4's built-in dark: variant
+ * which follows @media (prefers-color-scheme: dark) by default.
+ *
+ * Common pattern in components:
+ *   bg-white dark:bg-zinc-900
+ *   text-zinc-900 dark:text-white
+ *   border-zinc-200 dark:border-zinc-800
+ *
+ * We use CSS custom properties for the most repeated values
+ * to keep component classes shorter.
+ */
+
+@layer base {
+  /* Form inputs inherit the theme automatically */
+  input, textarea, select {
+    color-scheme: light dark;
+  }
+}

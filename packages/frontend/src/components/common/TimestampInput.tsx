@@ -61,7 +61,7 @@ export default function TimestampInput({ value, onChange, label, className = "" 
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      {label && <span className="text-xs text-zinc-400 w-12 shrink-0">{label}</span>}
+      {label && <span className="text-xs text-zinc-500 dark:text-zinc-400 w-12 shrink-0">{label}</span>}
       <input
         ref={inputRef}
         type="text"
@@ -72,11 +72,11 @@ export default function TimestampInput({ value, onChange, label, className = "" 
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         className={[
-          "bg-zinc-800 border rounded px-2 py-1 text-sm font-mono text-white w-32",
+          "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border rounded px-2 py-1 text-sm font-mono w-32",
           "focus:outline-none focus:ring-1",
           error
             ? "border-red-500 focus:ring-red-500"
-            : "border-zinc-600 focus:ring-indigo-500",
+            : "border-zinc-400 dark:border-zinc-600 focus:ring-indigo-500",
         ].join(" ")}
       />
     </div>

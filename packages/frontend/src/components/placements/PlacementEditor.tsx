@@ -34,7 +34,7 @@ function NumberField({
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs text-zinc-400">{label}</label>
+      <label className="text-xs text-zinc-500 dark:text-zinc-400">{label}</label>
       <input
         type="number"
         value={value ?? ""}
@@ -43,7 +43,7 @@ function NumberField({
           onChange(v === "" ? undefined : parseInt(v, 10));
         }}
         placeholder={placeholder ?? "0"}
-        className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-200 focus:outline-none focus:border-blue-500 transition-colors"
+        className="bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-blue-500 transition-colors"
       />
     </div>
   );
@@ -58,7 +58,7 @@ export function PlacementEditor({ placement, isNew, onSave, onDelete, onCancel }
 
   if (!placement && !isNew) {
     return (
-      <div className="flex items-center justify-center h-full text-zinc-600 text-sm">
+      <div className="flex items-center justify-center h-full text-zinc-400 dark:text-zinc-600 text-sm">
         Select a placement to edit
       </div>
     );
@@ -69,13 +69,13 @@ export function PlacementEditor({ placement, isNew, onSave, onDelete, onCancel }
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b border-zinc-800 flex items-center gap-2">
-        <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest flex-1">
+      <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 flex items-center gap-2">
+        <h2 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest flex-1">
           {isNew ? "New Placement" : "Edit Placement"}
         </h2>
         <button
           onClick={onCancel}
-          className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+          className="text-xs text-zinc-600 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 transition-colors"
         >
           Cancel
         </button>
@@ -84,14 +84,14 @@ export function PlacementEditor({ placement, isNew, onSave, onDelete, onCancel }
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {/* ID */}
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-400">ID</label>
+          <label className="text-xs text-zinc-500 dark:text-zinc-400">ID</label>
           <input
             type="text"
             value={form.id}
             onChange={(e) => set("id", e.target.value)}
             disabled={!isNew}
             placeholder="bottom-center"
-            className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-200 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
 
@@ -131,7 +131,7 @@ export function PlacementEditor({ placement, isNew, onSave, onDelete, onCancel }
       </div>
 
       {/* Actions */}
-      <div className="px-4 py-3 border-t border-zinc-800 flex items-center gap-2">
+      <div className="px-4 py-3 border-t border-zinc-200 dark:border-zinc-800 flex items-center gap-2">
         <button
           onClick={() => form.id.trim() && onSave(form)}
           disabled={!form.id.trim()}
@@ -142,7 +142,7 @@ export function PlacementEditor({ placement, isNew, onSave, onDelete, onCancel }
         {!isNew && (
           <button
             onClick={() => onDelete(form.id)}
-            className="py-2 px-4 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-zinc-800 rounded-lg transition-colors"
+            className="py-2 px-4 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-500 dark:hover:text-red-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
           >
             Delete
           </button>

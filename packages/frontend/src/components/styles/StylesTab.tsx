@@ -45,7 +45,7 @@ export function StylesTab() {
   return (
     <div className="flex h-full">
       {/* Left: list */}
-      <div className="w-56 shrink-0 border-r border-zinc-800 flex flex-col">
+      <div className="w-56 shrink-0 border-r border-zinc-200 dark:border-zinc-800 flex flex-col">
         <StyleList
           styles={styles}
           selectedId={selectedId}

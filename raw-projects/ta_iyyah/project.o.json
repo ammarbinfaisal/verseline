@@ -1,0 +1,114 @@
+{
+  "name": "Ta'iyyah al-Ilbiri — Verses 1–5",
+  "canvas": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30
+  },
+  "assets": {
+    "audio": "recitation.m4a",
+    "background": {
+      "type": "image",
+      "path": "bg.jpg",
+      "fit": "cover"
+    }
+  },
+  "fonts": [
+    {
+      "id": "rakkas",
+      "family": "Rakkas",
+      "files": [
+        "Rakkas/Rakkas-Regular.ttf"
+      ]
+    },
+    {
+      "id": "comfortaa",
+      "family": "Comfortaa",
+      "files": [
+        "Comfortaa/static/Comfortaa-SemiBold.ttf"
+      ]
+    }
+  ],
+  "styles": [
+    {
+      "id": "arabic",
+      "font": "rakkas",
+      "size": 52,
+      "color": "#FFFFFF",
+      "outline_color": "#000000",
+      "outline": 3,
+      "shadow_color": "#00000088",
+      "shadow": 4,
+      "align": "center",
+      "line_height": 80
+    },
+    {
+      "id": "english",
+      "font": "comfortaa",
+      "size": 28,
+      "color": "#E0E0E0",
+      "outline_color": "#000000",
+      "outline": 2,
+      "shadow_color": "#00000088",
+      "shadow": 3,
+      "align": "center",
+      "line_height": 44
+    },
+    {
+      "id": "note",
+      "font": "comfortaa",
+      "size": 18,
+      "color": "#AAAAAA",
+      "outline_color": "#000000",
+      "outline": 1,
+      "shadow_color": "#00000066",
+      "shadow": 2,
+      "align": "center",
+      "line_height": 26
+    },
+    {
+      "id": "note-arabic",
+      "font": "rakkas",
+      "size": 22,
+      "color": "#AAAAAA",
+      "outline_color": "#000000",
+      "outline": 1,
+      "shadow_color": "#00000066",
+      "shadow": 2
+    }
+  ],
+  "placements": [
+    {
+      "id": "arabic-center",
+      "anchor": "center",
+      "margin_x": 40,
+      "max_width": 1000
+    },
+    {
+      "id": "english-below",
+      "anchor": "center",
+      "margin_x": 40,
+      "margin_y": 200,
+      "max_width": 950
+    },
+    {
+      "id": "note-bottom",
+      "anchor": "bottom-center",
+      "margin_x": 40,
+      "margin_y": 120,
+      "max_width": 950
+    }
+  ],
+  "sources": [
+    {
+      "id": "verses",
+      "type": "jsonl",
+      "path": "verses.jsonl",
+      "language": "ar",
+      "text_field": "arabic",
+      "key_field": "key"
+    }
+  ],
+  "preview": {},
+  "timeline": "draft.json"
+}

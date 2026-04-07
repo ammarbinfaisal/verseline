@@ -27,7 +27,7 @@ export default function CanvasPreview({ blocks, styles, placements, canvas, back
 
   return (
     <div
-      className="relative w-full overflow-hidden rounded-lg border border-zinc-700"
+      className="relative w-full overflow-hidden rounded-lg border border-zinc-300 dark:border-zinc-700"
       style={{ aspectRatio, background: backgroundUrl ? `url(${backgroundUrl}) center/cover no-repeat` : "#18181b" }}
     >
       {blocks.map((block, i) => {

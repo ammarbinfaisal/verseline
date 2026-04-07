@@ -97,13 +97,13 @@ export function AssetUploader({ label, fieldPath, currentValue, accept }: AssetU
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-xs text-zinc-400">{label}</label>
+      <label className="text-xs text-zinc-500 dark:text-zinc-400">{label}</label>
 
       {/* Current file */}
       {currentValue && (
-        <div className="flex items-center gap-2 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2">
-          <span className="text-xs text-zinc-400 truncate flex-1 font-mono">{currentValue}</span>
-          <span className="text-xs text-zinc-600 shrink-0">current</span>
+        <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2">
+          <span className="text-xs text-zinc-500 dark:text-zinc-400 truncate flex-1 font-mono">{currentValue}</span>
+          <span className="text-xs text-zinc-400 dark:text-zinc-600 shrink-0">current</span>
         </div>
       )}
 
@@ -120,7 +120,7 @@ export function AssetUploader({ label, fieldPath, currentValue, accept }: AssetU
             ? "border-green-700 bg-green-950/20"
             : state === "error"
             ? "border-red-700 bg-red-950/20"
-            : "border-zinc-700 hover:border-zinc-500 hover:bg-zinc-800/50"
+            : "border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50"
         }`}
       >
         <input
@@ -133,8 +133,8 @@ export function AssetUploader({ label, fieldPath, currentValue, accept }: AssetU
 
         {state === "uploading" ? (
           <div className="flex flex-col items-center gap-2">
-            <span className="text-xs text-zinc-400">Uploading... {progress}%</span>
-            <div className="w-full bg-zinc-700 rounded-full h-1">
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">Uploading... {progress}%</span>
+            <div className="w-full bg-zinc-300 dark:bg-zinc-700 rounded-full h-1">
               <div
                 className="bg-blue-500 h-1 rounded-full transition-all"
                 style={{ width: `${progress}%` }}
@@ -142,11 +142,11 @@ export function AssetUploader({ label, fieldPath, currentValue, accept }: AssetU
             </div>
           </div>
         ) : state === "done" ? (
-          <span className="text-xs text-green-400">Upload complete</span>
+          <span className="text-xs text-green-600 dark:text-green-400">Upload complete</span>
         ) : state === "error" ? (
-          <span className="text-xs text-red-400">{error}</span>
+          <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
         ) : (
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-zinc-600 dark:text-zinc-500">
             Drag &amp; drop or click to upload
           </span>
         )}
