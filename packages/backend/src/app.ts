@@ -8,6 +8,7 @@ import timelineRouter from "./routes/timeline.js";
 import fontsRouter from "./routes/fonts.js";
 import renderRouter from "./routes/render.js";
 import assetsRouter from "./routes/assets.js";
+import importExportRouter from "./routes/import-export.js";
 import renderProgressRouter from "./ws/render-progress.js";
 
 type AuthEnv = {
@@ -45,6 +46,9 @@ app.route("/render", renderRouter);
 
 // Protected asset routes
 app.route("/projects", assetsRouter);
+
+// Import/export routes
+app.route("/projects", importExportRouter);
 
 // WebSocket render progress (no HTTP auth — jobId is the implicit secret)
 app.route("/ws/render", renderProgressRouter);

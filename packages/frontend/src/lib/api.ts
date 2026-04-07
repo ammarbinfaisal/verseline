@@ -140,7 +140,39 @@ const segments = {
   },
 };
 
+// --- Import/Export ---
+
+const importExport = {
+  async importFile(file: File, format?: "unified" | "legacy", timelineFile?: File): Promise<ProjectRecord> {
+    const token = getToken();
+    const form = new FormData();
+    if (format === "legacy") {
+      form.set("format", "legacy");
+      form.set("project", file);
+      if (timelineFile) form.set("timeline", timelineFile);
+    } else {
+      form.set("file", file);
+    }
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(`${BASE_URL}/projects/import`, {
+      method: "POST",
+      headers,
+      body: form,
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body?.error ?? `Import failed (${res.status})`);
+    }
+    return res.json();
+  },
+
+  exportUrl(projectId: string, format: "binary" | "json" | "legacy" = "binary"): string {
+    return `${BASE_URL}/projects/${projectId}/export?format=${format}`;
+  },
+};
+
 // --- Exported API object ---
 
-export const api = { auth, projects, segments };
+export const api = { auth, projects, segments, importExport };
 export { apiFetch };
