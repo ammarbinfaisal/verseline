@@ -3,10 +3,8 @@ import { eq, and, asc } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { projects, segments } from "../db/schema.js";
 import { getUserId } from "../middleware/auth.js";
+import { downloadFromR2, uploadToR2 } from "../services/storage.js";
 import {
-  tsToMillis,
-  isLegacyProject,
-  UnifiedFormatSchema,
   type VerselineFile,
   encodeVerseline,
   decodeVerseline,
@@ -16,126 +14,61 @@ import {
 type AuthEnv = { Variables: { userId: string } };
 const importExport = new Hono<AuthEnv>();
 
-// POST /projects/import — import from .verseline, .verseline.json, or legacy project.json + timeline.jsonl
+/** Read a ReadableStream into a Uint8Array. */
+async function streamToBytes(stream: ReadableStream): Promise<Uint8Array> {
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalLen = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    totalLen += value.length;
+  }
+  const result = new Uint8Array(totalLen);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return result;
+}
+
+/** Guess a content type from a file extension. */
+function mimeFromKey(key: string): string {
+  const ext = key.split(".").pop()?.toLowerCase();
+  switch (ext) {
+    case "mp3": return "audio/mpeg";
+    case "wav": return "audio/wav";
+    case "ogg": return "audio/ogg";
+    case "mp4": return "video/mp4";
+    case "webm": return "video/webm";
+    case "png": return "image/png";
+    case "jpg": case "jpeg": return "image/jpeg";
+    case "webp": return "image/webp";
+    default: return "application/octet-stream";
+  }
+}
+
+// POST /projects/import — import a .verseline binary file
 importExport.post("/import", async (c) => {
   const userId = getUserId(c);
   const contentType = c.req.header("content-type") ?? "";
 
-  let projectData: VerselineFile;
-
-  if (contentType.includes("multipart/form-data")) {
-    const form = await c.req.formData();
-    const format = form.get("format") as string | null;
-    const file = form.get("file") as File | null;
-
-    if (format === "legacy" || (!format && form.has("project"))) {
-      // Legacy: project.json + timeline.jsonl
-      const projectFile = (form.get("project") ?? file) as File | null;
-      const timelineFile = form.get("timeline") as File | null;
-      if (!projectFile) return c.json({ error: "project file is required" }, 400);
-
-      const projJson = JSON.parse(await projectFile.text());
-      let segs: { start: string; end: string; status?: string; confidence?: number; notes?: string; blocks: unknown[] }[] = [];
-
-      if (timelineFile) {
-        const text = await timelineFile.text();
-        const trimmed = text.trim();
-        if (trimmed.startsWith("[")) {
-          segs = JSON.parse(trimmed);
-        } else {
-          for (const line of trimmed.split("\n")) {
-            const l = line.trim();
-            if (l) segs.push(JSON.parse(l));
-          }
-        }
-      }
-
-      projectData = {
-        version: 1,
-        name: projJson.name ?? "Imported Project",
-        canvas: projJson.canvas,
-        assets: projJson.assets,
-        fonts: projJson.fonts ?? [],
-        styles: projJson.styles ?? [],
-        placements: projJson.placements ?? [],
-        sources: projJson.sources ?? [],
-        overlays: projJson.overlays ?? [],
-        render_profiles: projJson.render_profiles ?? [],
-        segments: segs.map((s) => ({
-          id: (s as any).id,
-          start_ms: tsToMillis(s.start),
-          end_ms: tsToMillis(s.end),
-          status: s.status,
-          confidence: s.confidence,
-          notes: s.notes,
-          blocks: s.blocks as any[],
-        })),
-      };
-    } else {
-      // Unified or binary
-      if (!file) return c.json({ error: "file is required" }, 400);
-      const buf = new Uint8Array(await file.arrayBuffer());
-
-      if (isVerselineBinary(buf)) {
-        projectData = decodeVerseline(buf);
-      } else {
-        const json = JSON.parse(new TextDecoder().decode(buf));
-        if (isLegacyProject(json)) {
-          return c.json({ error: "This looks like a legacy project.json. Use format=legacy and include the timeline file." }, 400);
-        }
-        const parsed = UnifiedFormatSchema.parse(json);
-        projectData = {
-          version: 1,
-          name: parsed.name ?? "Imported Project",
-          canvas: parsed.canvas,
-          assets: parsed.assets,
-          fonts: parsed.fonts ?? [],
-          styles: parsed.styles ?? [],
-          placements: parsed.placements ?? [],
-          sources: parsed.sources ?? [],
-          overlays: parsed.overlays ?? [],
-          render_profiles: parsed.render_profiles ?? [],
-          segments: parsed.segments.map((s) => ({
-            id: s.id,
-            start_ms: tsToMillis(s.start),
-            end_ms: tsToMillis(s.end),
-            status: s.status,
-            confidence: s.confidence,
-            notes: s.notes,
-            blocks: s.blocks as any[],
-          })),
-        };
-      }
-    }
-  } else {
-    // JSON body (unified format)
-    const body = await c.req.json();
-    if (isLegacyProject(body)) {
-      return c.json({ error: "Legacy format requires multipart upload with project + timeline files." }, 400);
-    }
-    const parsed = UnifiedFormatSchema.parse(body);
-    projectData = {
-      version: 1,
-      name: parsed.name ?? "Imported Project",
-      canvas: parsed.canvas,
-      assets: parsed.assets,
-      fonts: parsed.fonts ?? [],
-      styles: parsed.styles ?? [],
-      placements: parsed.placements ?? [],
-      sources: parsed.sources ?? [],
-      overlays: parsed.overlays ?? [],
-      render_profiles: parsed.render_profiles ?? [],
-      segments: parsed.segments.map((s) => ({
-        id: s.id,
-        start_ms: tsToMillis(s.start),
-        end_ms: tsToMillis(s.end),
-        status: s.status,
-        confidence: s.confidence,
-        notes: s.notes,
-        blocks: s.blocks as any[],
-      })),
-    };
+  if (!contentType.includes("multipart/form-data")) {
+    return c.json({ error: "Expected multipart/form-data with a .verseline file" }, 400);
   }
+
+  const form = await c.req.formData();
+  const file = form.get("file") as File | null;
+  if (!file) return c.json({ error: "file field is required" }, 400);
+
+  const buf = new Uint8Array(await file.arrayBuffer());
+  if (!isVerselineBinary(buf)) {
+    return c.json({ error: "Not a valid .verseline binary file" }, 400);
+  }
+
+  const projectData = decodeVerseline(buf);
 
   // Create project in DB
   const [project] = await db
@@ -153,6 +86,26 @@ importExport.post("/import", async (c) => {
       renderProfiles: projectData.render_profiles,
     })
     .returning();
+
+  // Upload embedded assets to R2 and update project assets paths
+  if (projectData.assets_data && Object.keys(projectData.assets_data).length > 0) {
+    const assets = { ...(project.assets as any) };
+
+    for (const [assetKey, assetBytes] of Object.entries(projectData.assets_data)) {
+      const r2Key = `projects/${project.id}/${assetKey}`;
+      await uploadToR2(r2Key, Buffer.from(assetBytes), mimeFromKey(assetKey));
+
+      // Map the asset back to the project's assets field
+      if (assetKey === assets.audio || assetKey.match(/^audio\./)) {
+        assets.audio = r2Key;
+      } else if (assetKey === assets.background?.path || assetKey.match(/^background\./)) {
+        assets.background = { ...assets.background, path: r2Key };
+      }
+    }
+
+    await db.update(projects).set({ assets }).where(eq(projects.id, project.id));
+    project.assets = assets;
+  }
 
   // Create segments
   if (projectData.segments.length > 0) {
@@ -174,7 +127,7 @@ importExport.post("/import", async (c) => {
   return c.json({ project }, 201);
 });
 
-// GET /projects/:id/export — export as .verseline binary
+// GET /projects/:id/export — export as .verseline binary with embedded assets
 importExport.get("/:id/export", async (c) => {
   const userId = getUserId(c);
   const id = c.req.param("id");
@@ -193,6 +146,36 @@ importExport.get("/:id/export", async (c) => {
     .from(segments)
     .where(and(eq(segments.projectId, id), eq(segments.timelineKind, kind)))
     .orderBy(asc(segments.sortOrder));
+
+  // Fetch source assets from R2 and embed them
+  const assetsData: Record<string, Uint8Array> = {};
+  const projectAssets = project.assets as any;
+
+  if (projectAssets?.background?.path) {
+    const bgPath = projectAssets.background.path as string;
+    if (bgPath) {
+      try {
+        const bgKey = bgPath.split("/").pop() ?? bgPath;
+        const stream = await downloadFromR2(bgPath);
+        assetsData[bgKey] = await streamToBytes(stream);
+      } catch {
+        // Asset may not exist in R2 — skip embedding
+      }
+    }
+  }
+
+  if (projectAssets?.audio) {
+    const audioPath = projectAssets.audio as string;
+    if (audioPath) {
+      try {
+        const audioKey = audioPath.split("/").pop() ?? audioPath;
+        const stream = await downloadFromR2(audioPath);
+        assetsData[audioKey] = await streamToBytes(stream);
+      } catch {
+        // Asset may not exist in R2 — skip embedding
+      }
+    }
+  }
 
   const fileData: VerselineFile = {
     version: 1,
@@ -213,6 +196,7 @@ importExport.get("/:id/export", async (c) => {
       notes: s.notes ?? undefined,
       blocks: (s.blocks as any[]) ?? [],
     })),
+    ...(Object.keys(assetsData).length > 0 ? { assets_data: assetsData } : {}),
   };
 
   const slug = project.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "project";

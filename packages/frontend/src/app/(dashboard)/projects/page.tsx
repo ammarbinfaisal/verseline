@@ -12,10 +12,7 @@ export default function ProjectsPage() {
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [showLegacy, setShowLegacy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  const legacyProjectRef = useRef<HTMLInputElement>(null);
-  const legacyTimelineRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     api.projects
@@ -55,27 +52,12 @@ export default function ProjectsPage() {
     }
   }
 
-  async function handleLegacyImport() {
-    const projectFile = legacyProjectRef.current?.files?.[0];
-    if (!projectFile) { setError("Select a project.json file"); return; }
-    const timelineFile = legacyTimelineRef.current?.files?.[0] ?? undefined;
-    setImporting(true);
-    setError(null);
-    try {
-      const result = await api.importExport.importFile(projectFile, "legacy", timelineFile);
-      router.push(`/projects/${(result as any).project?.id ?? (result as any).id}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Import failed");
-      setImporting(false);
-    }
-  }
-
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-semibold text-zinc-900 dark:text-white">Projects</h1>
         <div className="flex items-center gap-3">
-          <input ref={fileRef} type="file" accept=".verseline,.verseline.json,.json" className="hidden" onChange={handleImport} />
+          <input ref={fileRef} type="file" accept=".verseline" className="hidden" onChange={handleImport} />
           <button
             onClick={() => fileRef.current?.click()}
             disabled={importing}
@@ -91,38 +73,6 @@ export default function ProjectsPage() {
             {creating ? "Creating..." : "New project"}
           </button>
         </div>
-      </div>
-
-      {/* Legacy import toggle */}
-      <div className="mb-6">
-        <button
-          onClick={() => setShowLegacy(!showLegacy)}
-          className="text-xs text-zinc-600 dark:text-zinc-500 hover:text-zinc-500 dark:hover:text-zinc-400 transition-colors"
-        >
-          {showLegacy ? "Hide" : "Import legacy format"}
-        </button>
-        {showLegacy && (
-          <div className="mt-3 p-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-3">
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">Import a project.json + timeline.jsonl from the old format.</p>
-            <div className="flex items-center gap-3">
-              <label className="text-xs text-zinc-600 dark:text-zinc-500">
-                project.json
-                <input ref={legacyProjectRef} type="file" accept=".json" className="ml-2 text-xs text-zinc-500 dark:text-zinc-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-zinc-100 dark:file:bg-zinc-800 file:text-zinc-700 dark:file:text-zinc-300" />
-              </label>
-              <label className="text-xs text-zinc-600 dark:text-zinc-500">
-                timeline.jsonl
-                <input ref={legacyTimelineRef} type="file" accept=".jsonl,.json" className="ml-2 text-xs text-zinc-500 dark:text-zinc-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-zinc-100 dark:file:bg-zinc-800 file:text-zinc-700 dark:file:text-zinc-300" />
-              </label>
-              <button
-                onClick={handleLegacyImport}
-                disabled={importing}
-                className="px-3 py-1.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white text-xs hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-300 dark:border-zinc-700 disabled:opacity-50"
-              >
-                Import
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {error && (
