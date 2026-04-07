@@ -11,5 +11,6 @@ node_modules/
 .env.local
 packages/backend/.env
 packages/frontend/.env.local
-packages/backend/drizzle/*.sql
+packages/backend/drizzle/
+*.tsbuildinfo
 dist/
