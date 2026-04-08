@@ -29,16 +29,17 @@ function startLoop() {
     if (!state.playing) return;
 
     let newTimeMs: number;
+    const now = performance.now();
     if (_audioEl && !_audioEl.paused) {
-      // Sync from audio element (source of truth)
-      newTimeMs = _audioEl.currentTime * 1000;
+      // Sync from audio element (source of truth); round to integer ms
+      newTimeMs = Math.round(_audioEl.currentTime * 1000);
     } else {
       // Wall-clock fallback when no audio
-      const now = performance.now();
       const elapsed = (now - _lastWallTime) * state.playbackRate;
-      _lastWallTime = now;
-      newTimeMs = state.currentTimeMs + elapsed;
+      newTimeMs = Math.round(state.currentTimeMs + elapsed);
     }
+    // Always update wall-clock baseline to prevent stale jumps when switching paths
+    _lastWallTime = now;
 
     // Clamp and check for end
     if (newTimeMs >= state.durationMs && state.durationMs > 0) {

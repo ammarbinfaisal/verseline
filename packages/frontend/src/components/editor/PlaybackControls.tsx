@@ -15,13 +15,11 @@ interface PlaybackControlsProps {
 
 const RATE_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
-/** Converts millisToTs output (HH:MM:SS.mmm) to a shorter MM:SS.m display. */
+/** Converts millisToTs output (HH:MM:SS.mmm) to a shorter MM:SS.mmm display. */
 function formatShort(ms: number): string {
-  const ts = millisToTs(ms); // "HH:MM:SS.mmm"
-  // Drop leading "00:" (hours) if zero, then truncate to one decimal on millis
-  const withoutHours = ts.startsWith("00:") ? ts.slice(3) : ts; // "MM:SS.mmm"
-  // Keep MM:SS.m (one decimal digit)
-  return withoutHours.slice(0, withoutHours.lastIndexOf(".") + 2);
+  const ts = millisToTs(Math.round(ms)); // "HH:MM:SS.mmm"
+  // Drop leading "00:" (hours) if zero
+  return ts.startsWith("00:") ? ts.slice(3) : ts; // "MM:SS.mmm"
 }
 
 export default function PlaybackControls({
