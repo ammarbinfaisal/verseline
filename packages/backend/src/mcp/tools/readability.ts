@@ -171,7 +171,7 @@ export async function handleCheckReadability(input: {
       has_outline: hasOutline,
       has_shadow: hasShadow,
       has_text_bg: hasTextBg,
-      recommendations: hasOutline && hasShadow || hasTextBg ? [] : recommendations,
+      recommendations: hasOutline || hasShadow || hasTextBg ? [] : recommendations,
       note:
         "Contrast ratio is estimated against a neutral gray — for pixel-accurate sampling use the verseline Go binary.",
     });

@@ -6,13 +6,12 @@
  *
  * Configuration (environment variables):
  *   VERSELINE_API_URL    — backend base URL (default: http://localhost:4000)
- *   VERSELINE_API_TOKEN  — Bearer token for API auth
+ *   VERSELINE_API_TOKEN  — Bearer token for API auth (single-tenant)
  *   OPENAI_API_KEY       — required for verseline_transcribe
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
 
 import { inspectInputSchema, handleInspectProject } from "./tools/inspect.js";
 import { listInputSchema, handleListSegments } from "./tools/list.js";
@@ -34,139 +33,194 @@ import {
   readabilityInputSchema,
   handleCheckReadability,
 } from "./tools/readability.js";
+import {
+  listProjectsInputSchema,
+  handleListProjects,
+} from "./tools/list-projects.js";
+import {
+  createSegmentInputSchema,
+  handleCreateSegment,
+  deleteSegmentInputSchema,
+  handleDeleteSegment,
+} from "./tools/segment-crud.js";
+import {
+  approveTimelineInputSchema,
+  handleApproveTimeline,
+} from "./tools/approve-timeline.js";
+import {
+  previewSegmentInputSchema,
+  handlePreviewSegment,
+  renderProjectInputSchema,
+  handleRenderProject,
+  getRenderJobInputSchema,
+  handleGetRenderJob,
+} from "./tools/render.js";
+import {
+  libraryListInputSchema,
+  handleLibraryList,
+  libraryLinkInputSchema,
+  handleLibraryLink,
+} from "./tools/library.js";
+
+const SCHEMA_DOC = `Project schema (R2 keys are opaque storage paths — use verseline_list_projects to discover IDs, library tools for assets):
+{
+  "id": "uuid", "name": "string",
+  "canvas": { "width": int>0, "height": int>0, "fps": int>0 },
+  "assets": { "audio": "r2-key (optional)", "background": { "path": "r2-key", "type": "image|video|color", "loop": bool, "fit": "cover|contain" } },
+  "fonts": [{ "id": "string", "family": "string", "files": ["r2-key of .ttf/.otf"] }],
+  "styles": [{ "id": "string", "font": "font-id", "size": int, "color": "#RRGGBB", "outline"/"outline_color", "shadow"/"shadow_color", "text_bg"/"text_bg_pad"/"text_bg_radius", "line_height", "align" }],
+  "placements": [{ "id": "string", "anchor": "top-left|top-center|top-right|middle-left|center|middle-right|bottom-left|bottom-center|bottom-right", "margin_x", "margin_y", "max_width", "max_height" }],
+  "sources": [{ "id": "string", "type": "json|jsonl", "path": "r2-key", "language", "text_field", "key_field" }],
+  "overlays": [{ "id", "start": "HH:MM:SS.mmm", "end": "HH:MM:SS.mmm", "blocks": [...] }],
+  "renderProfiles": [{ "id", "label", "width", "height", "fps", "crf", "preset", "video_codec", "audio_codec", "output_suffix" }]
+}
+
+Segment: {"id":"uuid","startMs":int,"endMs":int,"status":"draft|approved|needs_fix","notes":string|null,"confidence":float|null,"blocks":[{"text":"string","style":"style-id","placement":"placement-id","source":{"source":"src-id","refs":["..."]}}]}
+
+Inline style tags: block.text may contain <styleID>...</styleID> segments rendered with that style's color. styleID must exist in project.styles. Tags do not nest.
+
+Segments can overlap in time — multiple segments covering the same ms range render as stacked layers (later segments on top).`;
 
 // ---- Server setup ----
 
 const server = new McpServer({
   name: "verseline",
-  version: "0.2.0",
+  version: "0.3.0",
 });
 
-// ---- Tool: verseline_inspect_project ----
+// ---- Discovery ----
+
+server.tool(
+  "verseline_list_projects",
+  `List all Verseline projects owned by the authenticated user. Use this first if you don't know the project_id. Returns id, name, canvas dimensions, and createdAt for each.`,
+  listProjectsInputSchema,
+  async (input) => handleListProjects(input),
+);
+
+// ---- Project inspection / validation ----
 
 server.tool(
   "verseline_inspect_project",
-  `Load a Verseline project and return its canvas dimensions, asset paths, registered styles, placements, sources, render profiles, and timeline info with segment counts.
-
-The project schema:
-{
-  "name": "string (optional)",
-  "output": "string — output file path (optional)",
-  "canvas": { "width": int, "height": int, "fps": int },
-  "assets": {
-    "audio": "string — path to audio file (optional)",
-    "background": { "path": "string (required)", "type": "\"image\" or \"video\" (optional, default image)", "loop": bool (optional), "fit": "\"cover\" or \"contain\" (optional, default cover)" }
-  },
-  "fonts": [{ "id": "string", "family": "string", "files": ["path to .ttf/.otf file"] }],
-  "styles": [{
-    "id": "string", "font": "string — references a font id", "size": int,
-    "color": "#RRGGBB (optional)",
-    "outline_color": "#RRGGBB (optional)", "outline": int pixels (optional),
-    "shadow_color": "#RRGGBB or #RRGGBBAA (optional)", "shadow": int pixels (optional),
-    "text_bg": "#RRGGBB or #RRGGBBAA (optional) — background color for a rounded box behind the text",
-    "text_bg_pad": int pixels (optional) — padding inside the text background box",
-    "text_bg_radius": int pixels (optional) — corner radius of the text background box",
-    "line_height": int (optional)
-  }],
-  "placements": [{ "id": "string", "anchor": "top-left|top-center|top-right|middle-left|center|middle-right|bottom-left|bottom-center|bottom-right", "margin_x": int (optional), "margin_y": int (optional), "max_width": int (optional), "max_height": int (optional) }],
-  "sources": [{ "id": "string", "type": "json|jsonl", "path": "string", "language": "string (optional)", "text_field": "string (optional)", "key_field": "string (optional)" }],
-  "overlays": [{ "id": "string (optional)", "start": "HH:MM:SS.mmm (optional — default 0)", "end": "HH:MM:SS.mmm (optional — default end of video)", "blocks": [block...] }],
-  "render_profiles": [{ "id": "string", "label": "string (optional)", "width": int (optional)", "height": int (optional)", "fps": int (optional)", "output": "string (optional)", "output_suffix": "string (optional)", "video_codec": "string (optional)", "audio_codec": "string (optional)", "crf": int (optional)", "preset": "string (optional)" }]
-}
-
-A timeline has one segment per entry:
-{"id":"string","startMs":int,"endMs":int,"status":"draft|approved|needs_fix","blocks":[{"text":"string","style":"style-id","placement":"placement-id"},...]}
-
-Inline style tags: block text can contain <styleID>...</styleID> tags to render portions in a different style's color. Example: "Glorified <aux>(and Exalted)</aux> be He" renders "(and Exalted)" using the "aux" style's color. The tag name must match a style ID in the project. Tags do not nest.
-
-Multiple text cards can overlap in time — all render simultaneously when their time ranges overlap.`,
+  `Load a project and return canvas, assets (R2 keys), fonts, styles, placements, sources, render profiles, overlays count, and draft/approved segment counts. ${SCHEMA_DOC}`,
   inspectInputSchema,
-  async (input) => {
-    return handleInspectProject(input);
-  },
+  async (input) => handleInspectProject(input),
 );
-
-// ---- Tool: verseline_list_segments ----
 
 server.tool(
   "verseline_list_segments",
-  `Return paginated segments from a project's draft or approved timeline. Each segment includes its 1-based number, start/end timestamps, status, block count, a text preview (first 160 characters), and source references. Defaults: timeline="draft", start_at=1, limit=50.
-
-Segments can overlap in time — multiple segments may cover the same time range and all render simultaneously as stacked layers. This is by design: use overlapping segments for parallel text cards (e.g., verse text from 0s-20s and a continuous attribution from 0s-60s spanning multiple verses).`,
+  `Return paginated segments from the draft or approved timeline. Each segment includes 1-based number, start/end timestamps, status, block count, text_preview (first 160 chars), source refs. Response includes has_more. Defaults: timeline="draft", start_at=1, limit=50 (max 200). Segments can overlap in time.`,
   listInputSchema,
-  async (input) => {
-    return handleListSegments(input);
-  },
+  async (input) => handleListSegments(input),
 );
-
-// ---- Tool: verseline_validate_project ----
 
 server.tool(
   "verseline_validate_project",
-  `Validate a project and one of its timelines. Checks: canvas dimensions are positive, background path is set, all IDs are unique and non-empty, every block has text or a source, and all style/placement/source references in the timeline exist in the project. Returns valid=true or an error describing the first failing check.`,
+  `Validate a project and one timeline. Checks: canvas > 0, assets.background.path set, block has text OR source reference, all style/placement/source references exist. Throws the first failing check, otherwise returns { valid: true, segment_count }.`,
   validateInputSchema,
-  async (input) => {
-    return handleValidateProject(input);
-  },
+  async (input) => handleValidateProject(input),
 );
 
-// ---- Tool: verseline_update_segment ----
+// ---- Segment editing ----
 
 server.tool(
   "verseline_update_segment",
-  `Update properties of a single segment in the draft or approved timeline. Can set start, end, status, notes, or a single block's text/style/placement. Identify the segment by 1-based segment_number or segment_id. Set dry_run=true to preview the change without saving. Block text may contain inline style tags: <styleID>text</styleID> to render portions with a different style's color (the styleID must exist in the project's styles array — use verseline_update_project to add it first).
-
-Segments can overlap in time — you can set a segment's start/end to any range, even if it overlaps other segments. Overlapping segments render as stacked layers (later segments on top). This enables parallel text cards like a verse spanning 0s-10s with an attribution spanning 0s-60s.`,
+  `Update a single draft or approved segment in-place. Set any of: start/end (HH:MM:SS.mmm), status, notes, confidence, or a single block's text/style/placement (identify block by 1-based block_index, default 1). Alternatively pass blocks=[...] to REPLACE the entire blocks array (use this to add/remove/reorder blocks — include every block you want to keep). Identify target segment by segment_number (1-based) or segment_id. dry_run=true previews without saving. Block text supports <styleID>...</styleID> inline tags; styleID must already exist in project.styles.`,
   updateSegmentInputSchema,
-  async (input) => {
-    return handleUpdateSegment(input);
-  },
+  async (input) => handleUpdateSegment(input),
 );
 
-// ---- Tool: verseline_split_segment ----
+server.tool(
+  "verseline_create_segment",
+  `Create a new draft or approved segment. Required: project_id, start, end. Optional: status, notes, blocks, sort_order (defaults to appended). Returns the created segment summary.`,
+  createSegmentInputSchema,
+  async (input) => handleCreateSegment(input),
+);
+
+server.tool(
+  "verseline_delete_segment",
+  `Delete one segment (identified by segment_number or segment_id). Subsequent segments' sort orders are shifted down by 1.`,
+  deleteSegmentInputSchema,
+  async (input) => handleDeleteSegment(input),
+);
 
 server.tool(
   "verseline_split_segment",
-  `Replace one timeline segment with multiple shorter segments by splitting a block's text. Provide the new text fragments in the texts array (minimum 2). Time is split equally across fragments. Identify the segment by segment_number or segment_id, and the block by block_index (1-based, default 1). Set dry_run=true to preview.
-
-Note: segments can overlap in time. If you need a block (e.g., an attribution) to span the full duration of a verse that was split into multiple segments, create a separate overlapping segment covering the full verse time range rather than duplicating the block in each split segment.`,
+  `Split one segment into N>=2 segments by splitting a block's text. Provide texts array (min 2). Duration is divided equally (floor) across fragments; the last fragment absorbs the remainder. Identify by segment_number or segment_id; the block by 1-based block_index (default 1). dry_run=true previews.`,
   splitSegmentInputSchema,
-  async (input) => {
-    return handleSplitSegment(input);
-  },
+  async (input) => handleSplitSegment(input),
 );
 
-// ---- Tool: verseline_update_project ----
+server.tool(
+  "verseline_approve_timeline",
+  `Copy the draft timeline over the approved timeline (replaces all approved segments with clones of drafts). Returns the approved segment count. Required: project_id.`,
+  approveTimelineInputSchema,
+  async (input) => handleApproveTimeline(input),
+);
+
+// ---- Project updates ----
 
 server.tool(
   "verseline_update_project",
-  `Add, update, or remove a style or placement in the project. Exactly one action per call: set upsert_style to add or replace a style by ID, remove_style to delete by ID, upsert_placement to add or replace a placement by ID, or remove_placement to delete by ID. The project is saved after the change. Use this to define new styles for inline <styleID>...</styleID> tags in block text.`,
+  `Upsert or remove project configuration items. Pass exactly one action object: { target: "style"|"placement"|"font"|"source"|"render_profile", action: "upsert"|"remove", value: {...} | id: "string" }. For upsert, value must include an id. To rename a project, set name. To change canvas, set canvas={width,height,fps}.`,
   updateProjectInputSchema,
-  async (input) => {
-    return handleUpdateProject(input);
-  },
+  async (input) => handleUpdateProject(input),
 );
 
-// ---- Tool: verseline_transcribe ----
+// ---- Rendering ----
+
+server.tool(
+  "verseline_preview_segment",
+  `Render a low-quality single-segment preview from the DRAFT timeline, upload to R2, return a 1-hour presigned URL. Use segment_number (1-based, default 1).`,
+  previewSegmentInputSchema,
+  async (input) => handlePreviewSegment(input),
+);
+
+server.tool(
+  "verseline_render_project",
+  `Start an async full-project render from the APPROVED timeline. Returns jobId immediately. Poll with verseline_get_render_job. Optional profile_id (default "default").`,
+  renderProjectInputSchema,
+  async (input) => handleRenderProject(input),
+);
+
+server.tool(
+  "verseline_get_render_job",
+  `Get render job status. Returns { status: "pending"|"running"|"done"|"failed", progress (0-100), downloadUrl (1-hour presigned, when done), error }.`,
+  getRenderJobInputSchema,
+  async (input) => handleGetRenderJob(input),
+);
+
+// ---- Transcription ----
 
 server.tool(
   "verseline_transcribe",
-  `Transcribe an audio file using the OpenAI Whisper API and write results as JSONL batch files to output_dir. Each batch file contains up to lines_per_batch entries (1–100, default 50). Each JSONL line is {"start":"HH:MM:SS.mmm","end":"HH:MM:SS.mmm","text":"...","confidence":0.0-1.0}. Returns the list of written file paths and line counts — does not return transcription content in the tool result. Requires OPENAI_API_KEY in the environment.`,
+  `Transcribe an audio file with OpenAI Whisper. Input is a LOCAL absolute or relative path (not an R2 key — download the audio first if needed). Writes JSONL batches to output_dir (created if needed). Each batch line: {"start":"HH:MM:SS.mmm","end":"HH:MM:SS.mmm","text":"...","confidence":0-1}. Returns batch file paths only. To seed draft segments from a transcript, use verseline_create_segment per line in a follow-up call. Requires OPENAI_API_KEY.`,
   transcribeInputSchema,
-  async (input) => {
-    return handleTranscribe(input);
-  },
+  async (input) => handleTranscribe(input),
 );
 
-// ---- Tool: verseline_check_readability ----
+// ---- Readability ----
 
 server.tool(
   "verseline_check_readability",
-  `Analyze text-on-background contrast for a specific segment. Returns per-block: text color, estimated contrast ratio, whether WCAG AA (>=3:1) and AAA (>=4.5:1) thresholds are met, whether outline/shadow/text_bg are set, and recommendations to improve contrast. Note: this TypeScript server estimates contrast against a neutral background; for pixel-accurate background sampling use the verseline Go binary. Use verseline_update_project to apply recommended style changes.`,
+  `Analyze per-block contrast aids for a segment. Returns, for each block: text_color, estimated contrast_ratio against neutral gray (rough — the real background image is not sampled here), meets_wcag_aa (>=3.0), meets_wcag_aaa (>=4.5), has_outline/has_shadow/has_text_bg, and recommendations (empty if any contrast aid is present). Use verseline_update_project to apply recommended style changes.`,
   readabilityInputSchema,
-  async (input) => {
-    return handleCheckReadability(input);
-  },
+  async (input) => handleCheckReadability(input),
+);
+
+// ---- Library ----
+
+server.tool(
+  "verseline_library_list",
+  `List the user's library assets (audio/background/font/image/video). Supports filtering by type and fuzzy name query. Paginated. Returns { id, name, assetType, r2Key, contentType, metadata, createdAt } per asset plus total count.`,
+  libraryListInputSchema,
+  async (input) => handleLibraryList(input),
+);
+
+server.tool(
+  "verseline_library_link",
+  `Link or unlink a library asset to/from a project. action="link" adds it, action="unlink" removes it. The asset remains in the library either way.`,
+  libraryLinkInputSchema,
+  async (input) => handleLibraryLink(input),
 );
 
 // ---- Start ----
