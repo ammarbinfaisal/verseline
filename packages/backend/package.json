@@ -3,9 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "verseline-mcp": "./dist/mcp.js"
+  },
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "mcp": "bun run src/mcp/server.ts",
+    "build:mcp": "bun build --target=node --banner='#!/usr/bin/env node' --outfile=dist/mcp.js src/mcp/server.ts && chmod +x dist/mcp.js",
     "db:generate": "bunx drizzle-kit generate",
     "db:migrate": "bunx drizzle-kit migrate",
     "db:studio": "bunx drizzle-kit studio"
