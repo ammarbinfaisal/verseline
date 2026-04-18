@@ -103,13 +103,9 @@ export async function handleCheckReadability(input: {
     (project.placements ?? []).map((p) => [p.id, p]),
   );
 
-  // Note: contrast ratio requires sampling the background image at the placement region.
-  // Since this TypeScript MCP server does not have image-processing capabilities built in
-  // (the Go binary does this via native image libraries), we return a structured analysis
-  // based on the style configuration alone — flagging any styles that lack contrast aids
-  // (outline, shadow, text_bg) alongside metadata for the caller to act on.
-  //
-  // For full pixel-level sampling, use the Go `verseline mcp` binary instead.
+  // Contrast is estimated against a neutral gray; the real R2-hosted background
+  // is not sampled pixel-by-pixel here. We flag styles that lack any contrast
+  // aid (outline, shadow, text_bg) and leave the caller to decide.
 
   const results: ReadabilityBlock[] = [];
 
@@ -173,7 +169,7 @@ export async function handleCheckReadability(input: {
       has_text_bg: hasTextBg,
       recommendations: hasOutline || hasShadow || hasTextBg ? [] : recommendations,
       note:
-        "Contrast ratio is estimated against a neutral gray — for pixel-accurate sampling use the verseline Go binary.",
+        "Contrast ratio is estimated against a neutral gray; the real background image is not sampled here.",
     });
   }
 
