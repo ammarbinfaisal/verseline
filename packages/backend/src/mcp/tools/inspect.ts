@@ -1,13 +1,16 @@
 import { z } from "zod";
-import { getProject } from "../api-client.js";
-import { jsonResult, msToTs } from "../helpers.js";
+import { getProject, getSegments } from "../api-client.js";
 
 export const inspectInputSchema = {
   project_id: z.string().min(1).describe("The project UUID to inspect"),
 };
 
 export async function handleInspectProject(input: { project_id: string }) {
-  const project = await getProject(input.project_id);
+  const [project, draftSegs, approvedSegs] = await Promise.all([
+    getProject(input.project_id),
+    getSegments(input.project_id, "draft"),
+    getSegments(input.project_id, "approved"),
+  ]);
 
   const styles: string[] = (project.styles ?? []).map((s) => s.id);
   const placements: string[] = (project.placements ?? []).map((p) => p.id);
@@ -26,13 +29,16 @@ export async function handleInspectProject(input: { project_id: string }) {
     sources,
     render_profiles: renderProfiles,
     overlays_count: (project.overlays ?? []).length,
+    draft_segment_count: draftSegs.length,
+    approved_segment_count: approvedSegs.length,
   };
 
   const text =
     `Project "${project.name}" (${project.id}): ` +
     `${project.canvas.width}x${project.canvas.height} @ ${project.canvas.fps}fps, ` +
     `styles=[${styles.join(", ")}], placements=[${placements.join(", ")}], ` +
-    `sources=[${sources.join(", ")}], profiles=[${renderProfiles.join(", ")}]`;
+    `sources=[${sources.join(", ")}], profiles=[${renderProfiles.join(", ")}], ` +
+    `draft_segments=${draftSegs.length}, approved_segments=${approvedSegs.length}`;
 
   return {
     content: [

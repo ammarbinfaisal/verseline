@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { getSegments, updateSegment } from "../api-client.js";
-import { findSegment, summarizeSegment, tsToMs, msToTs } from "../helpers.js";
+import { findSegment, summarizeSegment, tsToMs } from "../helpers.js";
 import type { ApiBlock, ApiSegment } from "../api-client.js";
 
 export const updateSegmentInputSchema = {
@@ -59,6 +59,17 @@ export const updateSegmentInputSchema = {
     .describe(
       "Placement ID to apply to the block (must exist in project placements)",
     ),
+  confidence: z
+    .number()
+    .nullable()
+    .optional()
+    .describe("Confidence score (0.0–1.0) for this segment, or null to clear it"),
+  blocks: z
+    .array(z.object({}).passthrough())
+    .optional()
+    .describe(
+      "Replacement blocks array. If provided, REPLACES the entire blocks array (include every block you want to keep). Mutually exclusive with block_text / block_style / block_placement — use one or the other.",
+    ),
   dry_run: z
     .boolean()
     .optional()
@@ -79,16 +90,30 @@ export async function handleUpdateSegment(input: {
   block_text?: string;
   block_style?: string;
   block_placement?: string;
+  confidence?: number | null;
+  blocks?: object[];
   dry_run?: boolean;
 }) {
   const timeline = input.timeline ?? "draft";
   const dryRun = input.dry_run ?? false;
 
+  // Validate mutual exclusion between blocks (whole-array replace) and per-block fields
+  if (
+    input.blocks !== undefined &&
+    (input.block_text !== undefined ||
+      input.block_style !== undefined ||
+      input.block_placement !== undefined)
+  ) {
+    throw new Error(
+      "cannot combine 'blocks' with block_text/block_style/block_placement — use one or the other",
+    );
+  }
+
   const allSegments = await getSegments(input.project_id, timeline);
   const [seg, idx] = findSegment(allSegments, input.segment_number, input.segment_id);
 
   // Build updates
-  const updates: Partial<Pick<ApiSegment, "startMs" | "endMs" | "status" | "notes" | "blocks">> = {};
+  const updates: Partial<Pick<ApiSegment, "startMs" | "endMs" | "status" | "notes" | "blocks" | "confidence">> = {};
 
   if (input.start !== undefined) {
     const ms = tsToMs(input.start);
@@ -102,15 +127,22 @@ export async function handleUpdateSegment(input: {
   }
   if (input.status !== undefined) updates.status = input.status;
   if (input.notes !== undefined) updates.notes = input.notes;
+  if (input.confidence !== undefined) updates.confidence = input.confidence;
 
-  // Block-level updates
+  // Whole-array blocks replacement
+  if (input.blocks !== undefined) {
+    updates.blocks = input.blocks as ApiBlock[];
+  }
+
+  // Per-block field updates (only if blocks array not replaced)
   const blockIdx = Math.max((input.block_index ?? 1) - 1, 0);
   const blocks = [...((seg.blocks ?? []) as ApiBlock[])];
 
   if (
-    input.block_text !== undefined ||
-    input.block_style !== undefined ||
-    input.block_placement !== undefined
+    input.blocks === undefined &&
+    (input.block_text !== undefined ||
+      input.block_style !== undefined ||
+      input.block_placement !== undefined)
   ) {
     if (blockIdx >= blocks.length) {
       throw new Error(

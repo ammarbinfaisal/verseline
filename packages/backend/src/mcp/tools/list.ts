@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { getSegments } from "../api-client.js";
-import { summarizeSegment, jsonResult } from "../helpers.js";
+import { summarizeSegment } from "../helpers.js";
 
 export const listInputSchema = {
   project_id: z.string().min(1).describe("The project UUID"),
@@ -55,6 +55,7 @@ export async function handleListSegments(input: {
     total_count: allSegments.length,
     start_at: startAt,
     limit,
+    has_more: endIndex < allSegments.length,
     segments: summaries,
   };
 
