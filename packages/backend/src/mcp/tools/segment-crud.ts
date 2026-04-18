@@ -76,10 +76,9 @@ export async function handleCreateSegment(input: {
 
   const segment = await createSegment(input.project_id, body as Parameters<typeof createSegment>[1]);
 
-  // Fetch segments to get the 1-based number
-  const allSegments = await getSegments(input.project_id, timeline);
-  const segIdx = allSegments.findIndex((s) => s.id === segment.id);
-  const oneBased = segIdx >= 0 ? segIdx + 1 : 1;
+  // Derive 1-based number directly from the returned sortOrder so this is
+  // safe under concurrent writes (no re-fetch round-trip / no race window).
+  const oneBased = segment.sortOrder + 1;
 
   const summary = summarizeSegment(segment, oneBased);
 
