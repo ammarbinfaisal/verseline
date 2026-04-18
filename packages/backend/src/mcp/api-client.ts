@@ -38,6 +38,9 @@ async function mcpFetch<T>(path: string, options?: RequestInit): Promise<T> {
     throw new ApiError(res.status, message);
   }
 
+  if (res.status === 204 || res.headers.get("content-length") === "0") {
+    return undefined as T;
+  }
   return res.json() as Promise<T>;
 }
 
@@ -236,6 +239,108 @@ export async function deleteSegment(
 ): Promise<void> {
   await mcpFetch<{ success: boolean }>(
     `/projects/${projectId}/segments/${segId}`,
+    { method: "DELETE" },
+  );
+}
+
+export async function approveTimeline(projectId: string): Promise<ApiSegment[]> {
+  const data = await mcpFetch<{ segments: ApiSegment[] }>(
+    `/projects/${projectId}/segments/approve`,
+    { method: "POST" },
+  );
+  return data.segments;
+}
+
+// ---- Render API ----
+
+export interface ApiRenderJob {
+  id: string;
+  projectId: string;
+  status: string;
+  profileId: string | null;
+  progress: number | null;
+  outputKey: string | null;
+  downloadUrl?: string;
+  error: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+export async function previewSegment(
+  projectId: string,
+  segIndex: number,
+): Promise<{ url: string; key: string }> {
+  return mcpFetch<{ url: string; key: string }>(
+    `/projects/${projectId}/preview/${segIndex}`,
+    { method: "POST" },
+  );
+}
+
+export async function renderProject(
+  projectId: string,
+  profileId: string,
+): Promise<{ jobId: string; status: string }> {
+  return mcpFetch<{ jobId: string; status: string }>(
+    `/projects/${projectId}/render`,
+    { method: "POST", body: JSON.stringify({ profileId }) },
+  );
+}
+
+export async function getRenderJob(jobId: string): Promise<ApiRenderJob> {
+  const data = await mcpFetch<{ job: ApiRenderJob }>(`/render/jobs/${jobId}`);
+  return data.job;
+}
+
+// ---- Library API ----
+
+export interface ApiLibraryAsset {
+  id: string;
+  userId: string;
+  name: string;
+  assetType: string;
+  r2Key: string | null;
+  filename: string;
+  contentType: string | null;
+  metadata: unknown;
+  pexelsId: string | null;
+  pexelsUrl: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+export async function listLibraryAssets(params: {
+  type?: string;
+  q?: string;
+  page?: number;
+  limit?: number;
+}): Promise<{ assets: ApiLibraryAsset[]; total: number }> {
+  const qs = new URLSearchParams();
+  if (params.type) qs.set("type", params.type);
+  if (params.q) qs.set("q", params.q);
+  if (params.page !== undefined) qs.set("page", String(params.page));
+  if (params.limit !== undefined) qs.set("limit", String(params.limit));
+  const query = qs.toString();
+  return mcpFetch<{ assets: ApiLibraryAsset[]; total: number }>(
+    `/library${query ? `?${query}` : ""}`,
+  );
+}
+
+export async function linkLibraryAsset(
+  assetId: string,
+  projectId: string,
+): Promise<{ linked: boolean }> {
+  return mcpFetch<{ linked: boolean }>(
+    `/library/${assetId}/link/${projectId}`,
+    { method: "POST" },
+  );
+}
+
+export async function unlinkLibraryAsset(
+  assetId: string,
+  projectId: string,
+): Promise<void> {
+  await mcpFetch<unknown>(
+    `/library/${assetId}/link/${projectId}`,
     { method: "DELETE" },
   );
 }
