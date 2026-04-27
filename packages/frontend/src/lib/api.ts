@@ -356,6 +356,29 @@ const pexels = {
   },
 };
 
+// --- /me prefs (theme + shortcuts cross-device sync — see /design.md §V2.6) ---
+
+export interface MePrefs {
+  theme: "system" | "light" | "warm" | "dark";
+  preferWarmInLight: boolean;
+  shortcuts: Record<string, string>;
+  updatedAt: string | null;
+}
+
+const me = {
+  async getPrefs(): Promise<MePrefs> {
+    const res = await apiFetch<{ prefs: MePrefs }>("/me/prefs");
+    return res.prefs;
+  },
+  async putPrefs(patch: Partial<Omit<MePrefs, "updatedAt">>): Promise<MePrefs> {
+    const res = await apiFetch<{ prefs: MePrefs }>("/me/prefs", {
+      method: "PUT",
+      body: JSON.stringify(patch),
+    });
+    return res.prefs;
+  },
+};
+
 // --- Presets (shared library tier — see /design.md §V2.2) ---
 
 const presets = {
@@ -383,5 +406,5 @@ const presets = {
 
 // --- Exported API object ---
 
-export const api = { auth, projects, segments, importExport, library, pexels, presets };
+export const api = { auth, projects, segments, importExport, library, pexels, presets, me };
 export { apiFetch };

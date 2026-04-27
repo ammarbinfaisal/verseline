@@ -13,6 +13,7 @@ import importExportRouter from "./routes/import-export.js";
 import libraryRouter from "./routes/library.js";
 import pexelsRouter from "./routes/pexels.js";
 import presetsRouter from "./routes/presets.js";
+import mePrefsRouter from "./routes/me-prefs.js";
 import renderProgressRouter from "./ws/render-progress.js";
 
 type AuthEnv = {
@@ -66,6 +67,9 @@ app.route("/pexels", pexelsRouter);
 // Presets — mixed auth (built-in catalogue is open; everything else gated
 // by middleware mounted inside the router itself)
 app.route("/presets", presetsRouter);
+
+// Per-user prefs (auth applied inside the router)
+app.route("/me/prefs", mePrefsRouter);
 
 // WebSocket render progress (no HTTP auth — jobId is the implicit secret)
 app.route("/ws/render", renderProgressRouter);

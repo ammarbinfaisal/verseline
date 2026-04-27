@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/stores/auth-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import { useMountEffect } from "@/hooks/useMountEffect";
 import { MobileGate } from "@/components/common/MobileGate";
 import { Spinner, ToastViewport } from "@/components/ui";
@@ -14,7 +15,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useMountEffect(() => {
     loadUser().then(() => {
       const { user } = useAuthStore.getState();
-      if (!user) router.replace("/login");
+      if (!user) {
+        router.replace("/login");
+        return;
+      }
+      // Pull theme + shortcuts from /me/prefs once authenticated.
+      useSettingsStore.getState().hydrateFromServer();
     });
   });
 

@@ -184,6 +184,23 @@ export const presets = pgTable(
   ],
 );
 
+// ---- user prefs (theme, shortcuts, etc.) ----
+//
+// One row per user. Theme is stored as a string ("system" | "light" |
+// "warm" | "dark"); preferWarmInLight is a boolean toggle. Shortcuts is
+// a partial overrides map keyed by action — defaults live in code so
+// missing keys mean "use the default."
+
+export const userPrefs = pgTable("user_prefs", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  theme: varchar("theme", { length: 16 }).notNull().default("system"),
+  preferWarmInLight: boolean("prefer_warm_in_light").notNull().default(false),
+  shortcuts: jsonb("shortcuts").notNull().default(sql`'{}'::jsonb`),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // ---- renderJobs ----
 
 export const renderJobs = pgTable("render_jobs", {
