@@ -1,4 +1,14 @@
-import type { Project, Segment, SegmentUpdates, SplitRequest } from "@verseline/shared";
+import type {
+  Project,
+  Segment,
+  SegmentUpdates,
+  SplitRequest,
+  Style,
+  Placement,
+  Font,
+  PresetKind,
+  PresetRecord,
+} from "@verseline/shared";
 import { tsToMillis, millisToTs } from "@verseline/shared";
 import { getToken } from "./auth";
 
@@ -346,7 +356,32 @@ const pexels = {
   },
 };
 
+// --- Presets (shared library tier — see /design.md §V2.2) ---
+
+const presets = {
+  async list(kind?: PresetKind): Promise<PresetRecord[]> {
+    const qs = kind ? `?kind=${kind}` : "";
+    const res = await apiFetch<{ presets: PresetRecord[] }>(`/presets${qs}`);
+    return res.presets;
+  },
+  async listBuiltIn(kind?: PresetKind): Promise<PresetRecord[]> {
+    const qs = kind ? `?kind=${kind}` : "";
+    const res = await apiFetch<{ presets: PresetRecord[] }>(`/presets/builtin${qs}`);
+    return res.presets;
+  },
+  async upsert(kind: PresetKind, payload: Style | Placement | Font): Promise<PresetRecord> {
+    const res = await apiFetch<{ preset: PresetRecord }>("/presets", {
+      method: "POST",
+      body: JSON.stringify({ kind, payload }),
+    });
+    return res.preset;
+  },
+  async delete(id: string): Promise<void> {
+    await apiFetch<void>(`/presets/${id}`, { method: "DELETE" });
+  },
+};
+
 // --- Exported API object ---
 
-export const api = { auth, projects, segments, importExport, library, pexels };
+export const api = { auth, projects, segments, importExport, library, pexels, presets };
 export { apiFetch };

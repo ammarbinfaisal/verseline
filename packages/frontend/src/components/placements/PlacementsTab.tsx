@@ -3,7 +3,6 @@
 import { useState } from "react";
 import type { Placement } from "@verseline/shared";
 import { useProjectStore } from "@/stores/project-store";
-import { useLibraryStore } from "@/stores/library-store";
 import { PlacementList } from "./PlacementList";
 import { PlacementEditor } from "./PlacementEditor";
 import { PresetPicker } from "@/components/library/PresetPicker";
@@ -11,8 +10,6 @@ import { Button, toast } from "@/components/ui";
 
 export function PlacementsTab() {
   const { project, upsertPlacement, removePlacement } = useProjectStore();
-  const listPresets = useLibraryStore((s) => s.listPlacementPresets);
-  const removePreset = useLibraryStore((s) => s.deletePlacementPreset);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isNew, setIsNew] = useState(false);
@@ -49,11 +46,12 @@ export function PlacementsTab() {
     if (!selected) setSelectedId(null);
   };
 
-  const handlePick = (preset: Placement) => {
-    upsertPlacement(preset);
-    setSelectedId(preset.id);
+  const handlePick = (preset: Placement | unknown) => {
+    const p = preset as Placement;
+    upsertPlacement(p);
+    setSelectedId(p.id);
     setIsNew(false);
-    toast.success(`“${preset.name || preset.id}” inserted`);
+    toast.success(`“${p.name || p.id}” inserted`);
   };
 
   return (
@@ -97,8 +95,6 @@ export function PlacementsTab() {
         open={showPicker}
         onClose={() => setShowPicker(false)}
         onPick={handlePick}
-        list={listPresets}
-        remove={removePreset}
       />
     </div>
   );

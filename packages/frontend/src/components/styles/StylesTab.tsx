@@ -3,7 +3,6 @@
 import { useState } from "react";
 import type { Style } from "@verseline/shared";
 import { useProjectStore } from "@/stores/project-store";
-import { useLibraryStore } from "@/stores/library-store";
 import { StyleList } from "./StyleList";
 import { StyleEditor } from "./StyleEditor";
 import { PresetPicker } from "@/components/library/PresetPicker";
@@ -11,8 +10,6 @@ import { Button, toast } from "@/components/ui";
 
 export function StylesTab() {
   const { project, upsertStyle, removeStyle } = useProjectStore();
-  const listPresets = useLibraryStore((s) => s.listStylePresets);
-  const removePreset = useLibraryStore((s) => s.deleteStylePreset);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isNew, setIsNew] = useState(false);
@@ -49,11 +46,12 @@ export function StylesTab() {
     if (!selected) setSelectedId(null);
   };
 
-  const handlePick = (preset: Style) => {
-    upsertStyle(preset);
-    setSelectedId(preset.id);
+  const handlePick = (preset: Style | unknown) => {
+    const s = preset as Style;
+    upsertStyle(s);
+    setSelectedId(s.id);
     setIsNew(false);
-    toast.success(`“${preset.id}” inserted`);
+    toast.success(`“${s.id}” inserted`);
   };
 
   return (
@@ -98,8 +96,6 @@ export function StylesTab() {
         open={showPicker}
         onClose={() => setShowPicker(false)}
         onPick={handlePick}
-        list={listPresets}
-        remove={removePreset}
       />
     </div>
   );
