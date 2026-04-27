@@ -1,6 +1,7 @@
 "use client";
 
 import type { Style } from "@verseline/shared";
+import { Button } from "@/components/ui";
 
 interface StyleListProps {
   styles: Style[];
@@ -12,50 +13,62 @@ interface StyleListProps {
 export function StyleList({ styles, selectedId, onSelect, onNew }: StyleListProps) {
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800">
-        <h2 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">Styles</h2>
-      </div>
-
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto" role="listbox" aria-label="Styles">
         {styles.length === 0 ? (
-          <p className="px-4 py-6 text-xs text-zinc-400 dark:text-zinc-600 text-center">No styles yet.</p>
+          <p className="px-4 py-6 text-[var(--text-fs-1)] text-[var(--text-faint)] text-center">
+            No styles yet.
+          </p>
         ) : (
           <ul>
-            {styles.map((style) => (
-              <li key={style.id}>
-                <button
-                  onClick={() => onSelect(style.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
-                    selectedId === style.id ? "bg-zinc-100 dark:bg-zinc-800 border-l-2 border-blue-500" : "border-l-2 border-transparent"
-                  }`}
-                >
-                  {/* Color swatch */}
-                  <span
-                    className="shrink-0 w-4 h-4 rounded-sm border border-zinc-300 dark:border-zinc-700"
-                    style={{ backgroundColor: style.color ?? "#ffffff" }}
-                  />
-
-                  {/* Info */}
-                  <span className="flex-1 min-w-0">
-                    <span className="block text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{style.id}</span>
-                    <span className="block text-xs text-zinc-600 dark:text-zinc-500 truncate">
-                      {style.font} &middot; {style.size}px
+            {styles.map((style) => {
+              const active = selectedId === style.id;
+              return (
+                <li key={style.id}>
+                  <button
+                    role="option"
+                    aria-selected={active}
+                    onClick={() => onSelect(style.id)}
+                    data-testid={`style-row-${style.id}`}
+                    className={[
+                      "w-full flex items-center gap-3 px-3 py-2 text-left transition-colors relative",
+                      "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--focus-ring)]",
+                      active
+                        ? "bg-[color-mix(in_srgb,var(--accent-cool)_10%,transparent)]"
+                        : "hover:bg-[var(--surface-2)]",
+                    ].join(" ")}
+                  >
+                    {active && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute left-0 top-1 bottom-1 w-0.5"
+                        style={{ background: "var(--accent-cool)" }}
+                      />
+                    )}
+                    <span
+                      className="shrink-0 w-4 h-4 rounded-sm border border-[var(--border)]"
+                      style={{ backgroundColor: style.color ?? "#ffffff" }}
+                      aria-hidden="true"
+                    />
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-[var(--text-fs-3)] font-medium text-[var(--text)] truncate">
+                        {style.id}
+                      </span>
+                      <span className="block text-[var(--text-fs-1)] font-mono text-[var(--text-muted)] truncate">
+                        {style.font} · {style.size}px
+                      </span>
                     </span>
-                  </span>
-                </button>
-              </li>
-            ))}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
 
-      <div className="p-3 border-t border-zinc-200 dark:border-zinc-800">
-        <button
-          onClick={onNew}
-          className="w-full py-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-colors"
-        >
+      <div className="p-2 border-t border-[var(--border)]">
+        <Button size="sm" variant="ghost" fullWidth onClick={onNew} data-testid="new-style">
           + New Style
-        </button>
+        </Button>
       </div>
     </div>
   );

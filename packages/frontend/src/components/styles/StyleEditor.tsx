@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { Style, Font } from "@verseline/shared";
+import { Button, toast } from "@/components/ui";
+import { useLibraryStore } from "@/stores/library-store";
 
 interface StyleEditorProps {
   style: Style | null;
@@ -240,23 +242,65 @@ export function StyleEditor({ style, isNew, fonts, onSave, onDelete, onCancel }:
       </div>
 
       {/* Actions */}
-      <div className="px-4 py-3 border-t border-zinc-200 dark:border-zinc-800 flex items-center gap-2">
-        <button
-          onClick={handleSave}
-          disabled={!form.id.trim()}
-          className="flex-1 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors"
-        >
-          Save
-        </button>
-        {!isNew && (
-          <button
-            onClick={() => onDelete(form.id)}
-            className="py-2 px-4 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-500 dark:hover:text-red-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
-          >
-            Delete
-          </button>
-        )}
-      </div>
+      <ActionsFooter
+        canSave={Boolean(form.id.trim())}
+        onSave={handleSave}
+        onSaveLibrary={async () => {
+          if (!form.id.trim()) return;
+          try {
+            await useLibraryStore.getState().saveStylePreset(form);
+            toast.success(`“${form.id}” saved to library`);
+          } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Failed to save to library");
+          }
+        }}
+        isNew={isNew}
+        onDelete={() => onDelete(form.id)}
+      />
+    </div>
+  );
+}
+
+function ActionsFooter({
+  canSave,
+  onSave,
+  onSaveLibrary,
+  isNew,
+  onDelete,
+}: {
+  canSave: boolean;
+  onSave: () => void;
+  onSaveLibrary: () => void;
+  isNew: boolean;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="px-4 py-3 border-t border-[var(--border)] flex items-center gap-2 shrink-0">
+      <Button
+        variant="primary"
+        size="md"
+        fullWidth
+        disabled={!canSave}
+        onClick={onSave}
+        data-testid="style-save"
+      >
+        Save
+      </Button>
+      <Button
+        variant="ghost"
+        size="md"
+        disabled={!canSave}
+        onClick={onSaveLibrary}
+        data-testid="style-save-library"
+        title="Save this style to your shared library"
+      >
+        ★ Library
+      </Button>
+      {!isNew && (
+        <Button variant="danger" size="md" onClick={onDelete} data-testid="style-delete">
+          Delete
+        </Button>
+      )}
     </div>
   );
 }

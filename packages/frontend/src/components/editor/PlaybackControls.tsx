@@ -2,6 +2,7 @@
 
 import { useRef, useCallback } from "react";
 import { millisToTs } from "@verseline/shared";
+import { IconButton } from "@/components/ui";
 
 interface PlaybackControlsProps {
   playing: boolean;
@@ -15,11 +16,9 @@ interface PlaybackControlsProps {
 
 const RATE_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
-/** Converts millisToTs output (HH:MM:SS.mmm) to a shorter MM:SS.mmm display. */
 function formatShort(ms: number): string {
-  const ts = millisToTs(Math.round(ms)); // "HH:MM:SS.mmm"
-  // Drop leading "00:" (hours) if zero
-  return ts.startsWith("00:") ? ts.slice(3) : ts; // "MM:SS.mmm"
+  const ts = millisToTs(Math.round(ms));
+  return ts.startsWith("00:") ? ts.slice(3) : ts;
 }
 
 export default function PlaybackControls({
@@ -47,62 +46,61 @@ export default function PlaybackControls({
   const filledPct = durationMs > 0 ? (currentTimeMs / durationMs) * 100 : 0;
 
   return (
-    <div className="flex items-center gap-3 px-3 py-1.5 bg-zinc-50 dark:bg-zinc-900 border-t border-zinc-300 dark:border-zinc-700">
-      {/* Play / Pause */}
-      <button
+    <div
+      className="flex items-center gap-3 px-3 py-2 bg-[var(--surface-1)] border-t border-[var(--border)]"
+      data-testid="playback-controls"
+    >
+      <IconButton
+        size="md"
+        variant={playing ? "primary" : "default"}
+        label={playing ? "Pause" : "Play"}
         onClick={onPlayPause}
-        aria-label={playing ? "Pause" : "Play"}
-        className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors shrink-0"
+        data-testid="play-pause"
       >
         {playing ? (
-          /* Pause: two vertical bars */
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            fill="currentColor"
-            className="text-zinc-700 dark:text-zinc-300"
-          >
-            <rect x="2" y="1" width="4" height="12" rx="1" />
-            <rect x="8" y="1" width="4" height="12" rx="1" />
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <rect x="3" y="2" width="4" height="12" rx="1" />
+            <rect x="9" y="2" width="4" height="12" rx="1" />
           </svg>
         ) : (
-          /* Play: right-facing triangle */
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            fill="currentColor"
-            className="text-zinc-700 dark:text-zinc-300"
-          >
-            <path d="M3 1.5l9 5.5-9 5.5V1.5z" />
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M3 2l11 6-11 6V2z" />
           </svg>
         )}
-      </button>
+      </IconButton>
 
-      {/* Time display */}
-      <span className="text-xs font-mono text-zinc-600 dark:text-zinc-400 shrink-0 tabular-nums">
+      <span
+        className="text-[var(--text-fs-2)] font-mono text-[var(--text-muted)] tabular-nums shrink-0"
+        data-testid="time-display"
+      >
         {formatShort(currentTimeMs)} / {formatShort(durationMs)}
       </span>
 
-      {/* Scrub bar */}
       <div
         ref={scrubRef}
         onClick={handleScrubClick}
-        className="flex-1 h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full cursor-pointer relative"
+        role="slider"
+        aria-label="Playback position"
+        aria-valuemin={0}
+        aria-valuemax={durationMs}
+        aria-valuenow={currentTimeMs}
+        tabIndex={0}
+        className="flex-1 h-2 bg-[var(--surface-2)] rounded-full cursor-pointer relative focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]"
       >
         <div
-          style={{ width: `${filledPct}%` }}
-          className="absolute left-0 top-0 bottom-0 bg-indigo-500 rounded-full pointer-events-none"
+          style={{
+            width: `${filledPct}%`,
+            background: "var(--brand-primary)",
+          }}
+          className="absolute left-0 top-0 bottom-0 rounded-full pointer-events-none"
         />
       </div>
 
-      {/* Playback rate */}
       <select
         value={playbackRate}
         onChange={(e) => onRateChange(parseFloat(e.target.value))}
-        className="text-xs bg-transparent text-zinc-600 dark:text-zinc-400 focus:outline-none cursor-pointer shrink-0"
         aria-label="Playback rate"
+        className="text-[var(--text-fs-2)] bg-transparent text-[var(--text-muted)] hover:text-[var(--text)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] cursor-pointer shrink-0 px-1 rounded-sm font-mono"
       >
         {RATE_OPTIONS.map((r) => (
           <option key={r} value={r}>

@@ -3,15 +3,23 @@
 import { useState } from "react";
 import type { Placement } from "@verseline/shared";
 import { useProjectStore } from "@/stores/project-store";
+import { useLibraryStore } from "@/stores/library-store";
 import { PlacementList } from "./PlacementList";
 import { PlacementEditor } from "./PlacementEditor";
+import { PresetPicker } from "@/components/library/PresetPicker";
+import { Button, toast } from "@/components/ui";
 
 export function PlacementsTab() {
   const { project, upsertPlacement, removePlacement } = useProjectStore();
+  const listPresets = useLibraryStore((s) => s.listPlacementPresets);
+  const removePreset = useLibraryStore((s) => s.deletePlacementPreset);
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isNew, setIsNew] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
 
   const placements = project?.placements ?? [];
+  const canvas = project?.canvas ?? { width: 1920, height: 1080, fps: 30 };
   const selected = placements.find((p) => p.id === selectedId) ?? null;
 
   const handleNew = () => {
@@ -41,9 +49,30 @@ export function PlacementsTab() {
     if (!selected) setSelectedId(null);
   };
 
+  const handlePick = (preset: Placement) => {
+    upsertPlacement(preset);
+    setSelectedId(preset.id);
+    setIsNew(false);
+    toast.success(`“${preset.name || preset.id}” inserted`);
+  };
+
   return (
-    <div className="flex h-full">
-      <div className="w-56 shrink-0 border-r border-zinc-200 dark:border-zinc-800 flex flex-col">
+    <div className="flex h-full" data-testid="placements-tab">
+      <div className="w-56 shrink-0 border-r border-[var(--border)] flex flex-col">
+        <div className="px-3 py-2 border-b border-[var(--border)] flex items-center justify-between">
+          <span className="text-[var(--text-fs-1)] font-semibold text-[var(--text-muted)] uppercase tracking-[0.14em]">
+            Placements
+          </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setShowPicker(true)}
+            data-testid="open-placement-picker"
+            title="Insert from library"
+          >
+            Library
+          </Button>
+        </div>
         <PlacementList
           placements={placements}
           selectedId={selectedId}
@@ -56,11 +85,21 @@ export function PlacementsTab() {
           key={isNew ? "__new__" : (selectedId ?? "__none__")}
           placement={isNew ? null : selected}
           isNew={isNew}
+          canvas={canvas}
           onSave={handleSave}
           onDelete={handleDelete}
           onCancel={handleCancel}
         />
       </div>
+
+      <PresetPicker
+        kind="placement"
+        open={showPicker}
+        onClose={() => setShowPicker(false)}
+        onPick={handlePick}
+        list={listPresets}
+        remove={removePreset}
+      />
     </div>
   );
 }

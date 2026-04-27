@@ -4,6 +4,7 @@ import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/stores/auth-store";
+import { Button, Field, Input } from "@/components/ui";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -27,60 +28,63 @@ export default function SignupPage() {
 
   return (
     <>
-      <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-6">Create account</h2>
+      <h1 className="font-display text-[var(--text-fs-6)] mb-2" style={{ fontFamily: "var(--font-display)" }}>
+        Create your account
+      </h1>
+      <p className="text-[var(--text-fs-3)] text-[var(--text-muted)] mb-8">
+        Free to start. No credit card required.
+      </p>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="email" className="text-sm text-zinc-500 dark:text-zinc-400">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-zinc-400 dark:focus:border-zinc-600"
-            placeholder="you@example.com"
-          />
-        </div>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+        <Field label="Email">
+          {(p) => (
+            <Input
+              {...p}
+              type="email"
+              autoComplete="email"
+              required
+              fullWidth
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+            />
+          )}
+        </Field>
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="password" className="text-sm text-zinc-500 dark:text-zinc-400">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="new-password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-zinc-400 dark:focus:border-zinc-600"
-            placeholder="At least 8 characters"
-          />
-        </div>
+        <Field label="Password" hint="At least 8 characters">
+          {(p) => (
+            <Input
+              {...p}
+              type="password"
+              autoComplete="new-password"
+              required
+              minLength={8}
+              fullWidth
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="A strong password"
+            />
+          )}
+        </Field>
 
         {error && (
-          <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-lg px-3 py-2">
+          <p
+            role="alert"
+            className="text-[var(--text-fs-2)] px-3 py-2 rounded-md"
+            style={{ background: "var(--error-bg)", color: "var(--error)" }}
+          >
             {error}
           </p>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="mt-1 w-full py-2.5 rounded-lg bg-white text-zinc-950 font-medium text-sm hover:bg-zinc-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? "Creating account..." : "Create account"}
-        </button>
+        <Button type="submit" variant="primary" size="lg" loading={loading} fullWidth>
+          {loading ? "Creating account" : "Create account"}
+        </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-500">
+      <p className="mt-8 text-[var(--text-fs-2)] text-[var(--text-muted)]">
         Already have an account?{" "}
-        <Link href="/login" className="text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors">
+        <Link href="/login" className="text-[var(--brand-primary)] hover:underline">
           Log in
         </Link>
       </p>

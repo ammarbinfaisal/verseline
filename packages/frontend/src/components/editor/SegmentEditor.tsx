@@ -7,6 +7,7 @@ import BlockEditor from "./BlockEditor";
 import TimestampInput from "@/components/common/TimestampInput";
 import VideoPlayer from "./VideoPlayer";
 import { apiFetch } from "@/lib/api";
+import { Button, Input, Modal, Spinner } from "@/components/ui";
 
 interface SegmentEditorProps {
   projectId: string;
@@ -49,71 +50,74 @@ function SplitModal({ segment, onClose, onSplit }: SplitModalProps) {
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    <Modal
+      open
+      onClose={onClose}
+      title="Split segment"
+      size="md"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleSubmit}
+            disabled={saving || lines.length < 2}
+            loading={saving}
+            data-testid="split-confirm"
+          >
+            {saving ? "Splitting" : "Split"}
+          </Button>
+        </>
+      }
     >
-      <div
-        className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl p-6 w-full max-w-md shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-4">Split Segment</h3>
-
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-zinc-500 dark:text-zinc-400">Block to split</label>
-            <select
-              value={blockIndex}
-              onChange={(e) => {
-                const idx = Number(e.target.value);
-                setBlockIndex(idx);
-                setRawText(segment.blocks[idx]?.text ?? "");
-              }}
-              className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-400 dark:border-zinc-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            >
-              {segment.blocks.map((b, i) => (
-                <option key={i} value={i}>
-                  Block {i + 1}: {(b.text ?? "").slice(0, 40)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-zinc-500 dark:text-zinc-400">
-              Text parts (separate with blank lines)
-            </label>
-            <textarea
-              value={rawText}
-              onChange={(e) => setRawText(e.target.value)}
-              rows={8}
-              className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-400 dark:border-zinc-600 rounded px-2 py-1.5 text-sm font-mono resize-y focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
-            <p className="text-xs text-zinc-600 dark:text-zinc-500">
-              {lines.length} part{lines.length !== 1 ? "s" : ""} detected
-            </p>
-          </div>
-
-          {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
-
-          <div className="flex gap-2 justify-end mt-2">
-            <button
-              onClick={onClose}
-              className="px-3 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={saving || lines.length < 2}
-              className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs rounded-lg transition-colors"
-            >
-              {saving ? "Splitting…" : "Split"}
-            </button>
-          </div>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1">
+          <label className="text-[var(--text-fs-2)] text-[var(--text-muted)] font-medium">Block to split</label>
+          <select
+            value={blockIndex}
+            onChange={(e) => {
+              const idx = Number(e.target.value);
+              setBlockIndex(idx);
+              setRawText(segment.blocks[idx]?.text ?? "");
+            }}
+            className="bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)] rounded-md px-3 py-1.5 text-[var(--text-fs-3)] focus:outline-none focus:border-[var(--brand-primary)] focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2"
+          >
+            {segment.blocks.map((b, i) => (
+              <option key={i} value={i}>
+                Block {i + 1}: {(b.text ?? "").slice(0, 40)}
+              </option>
+            ))}
+          </select>
         </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-[var(--text-fs-2)] text-[var(--text-muted)] font-medium">
+            Text parts (separate with blank lines)
+          </label>
+          <textarea
+            value={rawText}
+            onChange={(e) => setRawText(e.target.value)}
+            rows={8}
+            className="bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)] rounded-md px-3 py-2 text-[var(--text-fs-3)] font-mono resize-y focus:outline-none focus:border-[var(--brand-primary)] focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2"
+          />
+          <p className="text-[var(--text-fs-1)] text-[var(--text-muted)] mt-1">
+            {lines.length} part{lines.length !== 1 ? "s" : ""} detected
+          </p>
+        </div>
+
+        {error && (
+          <p
+            role="alert"
+            className="text-[var(--text-fs-2)] px-3 py-2 rounded-md"
+            style={{ background: "var(--error-bg)", color: "var(--error)" }}
+          >
+            {error}
+          </p>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -133,6 +137,7 @@ export default function SegmentEditor({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSplit, setShowSplit] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
 
@@ -188,7 +193,7 @@ export default function SegmentEditor({
 
   async function handleDelete() {
     if (!segment.id) return;
-    if (!confirm("Delete this segment?")) return;
+    setShowDelete(false);
     setSaving(true);
     setError(null);
     try {
@@ -240,12 +245,10 @@ export default function SegmentEditor({
   }
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Scrollable content area */}
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 min-w-0">
-
+    <div className="flex flex-col h-full" data-testid="segment-editor">
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-5 min-w-0">
         {/* Timing */}
-        <div className="flex flex-wrap gap-4 items-end">
+        <div className="flex flex-wrap gap-3 items-end">
           <TimestampInput
             label="Start"
             value={segment.start}
@@ -260,23 +263,22 @@ export default function SegmentEditor({
 
         {/* Notes */}
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500 dark:text-zinc-400">Notes</label>
-          <input
+          <label className="text-[var(--text-fs-2)] text-[var(--text-muted)] font-medium">Notes</label>
+          <Input
             type="text"
             value={segment.notes ?? ""}
             onChange={(e) => updateField("notes", e.target.value)}
-            placeholder="Optional notes…"
-            className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-400 dark:border-zinc-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            placeholder="Optional notes"
+            fullWidth
+            data-testid="segment-notes"
           />
         </div>
 
         {/* Blocks */}
         <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
-              Blocks
-            </span>
-          </div>
+          <span className="text-[var(--text-fs-1)] font-semibold text-[var(--text-muted)] uppercase tracking-[0.14em]">
+            Blocks
+          </span>
 
           {segment.blocks.map((block, i) => (
             <BlockEditor
@@ -291,14 +293,13 @@ export default function SegmentEditor({
           ))}
         </div>
 
-        {/* Preview video */}
         {previewUrl && (
           <div className="mt-2">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">Preview</span>
+              <span className="text-[var(--text-fs-2)] text-[var(--text-muted)]">Preview</span>
               <button
                 onClick={() => setPreviewUrl(null)}
-                className="text-xs text-zinc-600 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                className="text-[var(--text-fs-2)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
               >
                 Close
               </button>
@@ -307,66 +308,41 @@ export default function SegmentEditor({
           </div>
         )}
 
-        {/* Error */}
         {error && (
-          <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 rounded px-3 py-2">
+          <p
+            role="alert"
+            className="text-[var(--text-fs-2)] px-3 py-2 rounded-md"
+            style={{ background: "var(--error-bg)", color: "var(--error)" }}
+          >
             {error}
           </p>
         )}
       </div>
 
       {/* Sticky footer action bar */}
-      <div className="border-t border-zinc-300 dark:border-zinc-700 px-4 py-2 flex items-center gap-2 bg-zinc-50 dark:bg-zinc-900 shrink-0">
-        <button
-          onClick={handleAddBlock}
-          disabled={saving}
-          className="px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 text-white text-xs rounded-lg transition-colors disabled:opacity-50"
-        >
-          + Add Block
-        </button>
-
-        <button
-          onClick={() => setShowSplit(true)}
-          disabled={saving}
-          className="px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 text-white text-xs rounded-lg transition-colors disabled:opacity-50"
-        >
+      <div className="border-t border-[var(--border)] px-3 py-2 flex items-center gap-2 bg-[var(--surface-1)] shrink-0">
+        <Button size="sm" variant="ghost" onClick={handleAddBlock} disabled={saving} data-testid="add-block">
+          + Block
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => setShowSplit(true)} disabled={saving} data-testid="open-split">
           Split
-        </button>
-
-        <button
-          onClick={handleDuplicate}
-          disabled={saving}
-          title="Ctrl+D"
-          className="px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 text-white text-xs rounded-lg transition-colors disabled:opacity-50"
-        >
+        </Button>
+        <Button size="sm" variant="ghost" onClick={handleDuplicate} disabled={saving} title="Cmd/Ctrl+D" data-testid="duplicate-segment">
           Duplicate
-          <span className="ml-1.5 text-zinc-400 text-[10px]">Ctrl+D</span>
-        </button>
+        </Button>
+        <Button size="sm" variant="secondary" onClick={handlePreview} disabled={saving || previewLoading} loading={previewLoading} data-testid="preview-segment">
+          {previewLoading ? "Rendering" : "Preview"}
+        </Button>
 
-        <button
-          onClick={handlePreview}
-          disabled={saving || previewLoading}
-          className="px-3 py-1.5 bg-indigo-700 hover:bg-indigo-600 text-white text-xs rounded-lg transition-colors disabled:opacity-50"
-        >
-          {previewLoading ? "Rendering…" : "Preview"}
-        </button>
-
-        {saving && (
-          <span className="text-xs text-zinc-600 dark:text-zinc-500 ml-1">Saving…</span>
-        )}
+        {saving && <Spinner size={12} />}
 
         <div className="flex-1" />
 
-        <button
-          onClick={handleDelete}
-          disabled={saving}
-          className="px-3 py-1.5 bg-zinc-700 hover:bg-red-900 text-red-400 hover:text-red-300 text-xs rounded-lg transition-colors disabled:opacity-50"
-        >
+        <Button size="sm" variant="danger" onClick={() => setShowDelete(true)} disabled={saving} data-testid="open-delete">
           Delete
-        </button>
+        </Button>
       </div>
 
-      {/* Split modal */}
       {showSplit && (
         <SplitModal
           segment={segment}
@@ -374,6 +350,23 @@ export default function SegmentEditor({
           onSplit={handleSplit}
         />
       )}
+
+      <Modal
+        open={showDelete}
+        onClose={() => setShowDelete(false)}
+        title="Delete segment?"
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setShowDelete(false)}>Cancel</Button>
+            <Button variant="danger" onClick={handleDelete} data-testid="delete-confirm">Delete</Button>
+          </>
+        }
+      >
+        <p className="text-[var(--text-fs-3)] text-[var(--text-muted)]">
+          This will remove the segment and its blocks. This action cannot be undone.
+        </p>
+      </Modal>
     </div>
   );
 }

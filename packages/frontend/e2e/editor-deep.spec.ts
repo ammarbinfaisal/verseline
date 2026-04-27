@@ -46,7 +46,7 @@ async function openEditor(page: Page, projectId: string) {
   await injectAuth(page, token);
   await page.goto(`/projects/${projectId}`);
   // Wait for the editor shell to render (Settings tab visible = fully loaded)
-  await expect(page.getByRole("button", { name: "Settings" })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("tab", { name: "Settings" })).toBeVisible({ timeout: 15_000 });
 }
 
 // ---- 1. Tab stability -------------------------------------------------------
@@ -62,26 +62,26 @@ test.describe("Tab stability", () => {
 
   test("Settings tab opens without crash on empty project", async ({ page }) => {
     await openEditor(page, projectId);
-    await page.getByRole("button", { name: "Settings" }).click();
+    await page.getByRole("tab", { name: "Settings" }).click();
     await expect(page.getByText(/project settings/i)).toBeVisible({ timeout: 5000 });
     await expect(page.locator("input[type='number']").first()).toBeVisible();
   });
 
   test("Styles tab opens without crash", async ({ page }) => {
     await openEditor(page, projectId);
-    await page.getByRole("button", { name: "Styles" }).click();
+    await page.getByRole("tab", { name: "Styles" }).click();
     await expect(page.getByText("+ New Style")).toBeVisible({ timeout: 5000 });
   });
 
   test("Placements tab opens without crash", async ({ page }) => {
     await openEditor(page, projectId);
-    await page.getByRole("button", { name: "Placements" }).click();
+    await page.getByRole("tab", { name: "Placements" }).click();
     await expect(page.getByText("+ New Placement")).toBeVisible({ timeout: 5000 });
   });
 
   test("Fonts tab opens without crash", async ({ page }) => {
     await openEditor(page, projectId);
-    await page.getByRole("button", { name: "Fonts" }).click();
+    await page.getByRole("tab", { name: "Fonts" }).click();
     await expect(page.getByText(/project fonts/i)).toBeVisible({ timeout: 5000 });
   });
 
@@ -94,14 +94,14 @@ test.describe("Tab stability", () => {
       await page.waitForTimeout(100);
     }
     // Page should still be alive
-    await expect(page.getByRole("button", { name: "Settings" })).toBeVisible();
+    await expect(page.getByRole("tab", { name: "Settings" })).toBeVisible();
   });
 
   test("Settings tab with empty assets does not crash", async ({ page }) => {
     // Set assets to empty object
     await apiUpdateProject(token, projectId, { assets: {} });
     await openEditor(page, projectId);
-    await page.getByRole("button", { name: "Settings" }).click();
+    await page.getByRole("tab", { name: "Settings" }).click();
     await expect(page.getByText(/project settings/i)).toBeVisible({ timeout: 5000 });
     await expect(page.locator("input[type='number']").first()).toBeVisible();
   });
@@ -190,7 +190,7 @@ test.describe("Style CRUD via UI", () => {
 
   test("create a new style via UI", async ({ page }) => {
     await openEditor(page, projectId);
-    await page.getByRole("button", { name: "Styles" }).click();
+    await page.getByRole("tab", { name: "Styles" }).click();
 
     // Click + New Style
     await page.getByText("+ New Style").click();
@@ -208,8 +208,8 @@ test.describe("Style CRUD via UI", () => {
     await expect(page.getByText("test-style").first()).toBeVisible({ timeout: 5000 });
 
     // Verify it persists across a tab switch
-    await page.getByRole("button", { name: "Fonts" }).click();
-    await page.getByRole("button", { name: "Styles" }).click();
+    await page.getByRole("tab", { name: "Fonts" }).click();
+    await page.getByRole("tab", { name: "Styles" }).click();
     await expect(page.getByText("test-style").first()).toBeVisible({ timeout: 5000 });
   });
 });
@@ -227,7 +227,7 @@ test.describe("Placement CRUD via UI", () => {
 
   test("create a new placement via UI", async ({ page }) => {
     await openEditor(page, projectId);
-    await page.getByRole("button", { name: "Placements" }).click();
+    await page.getByRole("tab", { name: "Placements" }).click();
 
     await page.getByText("+ New Placement").click();
     await expect(page.getByRole("heading", { name: "New Placement" })).toBeVisible({ timeout: 5000 });
@@ -240,8 +240,8 @@ test.describe("Placement CRUD via UI", () => {
     await expect(page.getByText("test-placement").first()).toBeVisible({ timeout: 5000 });
 
     // Verify it persists across a tab switch
-    await page.getByRole("button", { name: "Fonts" }).click();
-    await page.getByRole("button", { name: "Placements" }).click();
+    await page.getByRole("tab", { name: "Fonts" }).click();
+    await page.getByRole("tab", { name: "Placements" }).click();
     await expect(page.getByText("test-placement").first()).toBeVisible({ timeout: 5000 });
   });
 });
@@ -259,7 +259,7 @@ test.describe("Settings panel", () => {
 
   test("edit project name persists to backend", async ({ page }) => {
     await openEditor(page, projectId);
-    await page.getByRole("button", { name: "Settings" }).click();
+    await page.getByRole("tab", { name: "Settings" }).click();
 
     const nameInput = page.locator("input[type='text']").first();
     await expect(nameInput).toBeVisible({ timeout: 5000 });
@@ -274,7 +274,7 @@ test.describe("Settings panel", () => {
 
   test("edit canvas width persists to backend", async ({ page }) => {
     await openEditor(page, projectId);
-    await page.getByRole("button", { name: "Settings" }).click();
+    await page.getByRole("tab", { name: "Settings" }).click();
 
     // Width is the first number input
     const widthInput = page.locator("input[type='number']").first();
@@ -295,7 +295,7 @@ test.describe("Settings panel", () => {
     });
 
     await openEditor(page, projectId);
-    await page.getByRole("button", { name: "Settings" }).click();
+    await page.getByRole("tab", { name: "Settings" }).click();
     await expect(page.getByText(/project settings/i)).toBeVisible({ timeout: 5000 });
   });
 });
@@ -334,7 +334,7 @@ test.describe("Keyboard shortcuts", () => {
     await page.waitForTimeout(500);
     await page.keyboard.press("Space");
     // Still alive
-    await expect(page.getByRole("button", { name: "Settings" })).toBeVisible();
+    await expect(page.getByRole("tab", { name: "Settings" })).toBeVisible();
   });
 
   test("Ctrl+S saves the project", async ({ page }) => {
@@ -385,7 +385,7 @@ test.describe("Navigation", () => {
 
     await page.getByText("Nav Test Project").click();
     await page.waitForURL(`**/projects/${projectId}`, { timeout: 10_000 });
-    await expect(page.getByRole("button", { name: "Settings" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("tab", { name: "Settings" })).toBeVisible({ timeout: 15_000 });
   });
 
   test("library page loads without crash", async ({ page }) => {
@@ -443,11 +443,11 @@ test.describe("Randomised style/placement combos", () => {
       await expect(page.getByText(`Combo ${combo.idx}`).first()).toBeVisible({ timeout: 10_000 });
 
       // Open styles tab — should show the style
-      await page.getByRole("button", { name: "Styles" }).click();
+      await page.getByRole("tab", { name: "Styles" }).click();
       await expect(page.getByText(styleId).first()).toBeVisible({ timeout: 5000 });
 
       // Open placements tab — should show the placement
-      await page.getByRole("button", { name: "Placements" }).click();
+      await page.getByRole("tab", { name: "Placements" }).click();
       await expect(page.getByText(placementId).first()).toBeVisible({ timeout: 5000 });
     });
   }

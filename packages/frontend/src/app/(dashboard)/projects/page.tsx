@@ -5,6 +5,7 @@ import { useMountEffect } from "@/hooks/useMountEffect";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api, type ProjectRecord } from "@/lib/api";
+import { Button, EmptyState, Skeleton, toast } from "@/components/ui";
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -34,7 +35,9 @@ export default function ProjectsPage() {
       });
       router.push(`/projects/${record.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create project");
+      const msg = err instanceof Error ? err.message : "Failed to create project";
+      setError(msg);
+      toast.error(msg);
       setCreating(false);
     }
   }
@@ -46,71 +49,106 @@ export default function ProjectsPage() {
     setError(null);
     try {
       const result = await api.importExport.importFile(file);
-      router.push(`/projects/${(result as any).project?.id ?? (result as any).id}`);
+      const id = (result as { project?: { id: string }; id?: string }).project?.id ??
+        (result as { id?: string }).id;
+      if (id) router.push(`/projects/${id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Import failed");
+      const msg = err instanceof Error ? err.message : "Import failed";
+      setError(msg);
+      toast.error(msg);
       setImporting(false);
     }
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-10">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-white">Projects</h1>
-        <div className="flex items-center gap-3">
-          <input ref={fileRef} type="file" accept=".verseline" className="hidden" onChange={handleImport} />
-          <button
-            onClick={() => fileRef.current?.click()}
-            disabled={importing}
-            className="px-4 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white font-medium text-sm hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors border border-zinc-300 dark:border-zinc-700 disabled:opacity-50"
+    <div className="max-w-6xl mx-auto px-8 py-12">
+      {/* Header — asymmetric, h1 dominant */}
+      <header className="flex items-end justify-between gap-6 mb-10 pb-6 border-b border-[var(--border)]">
+        <div>
+          <p className="text-[var(--text-fs-1)] uppercase tracking-[0.18em] text-[var(--text-muted)] font-mono mb-2">
+            Workspace
+          </p>
+          <h1
+            className="font-display text-[var(--text-fs-7)] text-[var(--text)]"
+            style={{ fontFamily: "var(--font-display)" }}
           >
-            {importing ? "Importing..." : "Import"}
-          </button>
-          <button
-            onClick={handleNewProject}
-            disabled={creating}
-            className="px-4 py-2 rounded-lg bg-white text-zinc-950 font-medium text-sm hover:bg-zinc-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {creating ? "Creating..." : "New project"}
-          </button>
+            Projects
+          </h1>
         </div>
-      </div>
+        <div className="flex items-center gap-2">
+          <input ref={fileRef} type="file" accept=".verseline" className="hidden" onChange={handleImport} />
+          <Button
+            variant="ghost"
+            onClick={() => fileRef.current?.click()}
+            loading={importing}
+            data-testid="import-project"
+          >
+            {importing ? "Importing" : "Import"}
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleNewProject}
+            loading={creating}
+            data-testid="new-project"
+          >
+            {creating ? "Creating" : "New project"}
+          </Button>
+        </div>
+      </header>
 
       {error && (
-        <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-lg px-4 py-3 mb-6">
+        <p
+          role="alert"
+          className="text-[var(--text-fs-2)] px-4 py-3 mb-6 rounded-md"
+          style={{ background: "var(--error-bg)", color: "var(--error)" }}
+        >
           {error}
         </p>
       )}
 
       {loading ? (
-        <div className="text-zinc-600 dark:text-zinc-500 text-sm">Loading projects...</div>
-      ) : projects.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-zinc-600 dark:text-zinc-500 text-sm mb-4">No projects yet.</p>
-          <button
-            onClick={handleNewProject}
-            disabled={creating}
-            className="px-4 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white font-medium text-sm hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors border border-zinc-300 dark:border-zinc-700 disabled:opacity-50"
-          >
-            Create your first project
-          </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" aria-label="Loading projects">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="p-5 rounded-[var(--radius-md)] bg-[var(--surface-1)] border border-[var(--border)]">
+              <Skeleton height={16} className="mb-3 w-3/4" />
+              <Skeleton height={12} className="mb-2 w-1/2" />
+              <Skeleton height={10} className="w-1/3" />
+            </div>
+          ))}
         </div>
+      ) : projects.length === 0 ? (
+        <EmptyState
+          title="No projects yet"
+          body="Create a new project to start placing timed text on audio or video."
+          cta={
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={handleNewProject}
+              loading={creating}
+              data-testid="empty-new-project"
+            >
+              {creating ? "Creating" : "Create your first project"}
+            </Button>
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {(Array.isArray(projects) ? projects : []).map((p) => (
             <Link
               key={p.id}
               href={`/projects/${p.id}`}
-              className="group block bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors"
+              data-testid={`project-${p.id}`}
+              className="group block p-5 rounded-[var(--radius-md)] bg-[var(--surface-1)] border border-[var(--border)] hover:border-[var(--border-strong)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]"
             >
-              <h2 className="font-medium text-zinc-900 dark:text-white text-sm truncate group-hover:text-zinc-800 dark:group-hover:text-zinc-100 mb-2">
+              <h2 className="text-[var(--text-fs-3)] font-semibold text-[var(--text)] truncate mb-2">
                 {p.name ?? "Untitled project"}
               </h2>
-              <p className="text-xs text-zinc-600 dark:text-zinc-500">
-                {p.canvas?.width} &times; {p.canvas?.height} &middot;{" "}
-                {p.canvas?.fps} fps
+              <p className="text-[var(--text-fs-2)] text-[var(--text-muted)] font-mono">
+                {p.canvas?.width} × {p.canvas?.height} · {p.canvas?.fps} fps
               </p>
-              <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-3">
+              <p className="text-[var(--text-fs-1)] text-[var(--text-faint)] mt-3">
+                Updated{" "}
                 {new Date(p.updatedAt ?? p.createdAt).toLocaleDateString(undefined, {
                   year: "numeric",
                   month: "short",

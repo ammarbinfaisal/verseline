@@ -28,7 +28,9 @@ export default function TimelineBar({
     if (durationMs <= 0) return [];
     const totalS = Math.floor(durationMs / 1000);
     const result: Array<{ label: string; pct: number }> = [];
-    for (let s = 0; s <= totalS; s += TICK_INTERVAL_S) {
+    // Skip every other tick on dense timelines so labels never overlap
+    const stride = totalS > 600 ? TICK_INTERVAL_S * 6 : totalS > 120 ? TICK_INTERVAL_S * 2 : TICK_INTERVAL_S;
+    for (let s = 0; s <= totalS; s += stride) {
       const mm = Math.floor(s / 60);
       const ss = s % 60;
       result.push({
@@ -52,8 +54,13 @@ export default function TimelineBar({
 
   if (durationMs <= 0) {
     return (
-      <div className="relative h-16 bg-zinc-100 dark:bg-zinc-900 border-t border-zinc-300 dark:border-zinc-700 flex items-center justify-center">
-        <span className="text-xs text-zinc-500 dark:text-zinc-600">No segments</span>
+      <div
+        className="relative h-16 border-t border-[var(--border)] flex items-center justify-center"
+        style={{ background: "var(--timeline-bg)" }}
+      >
+        <span className="text-[var(--text-fs-1)] text-[var(--text-faint)]">
+          No segments — add one to begin
+        </span>
       </div>
     );
   }
@@ -63,10 +70,11 @@ export default function TimelineBar({
   return (
     <div
       ref={containerRef}
-      className="relative h-16 bg-zinc-100 dark:bg-zinc-900 border-t border-zinc-300 dark:border-zinc-700 overflow-hidden cursor-crosshair"
+      className="relative h-16 border-t border-[var(--border)] overflow-hidden cursor-crosshair"
+      style={{ background: "var(--timeline-bg)" }}
       onClick={handleContainerClick}
+      data-testid="timeline-bar"
     >
-      {/* Segments */}
       {segments.map((seg, i) => {
         const startMs = tsToMillis(seg.start);
         const endMs = tsToMillis(seg.end);
@@ -78,19 +86,23 @@ export default function TimelineBar({
         return (
           <button
             key={seg.id ?? i}
-            style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
-            className={[
-              "absolute top-2 bottom-2 rounded-sm overflow-hidden px-1 text-left transition-colors",
-              isSelected
-                ? "bg-indigo-500/80"
-                : "bg-zinc-400/60 dark:bg-zinc-600/60 hover:bg-indigo-400/70",
-            ].join(" ")}
+            data-testid={`timeline-segment-${i}`}
+            data-selected={isSelected || undefined}
+            style={{
+              left: `${leftPct}%`,
+              width: `${widthPct}%`,
+              background: isSelected ? "var(--segment-selected)" : "var(--segment-default)",
+            }}
+            className="absolute top-2 bottom-2 rounded-sm overflow-hidden px-1.5 text-left transition-colors hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]"
             onClick={(e) => {
               e.stopPropagation();
               if (seg.id) onSelectSegment(seg.id);
             }}
           >
-            <span className="block text-[10px] leading-tight text-white truncate pointer-events-none">
+            <span
+              className="block text-[var(--text-fs-1)] leading-tight truncate pointer-events-none"
+              style={{ color: isSelected ? "var(--text-on-accent)" : "var(--text)" }}
+            >
               {firstText}
             </span>
           </button>
@@ -104,8 +116,11 @@ export default function TimelineBar({
           style={{ left: `${pct * 100}%` }}
           className="absolute bottom-0 flex flex-col items-start pointer-events-none"
         >
-          <div className="w-px h-1.5 bg-zinc-400/60 dark:bg-zinc-600/60" />
-          <span className="text-[8px] text-zinc-500 dark:text-zinc-600 leading-none ml-0.5">
+          <div className="w-px h-1.5" style={{ background: "var(--border-strong)" }} />
+          <span
+            className="text-[var(--text-fs-1)] font-mono leading-none ml-0.5"
+            style={{ color: "var(--text-faint)" }}
+          >
             {label}
           </span>
         </div>
@@ -113,8 +128,8 @@ export default function TimelineBar({
 
       {/* Playhead */}
       <div
-        style={{ left: `${playheadPct}%` }}
-        className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10 pointer-events-none"
+        style={{ left: `${playheadPct}%`, background: "var(--playhead)" }}
+        className="absolute top-0 bottom-0 w-0.5 z-10 pointer-events-none"
       />
     </div>
   );

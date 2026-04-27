@@ -3,6 +3,7 @@
 import { useState, FormEvent } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import { Button, Field, Input } from "@/components/ui";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -27,15 +28,17 @@ export default function ForgotPasswordPage() {
   if (submitted) {
     return (
       <>
-        <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-4">Check your email</h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
-          If an account exists for <span className="text-zinc-800 dark:text-zinc-200">{email}</span>, we've sent a password reset link.
+        <h1 className="font-display text-[var(--text-fs-6)] mb-2" style={{ fontFamily: "var(--font-display)" }}>
+          Check your email
+        </h1>
+        <p className="text-[var(--text-fs-3)] text-[var(--text-muted)] mb-8">
+          If an account exists for{" "}
+          <span className="text-[var(--text)] font-medium">{email}</span>, we've sent a reset link.
         </p>
-        <Link
-          href="/login"
-          className="block text-center w-full py-2.5 rounded-lg bg-white text-zinc-950 font-medium text-sm hover:bg-zinc-100 transition-colors"
-        >
-          Back to login
+        <Link href="/login">
+          <Button variant="primary" size="lg" fullWidth>
+            Back to log in
+          </Button>
         </Link>
       </>
     );
@@ -43,46 +46,47 @@ export default function ForgotPasswordPage() {
 
   return (
     <>
-      <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">Forgot password?</h2>
-      <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
-        Enter your email and we'll send you a link to reset your password.
+      <h1 className="font-display text-[var(--text-fs-6)] mb-2" style={{ fontFamily: "var(--font-display)" }}>
+        Forgot password?
+      </h1>
+      <p className="text-[var(--text-fs-3)] text-[var(--text-muted)] mb-8">
+        Enter your email and we'll send a reset link.
       </p>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="email" className="text-sm text-zinc-500 dark:text-zinc-400">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-zinc-400 dark:focus:border-zinc-600"
-            placeholder="you@example.com"
-          />
-        </div>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+        <Field label="Email">
+          {(p) => (
+            <Input
+              {...p}
+              type="email"
+              autoComplete="email"
+              required
+              fullWidth
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+            />
+          )}
+        </Field>
 
         {error && (
-          <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-lg px-3 py-2">
+          <p
+            role="alert"
+            className="text-[var(--text-fs-2)] px-3 py-2 rounded-md"
+            style={{ background: "var(--error-bg)", color: "var(--error)" }}
+          >
             {error}
           </p>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="mt-1 w-full py-2.5 rounded-lg bg-white text-zinc-950 font-medium text-sm hover:bg-zinc-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? "Sending..." : "Send reset link"}
-        </button>
+        <Button type="submit" variant="primary" size="lg" loading={loading} fullWidth>
+          {loading ? "Sending" : "Send reset link"}
+        </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-500">
+      <p className="mt-8 text-[var(--text-fs-2)] text-[var(--text-muted)]">
         Remember your password?{" "}
-        <Link href="/login" className="text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors">
+        <Link href="/login" className="text-[var(--brand-primary)] hover:underline">
           Log in
         </Link>
       </p>

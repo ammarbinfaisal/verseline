@@ -3,13 +3,20 @@
 import { useState } from "react";
 import type { Style } from "@verseline/shared";
 import { useProjectStore } from "@/stores/project-store";
+import { useLibraryStore } from "@/stores/library-store";
 import { StyleList } from "./StyleList";
 import { StyleEditor } from "./StyleEditor";
+import { PresetPicker } from "@/components/library/PresetPicker";
+import { Button, toast } from "@/components/ui";
 
 export function StylesTab() {
   const { project, upsertStyle, removeStyle } = useProjectStore();
+  const listPresets = useLibraryStore((s) => s.listStylePresets);
+  const removePreset = useLibraryStore((s) => s.deleteStylePreset);
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isNew, setIsNew] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
 
   const styles = project?.styles ?? [];
   const fonts = project?.fonts ?? [];
@@ -42,10 +49,30 @@ export function StylesTab() {
     if (!selected) setSelectedId(null);
   };
 
+  const handlePick = (preset: Style) => {
+    upsertStyle(preset);
+    setSelectedId(preset.id);
+    setIsNew(false);
+    toast.success(`“${preset.id}” inserted`);
+  };
+
   return (
-    <div className="flex h-full">
-      {/* Left: list */}
-      <div className="w-56 shrink-0 border-r border-zinc-200 dark:border-zinc-800 flex flex-col">
+    <div className="flex h-full" data-testid="styles-tab">
+      <div className="w-56 shrink-0 border-r border-[var(--border)] flex flex-col">
+        <div className="px-3 py-2 border-b border-[var(--border)] flex items-center justify-between">
+          <span className="text-[var(--text-fs-1)] font-semibold text-[var(--text-muted)] uppercase tracking-[0.14em]">
+            Styles
+          </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setShowPicker(true)}
+            data-testid="open-style-picker"
+            title="Insert from library"
+          >
+            Library
+          </Button>
+        </div>
         <StyleList
           styles={styles}
           selectedId={selectedId}
@@ -54,7 +81,6 @@ export function StylesTab() {
         />
       </div>
 
-      {/* Right: editor */}
       <div className="flex-1 min-w-0">
         <StyleEditor
           key={isNew ? "__new__" : (selectedId ?? "__none__")}
@@ -66,6 +92,15 @@ export function StylesTab() {
           onCancel={handleCancel}
         />
       </div>
+
+      <PresetPicker
+        kind="style"
+        open={showPicker}
+        onClose={() => setShowPicker(false)}
+        onPick={handlePick}
+        list={listPresets}
+        remove={removePreset}
+      />
     </div>
   );
 }

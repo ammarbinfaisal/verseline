@@ -1,128 +1,151 @@
+import Link from "next/link";
+import { Kbd } from "@/components/ui";
+
 export default function DocsPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-      <div className="max-w-2xl mx-auto px-6 py-12">
-        <a href="/" className="text-sm text-indigo-500 hover:text-indigo-400 mb-6 inline-block">&larr; Back to Verseline</a>
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
+      <div className="max-w-3xl mx-auto px-8 py-16">
+        <Link
+          href="/"
+          className="text-[var(--text-fs-2)] text-[var(--brand-primary)] hover:underline mb-8 inline-block"
+        >
+          ← Back to Verseline
+        </Link>
 
-        <h1 className="text-3xl font-bold mb-8">Verseline Documentation</h1>
-
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold mb-3">What is Verseline?</h2>
-          <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
-            Verseline is a timed-text video editor for creating videos with synchronized text overlays.
-            You provide a background image or video, an audio track, and define text segments that
-            appear at specific times. Verseline renders everything together into a final video.
+        <header className="mb-12">
+          <p className="text-[var(--text-fs-1)] uppercase tracking-[0.18em] text-[var(--text-muted)] font-mono mb-3">
+            Documentation
           </p>
-        </section>
+          <h1
+            className="font-display text-[var(--text-fs-7)] leading-[1.1]"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            How Verseline works
+          </h1>
+        </header>
 
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold mb-3">Getting Started</h2>
-          <ol className="list-decimal list-inside text-zinc-600 dark:text-zinc-400 leading-relaxed space-y-2">
-            <li>Create a new project from the Projects page</li>
-            <li>Upload a background image or video in Settings</li>
-            <li>Upload an audio file in Settings</li>
-            <li>Add segments in the timeline — each segment defines a time range</li>
-            <li>Add text blocks to each segment with styles and placements</li>
-            <li>Use the canvas preview to see how text appears on screen</li>
-            <li>Click Preview to render a single segment, or Render to create the full video</li>
+        <Section title="What is Verseline?">
+          <p>
+            Verseline is a timed-text video editor for putting synchronised text on top
+            of audio or video. You provide a background image or video, an audio track,
+            and a list of segments — each one a time range with text, a style, and a
+            placement. Verseline renders everything together into a final video.
+          </p>
+          <p>
+            The product&rsquo;s focus is <strong>reuse</strong>: a style or placement
+            you build once is reused across every segment, and can be saved to the
+            shared library to reuse across every project.
+          </p>
+        </Section>
+
+        <Section title="Getting started">
+          <ol>
+            <li>Create a new project from the Projects page.</li>
+            <li>Upload a background (image or video) and audio in Settings.</li>
+            <li>Add segments — each one defines a time range.</li>
+            <li>For each segment, add text blocks with a style and placement.</li>
+            <li>Use the canvas preview to see how text appears on screen.</li>
+            <li>Click <em>Preview</em> to render a single segment, or <em>Render</em> for the full video.</li>
           </ol>
-        </section>
+        </Section>
 
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold mb-3">Segments &amp; Blocks</h2>
-          <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
-            A <strong>segment</strong> represents a time range in your video (e.g., 00:05 to 00:12).
-            Each segment contains one or more <strong>blocks</strong> of text.
+        <Section title="Segments &amp; blocks">
+          <p>
+            A <strong>segment</strong> represents a time range in your video
+            (e.g. <span className="font-mono">00:05 — 00:12</span>). Each segment
+            contains one or more <strong>blocks</strong> of text, each with its own
+            content, style, placement, and optional language tag.
           </p>
-          <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
-            Each block has: text content, a style (font, size, color, effects),
-            a placement (where on screen it appears), and an optional language tag.
-          </p>
-        </section>
+        </Section>
 
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold mb-3">Styles</h2>
-          <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
-            Styles control how text looks. You can configure:
-          </p>
-          <ul className="list-disc list-inside text-zinc-600 dark:text-zinc-400 leading-relaxed space-y-1">
-            <li><strong>Font &amp; Size</strong> — Choose from Google Fonts or upload custom fonts</li>
-            <li><strong>Color</strong> — Text color in hex (e.g., #ffffff for white)</li>
-            <li><strong>Outline</strong> — Border around text for readability</li>
-            <li><strong>Shadow</strong> — Drop shadow behind text</li>
-            <li><strong>Text Background</strong> — Colored box behind text with padding and rounded corners</li>
-            <li><strong>Alignment</strong> — Left, center, or right text alignment</li>
+        <Section title="Styles">
+          <p>Styles control how text looks. You can configure:</p>
+          <ul>
+            <li><strong>Font &amp; size</strong> — pick from Google Fonts or upload your own.</li>
+            <li><strong>Color</strong> — text color in hex.</li>
+            <li><strong>Outline</strong> — border around text for readability.</li>
+            <li><strong>Shadow</strong> — drop shadow behind text.</li>
+            <li><strong>Text background</strong> — coloured box behind text with padding and rounded corners.</li>
+            <li><strong>Alignment</strong> — left, centre, or right.</li>
           </ul>
-        </section>
+        </Section>
 
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold mb-3">Inline Style Tags</h2>
-          <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
-            You can apply different colors to parts of your text using inline style tags.
-            This is useful for highlighting specific words or phrases.
+        <Section title="Inline style tags">
+          <p>
+            Apply different styles to parts of your text using inline tags. Useful for
+            highlighting specific words.
           </p>
-          <div className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg p-4 mb-3 font-mono text-sm">
-            Hello &lt;accent&gt;beautiful&lt;/accent&gt; world
-          </div>
-          <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
-            In this example, the word &quot;beautiful&quot; will use the color defined in the style
-            named &quot;accent&quot;. The rest of the text uses the block&apos;s base style color.
+          <pre className="font-mono text-[var(--text-fs-2)] bg-[var(--surface-2)] border border-[var(--border)] rounded-[var(--radius-md)] p-4 my-3 overflow-x-auto">
+{`Hello <accent>beautiful</accent> world`}
+          </pre>
+          <p>
+            Type <Kbd>&lt;</Kbd> in the editor for autocomplete suggestions.
           </p>
-          <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
-            <strong>Tip:</strong> In the editor, type <code className="bg-zinc-200 dark:bg-zinc-800 px-1 rounded">&lt;</code>
-            to get autocomplete suggestions for available style names.
-            You can also select text and click a style name in the wrap toolbar to apply a tag.
-          </p>
-        </section>
+        </Section>
 
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold mb-3">Placements</h2>
-          <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
-            Placements control where text appears on screen. Each placement has:
+        <Section title="Placements (free-form)">
+          <p>
+            Place text anywhere on the canvas. Drag a pin, snap to grids of 12 / 8 / 4,
+            or pick one of nine quick anchors. A placement can be saved to the library
+            and reused in any project.
           </p>
-          <ul className="list-disc list-inside text-zinc-600 dark:text-zinc-400 leading-relaxed space-y-1">
-            <li><strong>Anchor</strong> — One of 9 positions: top/center/bottom combined with left/center/right</li>
-            <li><strong>Margins</strong> — X and Y offset from the anchor position (in pixels)</li>
-            <li><strong>Max Width/Height</strong> — Optional constraints on the text area size</li>
-          </ul>
-        </section>
+        </Section>
 
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold mb-3">Keyboard Shortcuts</h2>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            {[
-              ["Space", "Play / Pause"],
-              ["Ctrl + S", "Save project"],
-              ["Ctrl + D", "Duplicate segment"],
-              ["Delete", "Delete selected segment"],
-              ["Arrow Left / Right", "Seek 1 second"],
-              ["Shift + Arrow", "Seek 5 seconds"],
-            ].map(([key, desc]) => (
+        <Section title="Keyboard shortcuts">
+          <p>All shortcuts are configurable in Settings.</p>
+          <div className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-2 mt-4 text-[var(--text-fs-2)]">
+            {(
+              [
+                ["Space", "Play / pause"],
+                ["Cmd / Ctrl + S", "Save project"],
+                ["Cmd / Ctrl + D", "Duplicate segment"],
+                ["Delete", "Delete segment"],
+                ["← / →", "Seek 1 second"],
+                ["Shift + ← / →", "Seek 5 seconds"],
+                ["J / K", "Previous / next segment"],
+                ["1 / 2 / 3 / 4", "Toggle right panel"],
+              ] as const
+            ).map(([key, desc]) => (
               <div key={key} className="contents">
-                <kbd className="bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded px-2 py-1 text-xs font-mono">{key}</kbd>
-                <span className="text-zinc-600 dark:text-zinc-400 flex items-center">{desc}</span>
+                <Kbd>{key}</Kbd>
+                <span className="text-[var(--text-muted)]">{desc}</span>
               </div>
             ))}
           </div>
-        </section>
+        </Section>
 
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold mb-3">Rendering</h2>
-          <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
-            Verseline renders your video server-side using FFmpeg.
-          </p>
-          <ul className="list-disc list-inside text-zinc-600 dark:text-zinc-400 leading-relaxed space-y-1">
-            <li><strong>Preview</strong> — Renders a single segment as a quick MP4 preview</li>
-            <li><strong>Full Render</strong> — Renders the entire project with all segments</li>
+        <Section title="Rendering">
+          <p>Verseline renders server-side using FFmpeg.</p>
+          <ul>
+            <li><strong>Preview</strong> — renders a single segment as a quick MP4.</li>
+            <li><strong>Full render</strong> — renders the whole project end-to-end.</li>
           </ul>
-        </section>
+        </Section>
 
-        <div className="border-t border-zinc-200 dark:border-zinc-800 pt-6 mt-12">
-          <p className="text-sm text-zinc-500 dark:text-zinc-600">
-            Verseline — Timed-text video editor
+        <footer className="border-t border-[var(--border)] pt-6 mt-16">
+          <p className="text-[var(--text-fs-2)] text-[var(--text-faint)]">
+            Verseline · timed-text video editor
           </p>
-        </div>
+        </footer>
       </div>
     </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="mb-12">
+      <h2
+        className="font-display text-[var(--text-fs-5)] mb-4"
+        style={{ fontFamily: "var(--font-display)" }}
+      >
+        {title}
+      </h2>
+      <div
+        className="text-[var(--text-fs-3)] text-[var(--text-muted)] leading-[1.6] [&_strong]:text-[var(--text)] [&_em]:text-[var(--text)] [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_p+ul]:mt-3 [&_p+ol]:mt-3 [&_li]:mt-1.5 [&_p+p]:mt-3"
+      >
+        {children}
+      </div>
+    </section>
   );
 }

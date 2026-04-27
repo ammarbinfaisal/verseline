@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import type { Placement, Anchor } from "@verseline/shared";
-import { AnchorPicker } from "./AnchorPicker";
+import type { Placement } from "@verseline/shared";
+import { Button, Field, Input, toast } from "@/components/ui";
+import { FreeformPlacementEditor } from "./FreeformPlacementEditor";
+import { useLibraryStore } from "@/stores/library-store";
 
 interface PlacementEditorProps {
   placement: Placement | null;
   isNew: boolean;
+  canvas: { width: number; height: number };
   onSave: (placement: Placement) => void;
   onDelete: (id: string) => void;
   onCancel: () => void;
@@ -14,138 +17,116 @@ interface PlacementEditorProps {
 
 const EMPTY: Placement = {
   id: "",
+  name: "",
   anchor: "bottom_center",
-  margin_x: undefined,
-  margin_y: undefined,
-  max_width: undefined,
-  max_height: undefined,
+  x: 0.5,
+  y: 0.85,
 };
 
-function NumberField({
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  value: number | undefined;
-  onChange: (v: number | undefined) => void;
-  placeholder?: string;
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <label className="text-xs text-zinc-500 dark:text-zinc-400">{label}</label>
-      <input
-        type="number"
-        value={value ?? ""}
-        onChange={(e) => {
-          const v = e.target.value;
-          onChange(v === "" ? undefined : parseInt(v, 10));
-        }}
-        placeholder={placeholder ?? "0"}
-        className="bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-blue-500 transition-colors"
-      />
-    </div>
-  );
-}
-
-export function PlacementEditor({ placement, isNew, onSave, onDelete, onCancel }: PlacementEditorProps) {
-  // State is initialized from props; the parent uses key={placement?.id ?? '__new__'} to remount
-  // this component whenever the selected placement changes, so no sync effect is needed.
+export function PlacementEditor({
+  placement,
+  isNew,
+  canvas,
+  onSave,
+  onDelete,
+  onCancel,
+}: PlacementEditorProps) {
   const [form, setForm] = useState<Placement>(placement ?? EMPTY);
+  const saveToLibrary = useLibraryStore((s) => s.savePlacementPreset);
 
   if (!placement && !isNew) {
     return (
-      <div className="flex items-center justify-center h-full text-zinc-400 dark:text-zinc-600 text-sm">
-        Select a placement to edit
+      <div className="flex items-center justify-center h-full text-[var(--text-fs-2)] text-[var(--text-muted)]">
+        Select a placement to edit, or create a new one.
       </div>
     );
   }
 
-  const set = <K extends keyof Placement>(key: K, value: Placement[K]) =>
-    setForm((prev) => ({ ...prev, [key]: value }));
+  const handleSaveLib = async () => {
+    try {
+      await saveToLibrary(form);
+      toast.success(`“${form.name || form.id}” saved to library`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save to library");
+    }
+  };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 flex items-center gap-2">
-        <h2 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest flex-1">
+    <div className="flex flex-col h-full" data-testid="placement-editor">
+      <header className="px-4 py-3 border-b border-[var(--border)] flex items-center gap-2 shrink-0">
+        <h2 className="text-[var(--text-fs-1)] font-semibold text-[var(--text-muted)] uppercase tracking-[0.14em] flex-1">
           {isNew ? "New Placement" : "Edit Placement"}
         </h2>
-        <button
-          onClick={onCancel}
-          className="text-xs text-zinc-600 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 transition-colors"
-        >
+        <Button size="sm" variant="ghost" onClick={onCancel}>
           Cancel
-        </button>
-      </div>
+        </Button>
+      </header>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-        {/* ID */}
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500 dark:text-zinc-400">ID</label>
-          <input
-            type="text"
-            value={form.id}
-            onChange={(e) => set("id", e.target.value)}
-            disabled={!isNew}
-            placeholder="bottom-center"
-            className="bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          />
+      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="ID" hint="Used in the schema, lowercase">
+            {(p) => (
+              <Input
+                {...p}
+                type="text"
+                value={form.id}
+                onChange={(e) => setForm((f) => ({ ...f, id: e.target.value.replace(/\s+/g, "-").toLowerCase() }))}
+                disabled={!isNew}
+                placeholder="bottom-center"
+                fullWidth
+                data-testid="placement-id"
+              />
+            )}
+          </Field>
+          <Field label="Name" hint="Shown in pickers">
+            {(p) => (
+              <Input
+                {...p}
+                type="text"
+                value={form.name ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value || undefined }))}
+                placeholder="Bottom caption"
+                fullWidth
+                data-testid="placement-name"
+              />
+            )}
+          </Field>
         </div>
 
-        {/* Anchor picker */}
-        <AnchorPicker
-          value={form.anchor}
-          onChange={(anchor: Anchor) => set("anchor", anchor)}
+        <FreeformPlacementEditor
+          canvas={canvas}
+          value={form}
+          onChange={(next) => setForm(next)}
         />
-
-        {/* Margins */}
-        <div className="grid grid-cols-2 gap-3">
-          <NumberField
-            label="Margin X (px)"
-            value={form.margin_x}
-            onChange={(v) => set("margin_x", v)}
-          />
-          <NumberField
-            label="Margin Y (px)"
-            value={form.margin_y}
-            onChange={(v) => set("margin_y", v)}
-          />
-        </div>
-
-        {/* Max dimensions */}
-        <div className="grid grid-cols-2 gap-3">
-          <NumberField
-            label="Max Width (px)"
-            value={form.max_width}
-            onChange={(v) => set("max_width", v)}
-          />
-          <NumberField
-            label="Max Height (px)"
-            value={form.max_height}
-            onChange={(v) => set("max_height", v)}
-          />
-        </div>
       </div>
 
-      {/* Actions */}
-      <div className="px-4 py-3 border-t border-zinc-200 dark:border-zinc-800 flex items-center gap-2">
-        <button
-          onClick={() => form.id.trim() && onSave(form)}
+      <footer className="px-4 py-3 border-t border-[var(--border)] flex items-center gap-2 shrink-0">
+        <Button
+          variant="primary"
+          size="md"
+          fullWidth
           disabled={!form.id.trim()}
-          className="flex-1 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors"
+          onClick={() => onSave(form)}
+          data-testid="placement-save"
         >
           Save
-        </button>
+        </Button>
+        <Button
+          variant="ghost"
+          size="md"
+          onClick={handleSaveLib}
+          disabled={!form.id.trim()}
+          data-testid="placement-save-library"
+          title="Save this placement to your shared library"
+        >
+          ★ Library
+        </Button>
         {!isNew && (
-          <button
-            onClick={() => onDelete(form.id)}
-            className="py-2 px-4 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-500 dark:hover:text-red-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
-          >
+          <Button variant="danger" size="md" onClick={() => onDelete(form.id)} data-testid="placement-delete">
             Delete
-          </button>
+          </Button>
         )}
-      </div>
+      </footer>
     </div>
   );
 }

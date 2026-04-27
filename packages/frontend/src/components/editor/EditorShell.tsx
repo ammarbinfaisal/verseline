@@ -19,6 +19,9 @@ import { PlacementsTab } from "@/components/placements/PlacementsTab";
 import { FontList } from "@/components/fonts/FontList";
 import { FontBrowser } from "@/components/fonts/FontBrowser";
 import { AssetUploader } from "@/components/project/AssetUploader";
+import { Button, Tabs, Spinner, StatusPill } from "@/components/ui";
+import { matchAction } from "@/lib/shortcuts";
+import { useSettingsStore } from "@/stores/settings-store";
 
 // ---- Types ------------------------------------------------------------------
 
@@ -165,55 +168,100 @@ export default function EditorShell({ projectId }: EditorShellProps) {
     }
   }, [effectiveSelected, projectId]);
 
-  // ---- Keyboard shortcuts ----
+  // ---- Keyboard shortcuts (configurable via Settings) ----
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     const target = e.target as HTMLElement;
-    const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT";
+    const isInput =
+      target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT";
 
-    // Ctrl+S / Cmd+S — save (always, even in inputs)
-    if ((e.ctrlKey || e.metaKey) && e.key === "s") {
-      e.preventDefault();
-      handleSaveRef.current();
-      return;
-    }
+    const bindings = useSettingsStore.getState().bindings;
+    const action = matchAction(e, bindings);
+    if (!action) return;
 
-    // Ctrl+D — duplicate segment
-    if ((e.ctrlKey || e.metaKey) && e.key === "d") {
-      e.preventDefault();
-      handleDuplicate();
-      return;
-    }
+    // Save and duplicate run even inside inputs.
+    const allowedInInputs = action === "save" || action === "duplicateSegment";
+    if (isInput && !allowedInInputs) return;
 
-    // Skip remaining shortcuts when focused on text inputs
-    if (isInput) return;
-
-    // Space — play/pause
-    if (e.key === " ") {
-      e.preventDefault();
-      handlePlayPause();
-      return;
-    }
-
-    // Delete — delete selected segment
-    if (e.key === "Delete" && effectiveSelected?.id) {
-      e.preventDefault();
-      if (confirm("Delete this segment?")) {
-        useTimelineStore.getState().deleteSegment(effectiveSelected.id);
-        setSelectedId(null);
+    switch (action) {
+      case "save":
+        e.preventDefault();
+        handleSaveRef.current();
+        return;
+      case "duplicateSegment":
+        e.preventDefault();
+        handleDuplicate();
+        return;
+      case "playPause":
+        e.preventDefault();
+        handlePlayPause();
+        return;
+      case "deleteSegment":
+        if (effectiveSelected?.id) {
+          e.preventDefault();
+          useTimelineStore.getState().deleteSegment(effectiveSelected.id);
+          setSelectedId(null);
+        }
+        return;
+      case "seekForward1s":
+        e.preventDefault();
+        seek(Math.min(currentTimeMs + 1000, durationMs));
+        return;
+      case "seekBack1s":
+        e.preventDefault();
+        seek(Math.max(currentTimeMs - 1000, 0));
+        return;
+      case "seekForward5s":
+        e.preventDefault();
+        seek(Math.min(currentTimeMs + 5000, durationMs));
+        return;
+      case "seekBack5s":
+        e.preventDefault();
+        seek(Math.max(currentTimeMs - 5000, 0));
+        return;
+      case "nextSegment": {
+        e.preventDefault();
+        const idx = segments.findIndex((s) => s.id === effectiveSelected?.id);
+        const next = segments[idx + 1] ?? segments[0];
+        if (next?.id) handleSelectSegment(next.id);
+        return;
       }
-      return;
+      case "prevSegment": {
+        e.preventDefault();
+        const idx = segments.findIndex((s) => s.id === effectiveSelected?.id);
+        const prev = segments[idx - 1] ?? segments[segments.length - 1];
+        if (prev?.id) handleSelectSegment(prev.id);
+        return;
+      }
+      case "toggleStylesPanel":
+        e.preventDefault();
+        setRightPanel(rightPanel === "styles" ? "editor" : "styles");
+        return;
+      case "togglePlacementsPanel":
+        e.preventDefault();
+        setRightPanel(rightPanel === "placements" ? "editor" : "placements");
+        return;
+      case "toggleFontsPanel":
+        e.preventDefault();
+        setRightPanel(rightPanel === "fonts" ? "editor" : "fonts");
+        return;
+      case "toggleSettingsPanel":
+        e.preventDefault();
+        setRightPanel(rightPanel === "settings" ? "editor" : "settings");
+        return;
+      default:
+        return;
     }
-
-    // Arrow keys — seek
-    const seekAmount = e.shiftKey ? 5000 : 1000;
-    if (e.key === "ArrowRight") {
-      e.preventDefault();
-      seek(Math.min(currentTimeMs + seekAmount, durationMs));
-    } else if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      seek(Math.max(currentTimeMs - seekAmount, 0));
-    }
-  }, [handlePlayPause, handleDuplicate, effectiveSelected, seek, currentTimeMs, durationMs]);
+  }, [
+    handlePlayPause,
+    handleDuplicate,
+    effectiveSelected,
+    seek,
+    currentTimeMs,
+    durationMs,
+    segments,
+    handleSelectSegment,
+    rightPanel,
+  ]);
 
   // ---- Root ref: auto-focus on mount, reset playback on unmount ----
   const rootRef = useCallback((node: HTMLDivElement | null) => {
@@ -231,83 +279,80 @@ export default function EditorShell({ projectId }: EditorShellProps) {
 
   if (isLoading && !project) {
     return (
-      <div className="flex items-center justify-center h-64 text-zinc-600 dark:text-zinc-500 text-sm">
-        Loading project…
+      <div className="flex items-center justify-center h-64 gap-3 text-[var(--text-fs-2)] text-[var(--text-muted)]">
+        <Spinner size={14} /> Loading project
       </div>
     );
   }
   if (!project) {
     return (
-      <div className="flex items-center justify-center h-64 text-zinc-600 dark:text-zinc-500 text-sm">
+      <div className="flex items-center justify-center h-64 text-[var(--text-fs-2)] text-[var(--text-muted)]">
         Project not found.
       </div>
     );
   }
+
+  const status: "saved" | "dirty" | "saving" | "error" = saveError
+    ? "error"
+    : isSaving
+      ? "saving"
+      : isDirty
+        ? "dirty"
+        : "saved";
 
   return (
     <div
       ref={rootRef}
       tabIndex={-1}
       onKeyDown={handleKeyDown}
-      className="flex flex-col h-[calc(100vh-3.5rem)] bg-white dark:bg-zinc-950 overflow-hidden outline-none"
+      className="flex flex-col h-[calc(100vh-3rem)] bg-[var(--bg)] overflow-hidden outline-none"
+      data-testid="editor-root"
     >
       {/* ---- Top toolbar ---- */}
-      <div className="flex items-center border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 shrink-0 px-2 gap-1">
+      <div
+        role="toolbar"
+        className="flex items-center h-11 border-b border-[var(--border)] bg-[var(--surface-1)] shrink-0 px-3 gap-3"
+      >
         <a
           href="/projects"
-          className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 px-2 py-2.5 transition-colors"
+          className="text-[var(--text-fs-2)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-2 py-1 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]"
           title="Back to projects"
+          aria-label="Back to projects"
         >
-          &larr;
+          ←
         </a>
-        <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200 px-2 py-3 truncate max-w-48" title={project.name}>
+        <h1
+          className="text-[var(--text-fs-3)] font-semibold text-[var(--text)] truncate max-w-[20rem]"
+          title={project.name}
+        >
           {project.name ?? "Untitled"}
-        </span>
+        </h1>
+
+        <div className="w-px h-5 bg-[var(--border)]" />
+
+        <Tabs
+          variant="underline"
+          tabs={CONFIG_TABS}
+          active={rightPanel}
+          onChange={(id) => setRightPanel(rightPanel === id ? "editor" : id)}
+        />
 
         <div className="flex-1" />
-
-        {/* Config tab pills */}
-        <div className="flex gap-1">
-          {CONFIG_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setRightPanel(rightPanel === tab.id ? "editor" : tab.id)}
-              className={[
-                "px-3 py-2.5 text-xs font-medium transition-colors relative",
-                rightPanel === tab.id
-                  ? "text-zinc-900 dark:text-white after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-indigo-500"
-                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200",
-              ].join(" ")}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="w-2" />
-
-        {/* Save button */}
-        {isSaving ? (
-          <span className="text-xs text-zinc-500 dark:text-zinc-400 px-2">Saving…</span>
-        ) : isDirty ? (
-          <button
-            onClick={handleSave}
-            className="text-xs text-amber-400 hover:text-amber-300 transition-colors px-2"
-          >
-            Save
-          </button>
-        ) : (
-          <span className="text-xs text-zinc-400 dark:text-zinc-600 px-2">Saved</span>
-        )}
+        {/* Save state lives in the status bar — no duplicate here */}
       </div>
 
       {/* ---- Main area ---- */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Left sidebar: segment list */}
-        <div className="w-56 shrink-0 border-r border-zinc-300 dark:border-zinc-700 flex flex-col overflow-hidden bg-zinc-50/50 dark:bg-zinc-900/50">
-          <div className="px-3 py-2 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-            <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">Segments</span>
-            <button
+        <div className="w-60 shrink-0 border-r border-[var(--border)] flex flex-col overflow-hidden bg-[var(--surface-1)]">
+          <div className="px-3 py-2 border-b border-[var(--border)] flex items-center justify-between">
+            <span className="text-[var(--text-fs-1)] font-semibold text-[var(--text-muted)] uppercase tracking-[0.14em]">
+              Segments
+            </span>
+            <Button
+              size="sm"
+              variant="ghost"
+              data-testid="add-segment"
               onClick={() => {
                 const last = segments[segments.length - 1];
                 useTimelineStore.getState().createSegment(projectId, {
@@ -316,36 +361,54 @@ export default function EditorShell({ projectId }: EditorShellProps) {
                   blocks: [{ text: "", style: styles[0]?.id, placement: placements[0]?.id }],
                 });
               }}
-              className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
             >
               + New
-            </button>
+            </Button>
           </div>
-          <div className="overflow-y-auto flex-1">
+          <div className="overflow-y-auto flex-1" role="listbox" aria-label="Segments">
             {segments.length === 0 ? (
-              <div className="flex items-center justify-center h-32 text-zinc-600 dark:text-zinc-500 text-xs">
-                No segments yet
+              <div className="flex items-center justify-center h-32 text-[var(--text-fs-1)] text-[var(--text-muted)] px-4 text-center">
+                No segments yet. Press “+ New” to add one.
               </div>
             ) : (
               segments.map((seg, i) => {
-                const isActive = seg.id === (effectiveSelected?.id);
+                const isActive = seg.id === effectiveSelected?.id;
                 const preview = seg.blocks.map((b) => b.text).filter(Boolean).join(" / ");
                 return (
                   <button
                     key={seg.id ?? i}
+                    role="option"
+                    aria-selected={isActive}
+                    data-testid={`segment-row-${i}`}
                     onClick={() => handleSelectSegment(seg.id ?? "")}
                     className={[
-                      "w-full text-left px-3 py-2 border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/70 transition-colors",
-                      isActive ? "bg-zinc-100 dark:bg-zinc-800" : "",
+                      "w-full text-left px-3 py-2 transition-colors relative",
+                      "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--focus-ring)]",
+                      isActive
+                        ? "bg-[color-mix(in_srgb,var(--accent-cool)_10%,transparent)]"
+                        : "hover:bg-[var(--surface-2)]",
                     ].join(" ")}
                   >
+                    {isActive && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute left-0 top-1 bottom-1 w-0.5"
+                        style={{ background: "var(--accent-cool)" }}
+                      />
+                    )}
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono text-zinc-500 dark:text-zinc-600 shrink-0">{String(i + 1).padStart(2, "0")}</span>
-                      <span className="text-[10px] font-mono text-zinc-600 dark:text-zinc-400">
+                      <span className="text-[var(--text-fs-1)] font-mono text-[var(--text-faint)] shrink-0">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <span className="text-[var(--text-fs-1)] font-mono text-[var(--text-muted)]">
                         {formatRange(seg.start, seg.end)}
                       </span>
                     </div>
-                    <div className="text-xs text-zinc-600 dark:text-zinc-500 truncate mt-0.5">{preview || "(empty)"}</div>
+                    <div className="text-[var(--text-fs-2)] text-[var(--text)] truncate mt-1">
+                      {preview || (
+                        <span className="text-[var(--text-faint)] italic">(empty)</span>
+                      )}
+                    </div>
                   </button>
                 );
               })
@@ -355,8 +418,10 @@ export default function EditorShell({ projectId }: EditorShellProps) {
 
         {/* Center: canvas + playback + timeline */}
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-          {/* Canvas preview */}
-          <div className="flex-1 min-h-0 flex items-center justify-center p-4 bg-zinc-950">
+          <div
+            className="flex-1 min-h-0 flex items-center justify-center p-4"
+            style={{ background: "var(--canvas-frame)" }}
+          >
             <CanvasPreview
               blocks={effectiveSelected?.blocks ?? []}
               styles={styles}
@@ -370,7 +435,6 @@ export default function EditorShell({ projectId }: EditorShellProps) {
             />
           </div>
 
-          {/* Playback controls */}
           <PlaybackControls
             playing={playing}
             currentTimeMs={currentTimeMs}
@@ -381,7 +445,6 @@ export default function EditorShell({ projectId }: EditorShellProps) {
             onRateChange={setRate}
           />
 
-          {/* Timeline bar */}
           <TimelineBar
             segments={segments}
             currentTimeMs={currentTimeMs}
@@ -393,7 +456,7 @@ export default function EditorShell({ projectId }: EditorShellProps) {
         </div>
 
         {/* Right panel */}
-        <div className="w-80 shrink-0 border-l border-zinc-300 dark:border-zinc-700 flex flex-col overflow-hidden">
+        <div className="w-80 shrink-0 border-l border-[var(--border)] flex flex-col overflow-hidden bg-[var(--surface-1)]">
           {rightPanel === "editor" && effectiveSelected ? (
             <SegmentEditor
               key={effectiveSelected.id}
@@ -406,7 +469,7 @@ export default function EditorShell({ projectId }: EditorShellProps) {
               canvas={canvas}
             />
           ) : rightPanel === "editor" ? (
-            <div className="flex items-center justify-center flex-1 text-zinc-600 dark:text-zinc-500 text-sm">
+            <div className="flex items-center justify-center flex-1 text-[var(--text-fs-2)] text-[var(--text-muted)]">
               No segment selected
             </div>
           ) : rightPanel === "styles" ? (
@@ -421,28 +484,36 @@ export default function EditorShell({ projectId }: EditorShellProps) {
         </div>
       </div>
 
-      {/* Hidden audio element */}
       {audioUrl && <audio ref={audioRef} src={audioUrl} preload="auto" />}
 
-      {/* ---- Status bar ---- */}
-      <div className="h-7 bg-zinc-50 dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex items-center px-4 gap-4 shrink-0">
-        <span className="text-xs text-zinc-600 dark:text-zinc-500">
-          {canvas.width}&times;{canvas.height} &middot; {canvas.fps} fps
+      {/* ---- Status bar (single source of truth for save state) ---- */}
+      <div className="h-8 bg-[var(--surface-1)] border-t border-[var(--border)] flex items-center px-4 gap-4 shrink-0">
+        <span className="text-[var(--text-fs-1)] text-[var(--text-muted)] font-mono">
+          {canvas.width}×{canvas.height} · {canvas.fps} fps
         </span>
-        <span className="text-xs text-zinc-500 dark:text-zinc-600">
+        <span className="text-[var(--text-fs-1)] text-[var(--text-muted)]">
           {segments.length} segment{segments.length !== 1 ? "s" : ""}
         </span>
         <div className="flex-1" />
-        {saveError && <span className="text-xs text-red-600 dark:text-red-400">{saveError}</span>}
-        {isSaving ? (
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">Saving…</span>
-        ) : isDirty ? (
-          <button onClick={handleSave} className="text-xs text-amber-400 hover:text-amber-300 transition-colors">
-            Unsaved changes — Ctrl+S
-          </button>
-        ) : (
-          <span className="text-xs text-zinc-400 dark:text-zinc-600">All changes saved</span>
+        {saveError && (
+          <span role="alert" className="text-[var(--text-fs-1)] text-[var(--error)]" data-testid="save-error">
+            ⚠ {saveError}
+          </span>
         )}
+        <StatusPill
+          status={status}
+          onClick={status === "dirty" || status === "error" ? handleSave : undefined}
+          shortcut={status === "dirty" ? "⌘S" : undefined}
+          label={
+            status === "saving"
+              ? "Saving"
+              : status === "dirty"
+                ? "Unsaved"
+                : status === "error"
+                  ? "Save failed — retry"
+                  : "All changes saved"
+          }
+        />
       </div>
     </div>
   );

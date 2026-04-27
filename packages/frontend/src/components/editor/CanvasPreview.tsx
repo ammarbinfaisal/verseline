@@ -86,7 +86,20 @@ export default function CanvasPreview({
         const style = styles.find((s) => s.id === block.style);
         const placement = placements.find((p) => p.id === block.placement);
         const anchor = placement?.anchor ?? "bottom_center";
+
+        // Free-form x/y takes precedence over the legacy 9-point anchor.
+        // The `anchor` value still describes which corner of the text box
+        // sits at (x,y) — we keep its transform but override position.
+        const useFreeform = placement?.x != null && placement?.y != null;
         const anchorStyle = ANCHOR_STYLES[anchor] ?? ANCHOR_STYLES["bottom_center"];
+        const positionStyle: React.CSSProperties = useFreeform
+          ? {
+              left: `${(placement!.x ?? 0.5) * 100}%`,
+              top: `${(placement!.y ?? 0.5) * 100}%`,
+              transform: anchorStyle.transform,
+              textAlign: anchorStyle.textAlign ?? "left",
+            }
+          : anchorStyle;
 
         const fontSizePx = style?.size ? `${(style.size / canvas.height) * 100}%` : "3%";
         const baseColor = style?.color ?? "#ffffff";
@@ -99,7 +112,7 @@ export default function CanvasPreview({
             key={block.id ?? i}
             className="absolute pointer-events-none"
             style={{
-              ...anchorStyle,
+              ...positionStyle,
               fontSize: fontSizePx,
               color: baseColor,
               fontFamily,
@@ -112,7 +125,6 @@ export default function CanvasPreview({
               WebkitTextStroke: style?.outline
                 ? `${style.outline}px ${style.outline_color ?? "#000"}`
                 : undefined,
-              textAlign: anchorStyle.textAlign ?? "left",
               background: style?.text_bg ?? undefined,
               padding: style?.text_bg_pad ? `${style.text_bg_pad}px` : undefined,
               borderRadius: style?.text_bg_radius ? `${style.text_bg_radius}px` : undefined,

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Suspense } from "react";
 import { useAuthStore } from "@/stores/auth-store";
+import { Button, Field, Input } from "@/components/ui";
 
 function LoginForm() {
   const router = useRouter();
@@ -31,74 +31,80 @@ function LoginForm() {
 
   return (
     <>
-      <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-6">Log in</h2>
+      <h1 className="font-display text-[var(--text-fs-6)] mb-2" style={{ fontFamily: "var(--font-display)" }}>
+        Welcome back
+      </h1>
+      <p className="text-[var(--text-fs-3)] text-[var(--text-muted)] mb-8">
+        Log in to keep editing where you left off.
+      </p>
 
       {resetSuccess && (
-        <p className="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900 rounded-lg px-3 py-2 mb-4">
-          Password reset successfully. You can now log in with your new password.
+        <p
+          role="status"
+          className="text-[var(--text-fs-2)] mb-6 px-3 py-2 rounded-md"
+          style={{ background: "var(--success-bg)", color: "var(--success)" }}
+        >
+          ✓ Password reset. Sign in with the new one.
         </p>
       )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="email" className="text-sm text-zinc-500 dark:text-zinc-400">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-zinc-400 dark:focus:border-zinc-600"
-            placeholder="you@example.com"
-          />
-        </div>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+        <Field label="Email">
+          {(p) => (
+            <Input
+              {...p}
+              type="email"
+              autoComplete="email"
+              required
+              fullWidth
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+            />
+          )}
+        </Field>
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="password" className="text-sm text-zinc-500 dark:text-zinc-400">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-zinc-400 dark:focus:border-zinc-600"
-            placeholder="••••••••"
-          />
-        </div>
+        <Field label="Password">
+          {(p) => (
+            <Input
+              {...p}
+              type="password"
+              autoComplete="current-password"
+              required
+              fullWidth
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Your password"
+            />
+          )}
+        </Field>
 
         {error && (
-          <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-lg px-3 py-2">
+          <p
+            role="alert"
+            className="text-[var(--text-fs-2)] px-3 py-2 rounded-md"
+            style={{ background: "var(--error-bg)", color: "var(--error)" }}
+          >
             {error}
           </p>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="mt-1 w-full py-2.5 rounded-lg bg-white text-zinc-950 font-medium text-sm hover:bg-zinc-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? "Logging in..." : "Log in"}
-        </button>
+        <Button type="submit" variant="primary" size="lg" loading={loading} fullWidth>
+          {loading ? "Logging in" : "Log in"}
+        </Button>
       </form>
 
-      <p className="mt-4 text-center text-sm">
-        <Link href="/forgot-password" className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
+      <div className="mt-8 flex items-center justify-between text-[var(--text-fs-2)]">
+        <Link href="/forgot-password" className="text-[var(--text-muted)] hover:text-[var(--text)] transition-colors">
           Forgot password?
         </Link>
-      </p>
-
-      <p className="mt-3 text-center text-sm text-zinc-600 dark:text-zinc-500">
-        No account?{" "}
-        <Link href="/signup" className="text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors">
-          Sign up
-        </Link>
-      </p>
+        <span className="text-[var(--text-muted)]">
+          No account?{" "}
+          <Link href="/signup" className="text-[var(--brand-primary)] hover:underline">
+            Sign up
+          </Link>
+        </span>
+      </div>
     </>
   );
 }

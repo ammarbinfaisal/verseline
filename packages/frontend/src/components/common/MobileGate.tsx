@@ -19,25 +19,35 @@ export function MobileGate({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {/* Overlay */}
-      <div className="fixed inset-0 z-50 bg-zinc-950/90 backdrop-blur-sm flex items-center justify-center p-6">
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-8 max-w-sm text-center shadow-2xl">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-white mb-3">
-            Verseline is designed for desktop
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-6"
+        style={{ background: "color-mix(in srgb, var(--canvas-frame) 75%, transparent)" }}
+      >
+        <div
+          className="rounded-[var(--radius-lg)] p-8 max-w-sm shadow-[var(--shadow-lg)] border border-[var(--border)]"
+          style={{ background: "var(--surface-1)" }}
+        >
+          <h2
+            className="font-display text-[var(--text-fs-5)] text-[var(--text)] mb-3"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            Verseline is built for desktop
           </h2>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">
-            For the best experience, please use a laptop or desktop computer with a widescreen display.
+          <p className="text-[var(--text-fs-3)] text-[var(--text-muted)] mb-6 leading-relaxed">
+            The editor needs the screen real estate. Pop this open on a laptop or
+            larger when you're ready to work.
           </p>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             <a
               href="/docs"
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-lg transition-colors"
+              className="inline-flex items-center justify-center px-4 py-2.5 rounded-md font-medium text-[var(--text-fs-2)] transition-colors"
+              style={{ background: "var(--accent-warm)", color: "var(--text-on-warm)" }}
             >
-              View Documentation
+              Read the docs
             </a>
             <button
               onClick={handleDismiss}
-              className="px-4 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors"
+              className="px-4 py-2 text-[var(--text-fs-2)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
             >
               Continue anyway
             </button>

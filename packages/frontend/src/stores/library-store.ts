@@ -2,6 +2,8 @@
 
 import { create } from "zustand";
 import { api, type LibraryAsset } from "@/lib/api";
+import type { Style, Placement, Font } from "@verseline/shared";
+import { presetLibrary } from "@/lib/preset-library";
 
 interface LibraryState {
   assets: LibraryAsset[];
@@ -15,6 +17,17 @@ interface LibraryState {
   deleteAsset: (id: string) => Promise<void>;
   linkToProject: (assetId: string, projectId: string) => Promise<void>;
   unlinkFromProject: (assetId: string, projectId: string) => Promise<void>;
+
+  // Preset library — local for v1, server-backed in v2.
+  saveStylePreset: (style: Style) => Promise<void>;
+  saveFontPreset: (font: Font) => Promise<void>;
+  savePlacementPreset: (placement: Placement) => Promise<void>;
+  listStylePresets: () => Style[];
+  listPlacementPresets: () => Placement[];
+  listFontPresets: () => Font[];
+  deleteStylePreset: (id: string) => void;
+  deletePlacementPreset: (id: string) => void;
+  deleteFontPreset: (id: string) => void;
 }
 
 export const useLibraryStore = create<LibraryState>((set, get) => ({
@@ -56,4 +69,21 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   async unlinkFromProject(assetId, projectId) {
     await api.library.unlinkFromProject(assetId, projectId);
   },
+
+  // ---- Preset library (localStorage v1) ----
+  async saveStylePreset(style) {
+    presetLibrary.saveStyle(style);
+  },
+  async saveFontPreset(font) {
+    presetLibrary.saveFont(font);
+  },
+  async savePlacementPreset(placement) {
+    presetLibrary.savePlacement(placement);
+  },
+  listStylePresets: () => presetLibrary.listStyles(),
+  listPlacementPresets: () => presetLibrary.listPlacements(),
+  listFontPresets: () => presetLibrary.listFonts(),
+  deleteStylePreset: (id) => { presetLibrary.deleteStyle(id); },
+  deletePlacementPreset: (id) => { presetLibrary.deletePlacement(id); },
+  deleteFontPreset: (id) => { presetLibrary.deleteFont(id); },
 }));
