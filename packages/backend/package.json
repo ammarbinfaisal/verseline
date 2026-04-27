@@ -12,7 +12,8 @@
     "build:mcp": "bun build --target=node --banner='#!/usr/bin/env node' --outfile=dist/mcp.js src/mcp/server.ts && chmod +x dist/mcp.js",
     "db:generate": "bunx drizzle-kit generate",
     "db:migrate": "bunx drizzle-kit migrate",
-    "db:studio": "bunx drizzle-kit studio"
+    "db:studio": "bunx drizzle-kit studio",
+    "db:seed-presets": "bun run src/scripts/seed-presets.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.700.0",
