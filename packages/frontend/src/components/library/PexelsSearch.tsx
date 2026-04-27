@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { usePexelsStore } from "@/stores/pexels-store";
 import { useMountEffect } from "@/hooks/useMountEffect";
+import { Button, Input, Spinner, Tabs, EmptyState } from "@/components/ui";
 
 export default function PexelsSearch() {
   const {
@@ -75,62 +76,46 @@ export default function PexelsSearch() {
   const hasMore = results.length > 0 && results.length < totalResults;
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Search input */}
+    <div className="flex flex-col gap-4" data-testid="pexels-search">
+      {/* Search input + tabs */}
       <div className="flex gap-2">
-        <input
+        <Input
           type="text"
           value={searchQuery}
           onChange={(e) => handleInputChange(e.target.value)}
-          placeholder="Search Pexels..."
-          className="flex-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          placeholder="Search Pexels…"
+          fullWidth
         />
-        <div className="flex rounded-lg border border-zinc-300 dark:border-zinc-700 overflow-hidden">
-          <button
-            onClick={() => {
-              setSearchType("photo");
-              if (searchQuery.trim()) search(searchQuery, 1);
-            }}
-            className={`px-3 py-2 text-xs transition-colors ${
-              searchType === "photo"
-                ? "bg-indigo-600 text-white"
-                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
-            }`}
-          >
-            Photos
-          </button>
-          <button
-            onClick={() => {
-              setSearchType("video");
-              if (searchQuery.trim()) search(searchQuery, 1);
-            }}
-            className={`px-3 py-2 text-xs transition-colors ${
-              searchType === "video"
-                ? "bg-indigo-600 text-white"
-                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
-            }`}
-          >
-            Videos
-          </button>
-        </div>
+        <Tabs
+          variant="pill"
+          tabs={[
+            { id: "photo" as const, label: "Photos" },
+            { id: "video" as const, label: "Videos" },
+          ]}
+          active={searchType}
+          onChange={(id) => {
+            setSearchType(id);
+            if (searchQuery.trim()) search(searchQuery, 1);
+          }}
+        />
         {searchQuery.trim() && (
-          <button
+          <Button
+            size="md"
+            variant="ghost"
             onClick={handleSaveSearch}
             title="Save this search"
-            className="px-3 py-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-300 dark:border-zinc-700 rounded-lg text-xs hover:text-zinc-900 dark:hover:text-white transition-colors"
           >
             Save
-          </button>
+          </Button>
         )}
       </div>
 
-      {/* Saved searches */}
       {savedSearches.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {savedSearches.map((s) => (
             <div
               key={s.id}
-              className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full px-3 py-1"
+              className="flex items-center gap-1 bg-[var(--surface-1)] border border-[var(--border)] rounded-sm px-2 py-1"
             >
               <button
                 onClick={() => {
@@ -138,30 +123,31 @@ export default function PexelsSearch() {
                   setSearchType(s.searchType as "photo" | "video");
                   search(s.query, 1);
                 }}
-                className="text-xs text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
+                className="text-[var(--text-fs-1)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] rounded-sm px-1"
               >
                 {s.query}
               </button>
               <button
                 onClick={() => deleteSavedSearch(s.id)}
-                className="text-xs text-zinc-400 hover:text-red-400 ml-1"
+                aria-label={`Remove saved search ${s.query}`}
+                className="text-[var(--text-fs-1)] text-[var(--text-faint)] hover:text-[var(--error)] transition-colors px-1 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]"
               >
-                x
+                ×
               </button>
             </div>
           ))}
         </div>
       )}
 
-      {/* Loading */}
       {loading && (
-        <div className="text-sm text-zinc-500 py-4 text-center">Searching...</div>
+        <div className="text-[var(--text-fs-2)] text-[var(--text-muted)] py-4 text-center flex items-center justify-center gap-2">
+          <Spinner size={12} /> Searching
+        </div>
       )}
 
-      {/* Results grid */}
       {!loading && results.length > 0 && (
         <>
-          <p className="text-xs text-zinc-500">
+          <p className="text-[var(--text-fs-1)] text-[var(--text-muted)]">
             {totalResults.toLocaleString()} results
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -172,7 +158,7 @@ export default function PexelsSearch() {
                   return (
                     <div
                       key={photo.id}
-                      className="group relative rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800"
+                      className="group relative rounded-md overflow-hidden bg-[var(--surface-2)]"
                     >
                       <img
                         src={photo.src.medium}
@@ -180,16 +166,30 @@ export default function PexelsSearch() {
                         className="w-full aspect-video object-cover"
                         loading="lazy"
                       />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end justify-between p-2 opacity-0 group-hover:opacity-100">
-                        <span className="text-[10px] text-white/80 truncate">
+                      <div
+                        className="absolute inset-0 transition-colors flex items-end justify-between p-2 opacity-0 group-hover:opacity-100"
+                        style={{
+                          background:
+                            "color-mix(in srgb, var(--canvas-frame) 50%, transparent)",
+                        }}
+                      >
+                        <span
+                          className="text-[var(--text-fs-1)] truncate"
+                          style={{ color: "rgba(255,255,255,0.85)" }}
+                        >
                           {photo.photographer}
                         </span>
                         {inLibrary ? (
-                          <span className="text-[10px] bg-green-600 text-white px-2 py-0.5 rounded">
-                            In Library
+                          <span
+                            className="text-[var(--text-fs-1)] px-2 py-0.5 rounded-sm font-medium"
+                            style={{ background: "var(--success)", color: "#FFFFFF" }}
+                          >
+                            In library
                           </span>
                         ) : (
-                          <button
+                          <Button
+                            size="sm"
+                            variant="primary"
                             onClick={() =>
                               handleSaveToLibrary(
                                 photo.id,
@@ -200,10 +200,10 @@ export default function PexelsSearch() {
                               )
                             }
                             disabled={saving}
-                            className="text-[10px] bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-0.5 rounded disabled:opacity-50"
+                            loading={saving}
                           >
-                            {saving ? "Saving..." : "Save"}
-                          </button>
+                            {saving ? "" : "Save"}
+                          </Button>
                         )}
                       </div>
                     </div>
@@ -218,7 +218,7 @@ export default function PexelsSearch() {
                   return (
                     <div
                       key={video.id}
-                      className="group relative rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800"
+                      className="group relative rounded-md overflow-hidden bg-[var(--surface-2)]"
                     >
                       <img
                         src={video.image}
@@ -227,20 +227,42 @@ export default function PexelsSearch() {
                         loading="lazy"
                       />
                       <div className="absolute top-2 left-2">
-                        <span className="text-[10px] bg-black/60 text-white px-1.5 py-0.5 rounded">
-                          {Math.floor(video.duration / 60)}:{String(video.duration % 60).padStart(2, "0")}
+                        <span
+                          className="text-[var(--text-fs-1)] px-1.5 py-0.5 rounded-sm font-mono"
+                          style={{
+                            background:
+                              "color-mix(in srgb, var(--canvas-frame) 60%, transparent)",
+                            color: "#FFFFFF",
+                          }}
+                        >
+                          {Math.floor(video.duration / 60)}:
+                          {String(video.duration % 60).padStart(2, "0")}
                         </span>
                       </div>
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end justify-between p-2 opacity-0 group-hover:opacity-100">
-                        <span className="text-[10px] text-white/80 truncate">
+                      <div
+                        className="absolute inset-0 transition-colors flex items-end justify-between p-2 opacity-0 group-hover:opacity-100"
+                        style={{
+                          background:
+                            "color-mix(in srgb, var(--canvas-frame) 50%, transparent)",
+                        }}
+                      >
+                        <span
+                          className="text-[var(--text-fs-1)] truncate"
+                          style={{ color: "rgba(255,255,255,0.85)" }}
+                        >
                           {video.user.name}
                         </span>
                         {inLibrary ? (
-                          <span className="text-[10px] bg-green-600 text-white px-2 py-0.5 rounded">
-                            In Library
+                          <span
+                            className="text-[var(--text-fs-1)] px-2 py-0.5 rounded-sm font-medium"
+                            style={{ background: "var(--success)", color: "#FFFFFF" }}
+                          >
+                            In library
                           </span>
                         ) : (
-                          <button
+                          <Button
+                            size="sm"
+                            variant="primary"
                             onClick={() =>
                               handleSaveToLibrary(
                                 video.id,
@@ -251,10 +273,10 @@ export default function PexelsSearch() {
                               )
                             }
                             disabled={saving}
-                            className="text-[10px] bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-0.5 rounded disabled:opacity-50"
+                            loading={saving}
                           >
-                            {saving ? "Saving..." : "Save"}
-                          </button>
+                            {saving ? "" : "Save"}
+                          </Button>
                         )}
                       </div>
                     </div>
@@ -262,24 +284,24 @@ export default function PexelsSearch() {
                 })}
           </div>
 
-          {/* Load more */}
           {hasMore && (
-            <button
+            <Button
+              variant="ghost"
               onClick={() => search(searchQuery, page + 1)}
               disabled={loading}
-              className="mx-auto px-4 py-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
+              className="mx-auto"
             >
               Load more
-            </button>
+            </Button>
           )}
         </>
       )}
 
-      {/* Empty state */}
       {!loading && searchQuery.trim() && results.length === 0 && (
-        <p className="text-sm text-zinc-500 py-8 text-center">
-          No {searchType}s found for &ldquo;{searchQuery}&rdquo;
-        </p>
+        <EmptyState
+          title={`No ${searchType}s found`}
+          body={`Nothing on Pexels for “${searchQuery}”. Try a different query.`}
+        />
       )}
     </div>
   );

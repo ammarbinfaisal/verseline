@@ -58,7 +58,7 @@ export default function CanvasPreview({
 
   return (
     <div
-      className="relative max-h-full max-w-full mx-auto overflow-hidden rounded-lg border border-zinc-300 dark:border-zinc-700"
+      className="relative max-h-full max-w-full mx-auto overflow-hidden rounded-md border border-[var(--border)]"
       style={{
         aspectRatio: canvas.width / canvas.height,
         background: backgroundUrl && backgroundType !== "video" ? undefined : "#18181b",
@@ -143,7 +143,7 @@ export default function CanvasPreview({
       })}
 
       {visibleBlocks.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center text-zinc-600 text-xs select-none">
+        <div className="absolute inset-0 flex items-center justify-center text-[var(--text-faint)] text-[var(--text-fs-1)] select-none">
           No blocks
         </div>
       )}

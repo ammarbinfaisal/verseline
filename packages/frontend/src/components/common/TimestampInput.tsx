@@ -60,7 +60,11 @@ export default function TimestampInput({ value, onChange, label, className = "" 
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      {label && <span className="text-xs text-zinc-500 dark:text-zinc-400 w-12 shrink-0">{label}</span>}
+      {label && (
+        <span className="text-[var(--text-fs-2)] text-[var(--text-muted)] font-medium w-12 shrink-0">
+          {label}
+        </span>
+      )}
       <input
         ref={inputRef}
         type="text"
@@ -70,12 +74,15 @@ export default function TimestampInput({ value, onChange, label, className = "" 
         onFocus={handleFocus}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
+        aria-invalid={error || undefined}
         className={[
-          "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border rounded px-2 py-1 text-sm font-mono w-32",
-          "focus:outline-none focus:ring-1",
+          "bg-[var(--surface-2)] text-[var(--text)] border rounded-md px-2 py-1.5 text-[var(--text-fs-2)] font-mono w-32",
+          "focus:outline-none focus-visible:outline-none",
+          "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]",
+          "transition-colors duration-[120ms] ease-[var(--ease-out-soft)]",
           error
-            ? "border-red-500 focus:ring-red-500"
-            : "border-zinc-400 dark:border-zinc-600 focus:ring-indigo-500",
+            ? "border-[var(--error)] focus-visible:ring-[var(--error)]"
+            : "border-[var(--border)] focus:border-[var(--brand-primary)] focus-visible:ring-[var(--focus-ring)]",
         ].join(" ")}
       />
     </div>

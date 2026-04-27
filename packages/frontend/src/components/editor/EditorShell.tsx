@@ -543,21 +543,24 @@ function FontsTab({ fonts, removeFont }: { fonts: Font[]; removeFont: (id: strin
           <FontList fonts={fonts} selectedId={selectedId} onSelect={setSelectedId} />
         )}
       </div>
-      <div className="px-3 py-2 border-t border-zinc-200 dark:border-zinc-800 flex gap-2">
-        <button
+      <div className="px-3 py-2 border-t border-[var(--border)] flex gap-2">
+        <Button
+          size="sm"
+          variant="secondary"
+          fullWidth
           onClick={() => setShowBrowser(!showBrowser)}
-          className="flex-1 text-xs px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors"
         >
           {showBrowser ? "Close Browser" : "Browse Google Fonts"}
-        </button>
+        </Button>
         {selectedId && !showBrowser && (
-          <button
+          <Button
+            size="sm"
+            variant="danger"
             onClick={() => { removeFont(selectedId); setSelectedId(null); }}
-            className="text-xs px-2 py-1.5 bg-zinc-700 hover:bg-red-900 text-white rounded-lg transition-colors"
             title="Remove font"
           >
             Remove
-          </button>
+          </Button>
         )}
       </div>
     </div>
@@ -580,37 +583,42 @@ function SettingsPanel({ project, projectId, onUpdateField }: {
   );
 
   return (
-    <div className="p-4 overflow-y-auto h-full">
-      <h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-4">Project Settings</h2>
+    <div className="p-4 overflow-y-auto h-full" data-testid="settings-panel">
+      <h2 className="text-[var(--text-fs-3)] font-semibold text-[var(--text)] mb-4">
+        Project Settings
+      </h2>
 
       <div className="flex flex-col gap-5">
         <Section title="General">
-          <Field label="Name" value={project.name ?? ""} onChange={(v) => onUpdateField("name", v || undefined)} />
+          <SettingsField
+            label="Name"
+            value={project.name ?? ""}
+            onChange={(v) => onUpdateField("name", v || undefined)}
+          />
         </Section>
 
         <Section title="Canvas">
           <div className="flex gap-3 flex-wrap">
-            <FieldNum label="Width"  value={project.canvas.width}  onChange={(v) => onUpdateField("canvas.width", v)} />
-            <FieldNum label="Height" value={project.canvas.height} onChange={(v) => onUpdateField("canvas.height", v)} />
-            <FieldNum label="FPS"    value={project.canvas.fps}    onChange={(v) => onUpdateField("canvas.fps", v)} />
+            <SettingsFieldNum
+              label="Width"
+              value={project.canvas.width}
+              onChange={(v) => onUpdateField("canvas.width", v)}
+            />
+            <SettingsFieldNum
+              label="Height"
+              value={project.canvas.height}
+              onChange={(v) => onUpdateField("canvas.height", v)}
+            />
+            <SettingsFieldNum
+              label="FPS"
+              value={project.canvas.fps}
+              onChange={(v) => onUpdateField("canvas.fps", v)}
+            />
           </div>
         </Section>
 
         <Section title="Background">
-          <div className="flex gap-2 mb-2">
-            <button
-              onClick={() => setBgMode("upload")}
-              className={`text-xs px-2 py-1 rounded ${bgMode === "upload" ? "bg-indigo-600 text-white" : "bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300"}`}
-            >
-              Upload
-            </button>
-            <button
-              onClick={() => setBgMode("url")}
-              className={`text-xs px-2 py-1 rounded ${bgMode === "url" ? "bg-indigo-600 text-white" : "bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300"}`}
-            >
-              URL
-            </button>
-          </div>
+          <ModeToggle value={bgMode} onChange={setBgMode} />
           {bgMode === "upload" ? (
             <AssetUploader
               label="Background image/video"
@@ -620,7 +628,7 @@ function SettingsPanel({ project, projectId, onUpdateField }: {
               assetType="background"
             />
           ) : (
-            <Field
+            <SettingsField
               label="Background URL"
               value={bg?.path ?? ""}
               onChange={(v) => onUpdateField("assets.background.path", v)}
@@ -628,32 +636,25 @@ function SettingsPanel({ project, projectId, onUpdateField }: {
             />
           )}
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-zinc-500 dark:text-zinc-400">Fit</label>
+            <label className="text-[var(--text-fs-2)] text-[var(--text-muted)] font-medium">
+              Fit
+            </label>
             <select
               value={bg?.fit ?? "cover"}
               onChange={(e) => onUpdateField("assets.background.fit", e.target.value)}
-              className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-400 dark:border-zinc-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)] rounded-md px-3 py-1.5 text-[var(--text-fs-3)] focus:outline-none focus:border-[var(--brand-primary)] focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
             >
-              {["cover", "contain"].map((o) => <option key={o} value={o}>{o}</option>)}
+              {["cover", "contain"].map((o) => (
+                <option key={o} value={o}>
+                  {o}
+                </option>
+              ))}
             </select>
           </div>
         </Section>
 
         <Section title="Audio">
-          <div className="flex gap-2 mb-2">
-            <button
-              onClick={() => setAudioMode("upload")}
-              className={`text-xs px-2 py-1 rounded ${audioMode === "upload" ? "bg-indigo-600 text-white" : "bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300"}`}
-            >
-              Upload
-            </button>
-            <button
-              onClick={() => setAudioMode("url")}
-              className={`text-xs px-2 py-1 rounded ${audioMode === "url" ? "bg-indigo-600 text-white" : "bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300"}`}
-            >
-              URL
-            </button>
-          </div>
+          <ModeToggle value={audioMode} onChange={setAudioMode} />
           {audioMode === "upload" ? (
             <AssetUploader
               label="Audio file"
@@ -663,7 +664,7 @@ function SettingsPanel({ project, projectId, onUpdateField }: {
               assetType="audio"
             />
           ) : (
-            <Field
+            <SettingsField
               label="Audio URL"
               value={project.assets?.audio ?? ""}
               onChange={(v) => onUpdateField("assets.audio", v || undefined)}
@@ -676,18 +677,58 @@ function SettingsPanel({ project, projectId, onUpdateField }: {
   );
 }
 
-// ---- Shared mini-components -------------------------------------------------
+// ---- Shared mini-components for SettingsPanel ----
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">{title}</h3>
+      <h3 className="text-[var(--text-fs-1)] font-semibold text-[var(--text-muted)] uppercase tracking-[0.14em] mb-2">
+        {title}
+      </h3>
       <div className="flex flex-col gap-3">{children}</div>
     </div>
   );
 }
 
-function Field({ label, value, onChange, placeholder }: {
+function ModeToggle({
+  value,
+  onChange,
+}: {
+  value: "upload" | "url";
+  onChange: (v: "upload" | "url") => void;
+}) {
+  return (
+    <div className="flex gap-1 mb-1" role="radiogroup">
+      {(["upload", "url"] as const).map((mode) => {
+        const active = value === mode;
+        return (
+          <button
+            key={mode}
+            role="radio"
+            aria-checked={active}
+            onClick={() => onChange(mode)}
+            className={[
+              "text-[var(--text-fs-1)] px-2.5 py-1 rounded-sm transition-colors",
+              "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]",
+              active
+                ? "bg-[var(--accent-cool)] text-[var(--text-on-accent)]"
+                : "bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--text)]",
+            ].join(" ")}
+          >
+            {mode === "upload" ? "Upload" : "URL"}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function SettingsField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
   label: string;
   value: string;
   onChange: (v: string) => void;
@@ -695,31 +736,39 @@ function Field({ label, value, onChange, placeholder }: {
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs text-zinc-500 dark:text-zinc-400">{label}</label>
+      <label className="text-[var(--text-fs-2)] text-[var(--text-muted)] font-medium">
+        {label}
+      </label>
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-400 dark:border-zinc-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        className="bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)] rounded-md px-3 py-1.5 text-[var(--text-fs-3)] focus:outline-none focus:border-[var(--brand-primary)] focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] placeholder:text-[var(--text-faint)] transition-colors duration-[120ms] ease-[var(--ease-out-soft)]"
       />
     </div>
   );
 }
 
-function FieldNum({ label, value, onChange }: {
+function SettingsFieldNum({
+  label,
+  value,
+  onChange,
+}: {
   label: string;
   value: number;
   onChange: (v: number) => void;
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs text-zinc-500 dark:text-zinc-400">{label}</label>
+      <label className="text-[var(--text-fs-2)] text-[var(--text-muted)] font-medium">
+        {label}
+      </label>
       <input
         type="number"
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-400 dark:border-zinc-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 w-20"
+        className="bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)] rounded-md px-3 py-1.5 text-[var(--text-fs-3)] w-24 focus:outline-none focus:border-[var(--brand-primary)] focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] transition-colors duration-[120ms] ease-[var(--ease-out-soft)]"
       />
     </div>
   );

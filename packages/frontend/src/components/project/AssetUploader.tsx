@@ -7,11 +7,11 @@ import { useProjectStore } from "@/stores/project-store";
 interface AssetUploaderProps {
   /** Label shown above the upload area */
   label: string;
-  /** Which asset field to update in the project after upload: "assets.audio" | "assets.background.path" */
+  /** Which asset field to update in the project after upload */
   fieldPath: string;
   /** Currently stored file name / path (for display) */
   currentValue: string | undefined;
-  /** Accepted MIME types, e.g. "audio/*" or "video/*,image/*" */
+  /** Accepted MIME types */
   accept?: string;
   /** Asset type sent to the backend to determine R2 path prefix */
   assetType: "audio" | "background" | "font";
@@ -37,16 +37,14 @@ export function AssetUploader({ label, fieldPath, currentValue, accept, assetTyp
       setProgress(0);
 
       try {
-        // 1. Get presigned upload URL
         const { uploadUrl, key } = await apiFetch<{ uploadUrl: string; key: string }>(
           `/projects/${projectId}/assets/upload-url`,
           {
             method: "POST",
             body: JSON.stringify({ filename: file.name, contentType: file.type, assetType }),
-          }
+          },
         );
 
-        // 2. Upload directly to R2 via presigned URL (XHR for progress tracking)
         await new Promise<void>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           xhr.open("PUT", uploadUrl);
@@ -66,7 +64,6 @@ export function AssetUploader({ label, fieldPath, currentValue, accept, assetTyp
           xhr.send(file);
         });
 
-        // 3. Confirm with API and update local store
         await apiFetch(`/projects/${projectId}/assets/confirm`, {
           method: "POST",
           body: JSON.stringify({ key, assetType, filename: file.name }),
@@ -79,13 +76,16 @@ export function AssetUploader({ label, fieldPath, currentValue, accept, assetTyp
         setState("error");
       }
     },
-    [projectId, fieldPath, assetType, updateField]
+    [projectId, fieldPath, assetType, updateField],
   );
 
-  const handleFiles = (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    upload(files[0]);
-  };
+  const handleFiles = useCallback(
+    (files: FileList | null) => {
+      if (!files || files.length === 0) return;
+      void upload(files[0]);
+    },
+    [upload],
+  );
 
   const onDrop = useCallback(
     (e: React.DragEvent) => {
@@ -93,37 +93,53 @@ export function AssetUploader({ label, fieldPath, currentValue, accept, assetTyp
       setDragOver(false);
       handleFiles(e.dataTransfer.files);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [upload]
+    [handleFiles],
   );
+
+  // Border + background depend on state — derived, not stored.
+  const dropClass = dragOver
+    ? "border-[var(--brand-primary)] bg-[color-mix(in_srgb,var(--brand-primary)_10%,transparent)]"
+    : state === "done"
+    ? "border-[var(--success)] bg-[var(--success-bg)]"
+    : state === "error"
+    ? "border-[var(--error)] bg-[var(--error-bg)]"
+    : "border-[var(--border)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)]";
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-xs text-zinc-500 dark:text-zinc-400">{label}</label>
+      <label className="text-[var(--text-fs-2)] text-[var(--text-muted)] font-medium">{label}</label>
 
-      {/* Current file */}
       {currentValue && (
-        <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2">
-          <span className="text-xs text-zinc-500 dark:text-zinc-400 truncate flex-1 font-mono">{currentValue}</span>
-          <span className="text-xs text-zinc-400 dark:text-zinc-600 shrink-0">current</span>
+        <div className="flex items-center gap-2 bg-[var(--surface-2)] border border-[var(--border)] rounded-md px-3 py-2">
+          <span className="text-[var(--text-fs-1)] text-[var(--text-muted)] truncate flex-1 font-mono">
+            {currentValue}
+          </span>
+          <span className="text-[var(--text-fs-1)] text-[var(--text-faint)] shrink-0">current</span>
         </div>
       )}
 
-      {/* Drop zone */}
       <div
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
         onDragLeave={() => setDragOver(false)}
         onDrop={onDrop}
         onClick={() => inputRef.current?.click()}
-        className={`relative border-2 border-dashed rounded-lg px-4 py-6 text-center cursor-pointer transition-colors ${
-          dragOver
-            ? "border-blue-500 bg-blue-950/30"
-            : state === "done"
-            ? "border-green-700 bg-green-950/20"
-            : state === "error"
-            ? "border-red-700 bg-red-950/20"
-            : "border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50"
-        }`}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            inputRef.current?.click();
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-label={`Upload ${label}`}
+        className={[
+          "relative border-2 border-dashed rounded-md px-4 py-6 text-center cursor-pointer transition-colors",
+          "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]",
+          dropClass,
+        ].join(" ")}
       >
         <input
           ref={inputRef}
@@ -135,20 +151,22 @@ export function AssetUploader({ label, fieldPath, currentValue, accept, assetTyp
 
         {state === "uploading" ? (
           <div className="flex flex-col items-center gap-2">
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">Uploading... {progress}%</span>
-            <div className="w-full bg-zinc-300 dark:bg-zinc-700 rounded-full h-1">
+            <span className="text-[var(--text-fs-1)] text-[var(--text-muted)]">
+              Uploading… {progress}%
+            </span>
+            <div className="w-full bg-[var(--surface-2)] rounded-full h-1">
               <div
-                className="bg-blue-500 h-1 rounded-full transition-all"
-                style={{ width: `${progress}%` }}
+                className="h-1 rounded-full transition-all"
+                style={{ width: `${progress}%`, background: "var(--brand-primary)" }}
               />
             </div>
           </div>
         ) : state === "done" ? (
-          <span className="text-xs text-green-600 dark:text-green-400">Upload complete</span>
+          <span className="text-[var(--text-fs-1)] text-[var(--success)]">Upload complete</span>
         ) : state === "error" ? (
-          <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
+          <span className="text-[var(--text-fs-1)] text-[var(--error)]">{error}</span>
         ) : (
-          <span className="text-xs text-zinc-600 dark:text-zinc-500">
+          <span className="text-[var(--text-fs-1)] text-[var(--text-muted)]">
             Drag &amp; drop or click to upload
           </span>
         )}

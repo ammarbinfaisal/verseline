@@ -26,20 +26,20 @@ function ColorField({
   const display = value ?? "#ffffff";
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs text-zinc-500 dark:text-zinc-400">{label}</label>
+      <label className="text-[var(--text-fs-2)] text-[var(--text-muted)] font-medium">{label}</label>
       <div className="flex items-center gap-2">
         <input
           type="color"
           value={display}
           onChange={(e) => onChange(e.target.value)}
-          className="w-8 h-8 rounded cursor-pointer border border-zinc-300 dark:border-zinc-700 bg-transparent p-0.5"
+          className="w-9 h-9 rounded-md cursor-pointer border border-[var(--border)] bg-transparent p-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]"
         />
         <input
           type="text"
           value={display}
           onChange={(e) => onChange(e.target.value)}
           placeholder="#ffffff"
-          className="flex-1 min-w-0 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-800 dark:text-zinc-200 font-mono focus:outline-none focus:border-blue-500 transition-colors"
+          className="flex-1 min-w-0 bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)] rounded-md px-3 py-1.5 text-[var(--text-fs-3)] font-mono focus:outline-none focus:border-[var(--brand-primary)] focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] transition-colors duration-[120ms] ease-[var(--ease-out-soft)]"
         />
       </div>
     </div>
@@ -59,7 +59,7 @@ function NumberField({
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs text-zinc-500 dark:text-zinc-400">{label}</label>
+      <label className="text-[var(--text-fs-2)] text-[var(--text-muted)] font-medium">{label}</label>
       <input
         type="number"
         value={value ?? ""}
@@ -68,7 +68,7 @@ function NumberField({
           onChange(v === "" ? undefined : parseInt(v, 10));
         }}
         placeholder={placeholder ?? "0"}
-        className="bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-blue-500 transition-colors"
+        className="bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)] rounded-md px-3 py-1.5 text-[var(--text-fs-3)] focus:outline-none focus:border-[var(--brand-primary)] focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] transition-colors duration-[120ms] ease-[var(--ease-out-soft)]"
       />
     </div>
   );
@@ -97,8 +97,8 @@ export function StyleEditor({ style, isNew, fonts, onSave, onDelete, onCancel }:
 
   if (!style && !isNew) {
     return (
-      <div className="flex items-center justify-center h-full text-zinc-400 dark:text-zinc-600 text-sm">
-        Select a style to edit
+      <div className="flex items-center justify-center h-full text-[var(--text-fs-2)] text-[var(--text-muted)]">
+        Select a style to edit, or create a new one.
       </div>
     );
   }
@@ -113,13 +113,13 @@ export function StyleEditor({ style, isNew, fonts, onSave, onDelete, onCancel }:
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 flex items-center gap-2">
-        <h2 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest flex-1">
+      <div className="px-4 py-3 border-b border-[var(--border)] flex items-center gap-2 shrink-0">
+        <h2 className="text-[var(--text-fs-1)] font-semibold text-[var(--text-muted)] uppercase tracking-[0.14em] flex-1">
           {isNew ? "New Style" : "Edit Style"}
         </h2>
         <button
           onClick={onCancel}
-          className="text-xs text-zinc-600 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 transition-colors"
+          className="text-[var(--text-fs-2)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-1 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]"
         >
           Cancel
         </button>
@@ -128,24 +128,24 @@ export function StyleEditor({ style, isNew, fonts, onSave, onDelete, onCancel }:
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {/* ID */}
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500 dark:text-zinc-400">ID</label>
+          <label className="text-[var(--text-fs-2)] text-[var(--text-muted)] font-medium">ID</label>
           <input
             type="text"
             value={form.id}
             onChange={(e) => set("id", e.target.value)}
             disabled={!isNew}
             placeholder="my-style"
-            className="bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)] rounded-md px-3 py-1.5 text-[var(--text-fs-3)] focus:outline-none focus:border-[var(--brand-primary)] focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] transition-colors duration-[120ms] ease-[var(--ease-out-soft)] disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
 
         {/* Font */}
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500 dark:text-zinc-400">Font</label>
+          <label className="text-[var(--text-fs-2)] text-[var(--text-muted)] font-medium">Font</label>
           <select
             value={form.font}
             onChange={(e) => set("font", e.target.value)}
-            className="bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-blue-500 transition-colors"
+            className="bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)] rounded-md px-3 py-1.5 text-[var(--text-fs-3)] focus:outline-none focus:border-[var(--brand-primary)] focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] transition-colors duration-[120ms] ease-[var(--ease-out-soft)]"
           >
             <option value="">-- select font --</option>
             {fonts.map((f) => (
@@ -158,12 +158,12 @@ export function StyleEditor({ style, isNew, fonts, onSave, onDelete, onCancel }:
 
         {/* Size */}
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500 dark:text-zinc-400">Size (px)</label>
+          <label className="text-[var(--text-fs-2)] text-[var(--text-muted)] font-medium">Size (px)</label>
           <input
             type="number"
             value={form.size}
             onChange={(e) => set("size", parseInt(e.target.value, 10) || 0)}
-            className="bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-blue-500 transition-colors"
+            className="bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)] rounded-md px-3 py-1.5 text-[var(--text-fs-3)] focus:outline-none focus:border-[var(--brand-primary)] focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] transition-colors duration-[120ms] ease-[var(--ease-out-soft)]"
           />
         </div>
 
@@ -220,11 +220,11 @@ export function StyleEditor({ style, isNew, fonts, onSave, onDelete, onCancel }:
 
         {/* Align */}
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500 dark:text-zinc-400">Align</label>
+          <label className="text-[var(--text-fs-2)] text-[var(--text-muted)] font-medium">Align</label>
           <select
             value={form.align ?? "center"}
             onChange={(e) => set("align", e.target.value)}
-            className="bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-blue-500 transition-colors"
+            className="bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)] rounded-md px-3 py-1.5 text-[var(--text-fs-3)] focus:outline-none focus:border-[var(--brand-primary)] focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] transition-colors duration-[120ms] ease-[var(--ease-out-soft)]"
           >
             <option value="left">Left</option>
             <option value="center">Center</option>

@@ -2,14 +2,14 @@
 
 import type { LibraryAsset } from "@/lib/api";
 
-const TYPE_COLORS: Record<string, string> = {
-  background: "bg-blue-500/20 text-blue-400",
-  audio: "bg-green-500/20 text-green-400",
-  font: "bg-purple-500/20 text-purple-400",
-  style: "bg-amber-500/20 text-amber-400",
-  image: "bg-blue-500/20 text-blue-400",
-  video: "bg-rose-500/20 text-rose-400",
-  photo: "bg-blue-500/20 text-blue-400",
+const TYPE_TINT: Record<string, string> = {
+  background: "color-mix(in srgb, var(--brand-primary) 22%, transparent)",
+  audio: "color-mix(in srgb, var(--success) 22%, transparent)",
+  font: "color-mix(in srgb, var(--accent-cool) 22%, transparent)",
+  style: "color-mix(in srgb, var(--accent-warm) 22%, transparent)",
+  image: "color-mix(in srgb, var(--brand-primary) 22%, transparent)",
+  video: "color-mix(in srgb, var(--error) 22%, transparent)",
+  photo: "color-mix(in srgb, var(--brand-primary) 22%, transparent)",
 };
 
 interface LibraryAssetCardProps {
@@ -39,74 +39,97 @@ export default function LibraryAssetCard({
 
   return (
     <div
-      className="group bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors cursor-pointer"
+      className="group bg-[var(--surface-1)] border border-[var(--border)] rounded-md overflow-hidden hover:border-[var(--border-strong)] transition-colors cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]"
       onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={(e) => {
+        if (onClick && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          onClick();
+        }
+      }}
     >
-      {/* Preview area */}
-      <div className="aspect-video bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center relative overflow-hidden">
+      <div
+        className="aspect-video flex items-center justify-center relative overflow-hidden"
+        style={{ background: "var(--surface-2)" }}
+      >
         {isImage && proxyUrl ? (
-          <img
-            src={proxyUrl}
-            alt={asset.name}
-            className="w-full h-full object-cover"
-          />
+          <img src={proxyUrl} alt={asset.name} className="w-full h-full object-cover" />
         ) : isVideo && proxyUrl ? (
-          <video
-            src={proxyUrl}
-            className="w-full h-full object-cover"
-            muted
-            playsInline
-          />
+          <video src={proxyUrl} className="w-full h-full object-cover" muted playsInline />
         ) : isAudio ? (
-          <svg className="w-8 h-8 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <svg
+            className="w-8 h-8"
+            style={{ color: "var(--text-faint)" }}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            aria-hidden="true"
+          >
             <path d="M9 18V5l12-2v13" />
             <circle cx="6" cy="18" r="3" />
             <circle cx="18" cy="16" r="3" />
           </svg>
         ) : asset.assetType === "font" ? (
-          <span className="text-2xl text-zinc-400 font-serif">Aa</span>
+          <span className="text-[var(--text-fs-6)] text-[var(--text-faint)] font-serif">Aa</span>
         ) : asset.assetType === "style" ? (
           <div
-            className="w-12 h-12 rounded-lg border border-zinc-300 dark:border-zinc-600"
+            className="w-12 h-12 rounded-md border border-[var(--border)]"
             style={{
               backgroundColor:
-                (asset.metadata as Record<string, unknown>)?.color as string ??
-                "#ffffff",
+                ((asset.metadata as Record<string, unknown>)?.color as string) ?? "#FFFFFF",
             }}
+            aria-hidden="true"
           />
         ) : (
-          <svg className="w-8 h-8 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <svg
+            className="w-8 h-8"
+            style={{ color: "var(--text-faint)" }}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            aria-hidden="true"
+          >
             <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
         )}
 
-        {/* Pexels badge */}
         {asset.pexelsId && (
-          <span className="absolute top-2 right-2 text-[10px] bg-zinc-900/70 text-white px-1.5 py-0.5 rounded">
+          <span
+            className="absolute top-2 right-2 text-[var(--text-fs-1)] px-1.5 py-0.5 rounded-sm font-mono"
+            style={{
+              background: "color-mix(in srgb, var(--canvas-frame) 75%, transparent)",
+              color: "#FFFFFF",
+            }}
+          >
             Pexels
           </span>
         )}
       </div>
 
-      {/* Info */}
       <div className="p-3">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="text-sm font-medium text-zinc-900 dark:text-white truncate flex-1">
+          <h3 className="text-[var(--text-fs-3)] font-medium text-[var(--text)] truncate flex-1">
             {asset.name}
           </h3>
           <span
-            className={`text-[10px] px-1.5 py-0.5 rounded-full shrink-0 ${TYPE_COLORS[asset.assetType] ?? "bg-zinc-500/20 text-zinc-400"}`}
+            className="text-[var(--text-fs-1)] px-1.5 py-0.5 rounded-sm shrink-0 font-medium"
+            style={{
+              background: TYPE_TINT[asset.assetType] ?? "var(--surface-2)",
+              color: "var(--text)",
+            }}
           >
             {asset.assetType}
           </span>
         </div>
 
         <div className="flex items-center justify-between mt-2">
-          <p className="text-xs text-zinc-500 dark:text-zinc-500 truncate">
-            {asset.filename}
-          </p>
+          <p className="text-[var(--text-fs-1)] text-[var(--text-muted)] truncate">{asset.filename}</p>
           {projectCount !== undefined && projectCount > 0 && (
-            <span className="text-[10px] text-zinc-400 shrink-0 ml-2">
+            <span className="text-[var(--text-fs-1)] text-[var(--text-faint)] shrink-0 ml-2">
               {projectCount} project{projectCount !== 1 ? "s" : ""}
             </span>
           )}
@@ -118,7 +141,7 @@ export default function LibraryAssetCard({
               e.stopPropagation();
               onDelete();
             }}
-            className="mt-2 text-xs text-red-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="mt-2 text-[var(--text-fs-1)] text-[var(--error)] hover:underline opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] rounded-sm"
           >
             Delete
           </button>

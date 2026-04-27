@@ -115,27 +115,34 @@ export function StyleTagDropdown({
 
   return (
     <div
-      className="absolute left-0 z-50 max-h-48 overflow-y-auto bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg shadow-lg"
+      className="absolute left-0 z-50 max-h-48 overflow-y-auto bg-[var(--surface-1)] border border-[var(--border)] rounded-md shadow-[var(--shadow-md)]"
       style={{ top: offsetTop }}
+      role="listbox"
     >
-      {styles.map((style, i) => (
-        <button
-          key={style.id}
-          type="button"
-          className={
-            "flex w-full items-baseline gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700" +
-            (i === highlightIndex ? " bg-zinc-100 dark:bg-zinc-700" : "")
-          }
-          onMouseDown={(e) => {
-            // Use mousedown so the textarea doesn't lose focus before we handle it
-            e.preventDefault();
-            onSelect(style.id);
-          }}
-        >
-          <span className="font-bold text-zinc-900 dark:text-zinc-100">{style.id}</span>
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">{style.label}</span>
-        </button>
-      ))}
+      {styles.map((style, i) => {
+        const active = i === highlightIndex;
+        return (
+          <button
+            key={style.id}
+            type="button"
+            role="option"
+            aria-selected={active}
+            className={[
+              "flex w-full items-baseline gap-2 px-3 py-1.5 text-left text-[var(--text-fs-3)] transition-colors",
+              "hover:bg-[var(--surface-2)]",
+              active ? "bg-[color-mix(in_srgb,var(--accent-cool)_12%,transparent)]" : "",
+            ].join(" ")}
+            onMouseDown={(e) => {
+              // mousedown so the textarea doesn't lose focus before we handle it
+              e.preventDefault();
+              onSelect(style.id);
+            }}
+          >
+            <span className="font-semibold text-[var(--text)] font-mono">{style.id}</span>
+            <span className="text-[var(--text-fs-1)] text-[var(--text-muted)]">{style.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
