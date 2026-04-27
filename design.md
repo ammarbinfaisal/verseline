@@ -749,3 +749,21 @@ loadStylePresets()     -> Promise<Style[]>  // NEW
 - The seed migration for built-in presets must be idempotent — re-running it should not create duplicates. Use `INSERT … ON CONFLICT DO NOTHING` keyed on `(builtIn, kind, payload->>'id')`.
 - The localStorage → server migration in V2.2 must run exactly once per user per browser. Use a `verseline.preset-library.migrated.v1` flag.
 - `PUT /me/prefs` debouncing: client-side only; server can accept high-frequency writes since it's a single row per user.
+
+---
+
+## V2.5 — Decisions on v1 "alternative to revisit" callouts
+
+Each callout from v1 is closed (kept current) or deferred (filed as a future-V issue note) below. No callouts get upgraded in v2 except §10.2, which becomes V2.6.
+
+| Callout | Section | Decision | Reason |
+|---|---|---|---|
+| Warm-industrial vs editorial-broadcast aesthetic | §1 | **Close — keep editorial-broadcast** | The product is *type on video*. An aesthetic that puts typography at the centre is non-negotiable. |
+| Triadic palette for collaborator presence | §2.1 | **Close — keep split-complementary** | No collaboration feature in scope; introducing a third major hue without a use case dilutes the wheel relationship. |
+| IBM Plex Sans alternative to Geist | §3.1 | **Close — keep Geist** | Geist + Geist Mono share a designer skeleton (the "n test" passes by construction). Plex would be equally valid; switching costs nothing useful. |
+| Golden-ratio scale for marketing pages | §3.2 | **Close — keep 3:4 everywhere** | Two scales would be one ratio too many. The marketing pages use the same scale as the editor; the hero is `--fs-8` and that's enough contrast. |
+| Placement keyframe animation | §6 | **Defer — V3 candidate** | Real demand from the verbatim-captioning workflow is unclear. File when a user asks. |
+| Team library | §7 | **Defer — V3 candidate** | Requires a billing model and per-team scope. Personal library + built-ins covers v1+v2. |
+| Server-synced prefs (theme + shortcuts) | §10.2 | **Promote → V2.6** | The user explicitly asked for cross-device sync. Built in this loop. |
+| Adopt Radix UI primitives | §11 | **Defer — V3 candidate** | Our primitives ship and work. A swap is justified only when we hit a Radix-specific accessibility win (focus management for combobox / popover patterns we don't have yet). |
+| Auto-warm-after-sunset theme | §2.3 | **Defer — V3 candidate** | A nice toy, no requested user value. The "prefer warm in light mode" toggle in V2.6 covers the daytime case. |
