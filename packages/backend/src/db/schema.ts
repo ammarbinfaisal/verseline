@@ -7,6 +7,7 @@ import {
   integer,
   real,
   text,
+  boolean,
   index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
@@ -149,6 +150,38 @@ export const savedSearches = pgTable(
     createdAt: timestamp("created_at").defaultNow(),
   },
   (t) => [index("idx_saved_searches_user").on(t.userId)],
+);
+
+// ---- presets (shared library tier) ----
+//
+// User-saved or built-in reusable Style / Placement / Font definitions. The
+// payload column holds the validated shared schema object (StyleSchema,
+// PlacementSchema, or FontSchema). Built-in rows have userId = NULL and
+// builtIn = true; users cannot delete or modify them.
+
+export const presets = pgTable(
+  "presets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    // null for built-in / global presets
+    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+    kind: varchar("kind", { length: 20 }).notNull(), // "style" | "placement" | "font"
+    payload: jsonb("payload").notNull(),
+    builtIn: boolean("built_in").notNull().default(false),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => [
+    index("idx_presets_user_kind").on(t.userId, t.kind),
+    index("idx_presets_builtin_kind").on(t.builtIn, t.kind),
+    // Prevent the same payload-id from being saved twice for the same user+kind.
+    // Built-in presets all share userId=NULL so this also dedupes them.
+    uniqueIndex("idx_presets_user_kind_payload_id").on(
+      t.userId,
+      t.kind,
+      sql`(payload->>'id')`,
+    ),
+  ],
 );
 
 // ---- renderJobs ----
