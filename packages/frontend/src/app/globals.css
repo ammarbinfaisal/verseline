@@ -1,21 +1,329 @@
 @import "tailwindcss";
 
-/*
- * Light/dark theming uses Tailwind v4's built-in dark: variant
- * which follows @media (prefers-color-scheme: dark) by default.
- *
- * Common pattern in components:
- *   bg-white dark:bg-zinc-900
- *   text-zinc-900 dark:text-white
- *   border-zinc-200 dark:border-zinc-800
- *
- * We use CSS custom properties for the most repeated values
- * to keep component classes shorter.
- */
+/* =============================================================================
+   Verseline design tokens
+   See /design.md for the full rationale (aesthetic direction, palette wheel
+   relationships, type scale derivation, theme decisions, accessibility notes).
+   Every token here exists to be referenced — never hard-code colors, sizes,
+   spacing, radii, durations or easings in component code.
+   =========================================================================== */
+
+@theme {
+  /* ---------- Type scale (3:4 ratio) ---------- */
+  --text-fs-1: 0.6875rem;  /* 11px — caption, kbd, ticks */
+  --text-fs-2: 0.8125rem;  /* 13px — metadata, secondary */
+  --text-fs-3: 0.9375rem;  /* 15px — body, default */
+  --text-fs-4: 1.125rem;   /* 18px — lead, section labels */
+  --text-fs-5: 1.375rem;   /* 22px — h3 */
+  --text-fs-6: 1.75rem;    /* 28px — h2 */
+  --text-fs-7: 2.375rem;   /* 38px — h1 */
+  --text-fs-8: 3.25rem;    /* 52px — hero / display */
+
+  /* ---------- Spacing scale (3:4) ---------- */
+  --spacing-sp-1: 0.25rem;   /* 4px */
+  --spacing-sp-2: 0.375rem;  /* 6px */
+  --spacing-sp-3: 0.5rem;    /* 8px */
+  --spacing-sp-4: 0.75rem;   /* 12px */
+  --spacing-sp-5: 1rem;      /* 16px */
+  --spacing-sp-6: 1.5rem;    /* 24px */
+  --spacing-sp-7: 2rem;      /* 32px */
+  --spacing-sp-8: 3rem;      /* 48px */
+  --spacing-sp-9: 4rem;      /* 64px */
+
+  /* ---------- Radii ---------- */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+
+  /* ---------- Motion ---------- */
+  --ease-out-soft: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in-soft:  cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* =============================================================================
+   Theme tokens
+   Three themes — light, warm, dark. Defaults to light. The data-theme attribute
+   is set on <html> by lib/theme.ts (no FOUC: a tiny inline script runs in
+   layout.tsx before paint).
+
+   Brand wheel: split-complementary anchored on a desaturated teal-blue.
+   - --brand-primary    teal-blue (dominant)
+   - --accent-warm      amber  (CTA, "act on this next")
+   - --accent-cool      violet (selected/active state)
+
+   Hex values were derived via OKLCH so perceptual lightness stays consistent
+   across themes (e.g. body bg in light/warm both sit at L≈0.97).
+   =========================================================================== */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Brand */
+  --brand-primary:    #2F6E80;   /* teal-blue */
+  --brand-primary-hi: #3C8497;
+  --brand-primary-lo: #245867;
+  --accent-warm:      #C8782A;   /* amber */
+  --accent-warm-hi:   #D88A3A;
+  --accent-warm-lo:   #A4621D;
+  --accent-cool:      #5A55B8;   /* violet */
+  --accent-cool-hi:   #7672D0;
+  --accent-cool-lo:   #4642A0;
+
+  /* Surfaces (cool-paper) */
+  --bg:        #F7F8FA;
+  --surface-1: #FFFFFF;
+  --surface-2: #EEF0F4;
+  --surface-3: #FFFFFF;
+
+  /* Text */
+  --text:        #1B1A1F;        /* warm dark, never #000 */
+  --text-muted:  #5C6068;        /* cool gray */
+  --text-faint:  #8A8E97;
+  --text-on-accent: #FFFFFF;
+  --text-on-warm:   #1B1410;     /* dark warm on amber CTAs */
+
+  /* Borders */
+  --border:        #DCDFE5;
+  --border-strong: #B8BDC7;
+  --divider:       #E8EAEF;
+
+  /* Functional */
+  --error:   #C03A3A;
+  --error-bg:#FBE9E9;
+  --success: #2F8F4E;
+  --success-bg: #E5F4EA;
+  --warn:    #B8761B;
+  --warn-bg: #FBF1DC;
+  --link:    #2F6E80;            /* same as brand-primary */
+
+  /* Focus */
+  --focus-ring:        #5A55B8;  /* accent-cool */
+  --focus-ring-offset: var(--bg);
+
+  /* Shadows — hue-shifted toward violet, never pure black */
+  --shadow-sm: 0 1px 2px rgba(28, 24, 60, 0.08);
+  --shadow-md: 0 4px 12px rgba(28, 24, 60, 0.12);
+  --shadow-lg: 0 16px 40px rgba(28, 24, 60, 0.18);
+
+  /* Timeline / canvas-specific */
+  --timeline-bg:        #EAECF1;
+  --segment-default:    #B7BDC9;
+  --segment-selected:   #5A55B8;  /* accent-cool */
+  --playhead:           #C03A3A;  /* same as --error for visibility */
+  --canvas-frame:       #0E1116;  /* dark stage even in light theme */
+}
+
+[data-theme="warm"] {
+  color-scheme: light;
+
+  /* Brand wheel rotated toward warm — teal becomes teal-green, violet becomes red-violet */
+  --brand-primary:    #2D7570;
+  --brand-primary-hi: #3A8B85;
+  --brand-primary-lo: #225A56;
+  --accent-warm:      #B36A20;   /* slightly desaturated */
+  --accent-warm-hi:   #C57E33;
+  --accent-warm-lo:   #8E5114;
+  --accent-cool:      #8B4A8E;   /* red-violet */
+  --accent-cool-hi:   #A65FA9;
+  --accent-cool-lo:   #6F3A72;
+
+  /* Surfaces (sepia paper) */
+  --bg:        #F3EDE2;
+  --surface-1: #FBF6EB;
+  --surface-2: #ECE3D2;
+  --surface-3: #FBF6EB;
+
+  /* Text */
+  --text:        #2A1F12;        /* warm-brown dark */
+  --text-muted:  #7B6B53;
+  --text-faint:  #A09376;
+  --text-on-accent: #FBF6EB;
+  --text-on-warm:   #2A1F12;
+
+  /* Borders */
+  --border:        #DBCEB7;
+  --border-strong: #B8A684;
+  --divider:       #E5DBC5;
+
+  /* Functional */
+  --error:   #B53030;
+  --error-bg:#F5DCDC;
+  --success: #2A7C44;
+  --success-bg: #DEEBDC;
+  --warn:    #A56616;
+  --warn-bg: #F4E5C9;
+  --link:    #2D7570;
+
+  /* Focus */
+  --focus-ring:        #8B4A8E;
+  --focus-ring-offset: var(--bg);
+
+  /* Shadows — warm umber */
+  --shadow-sm: 0 1px 2px rgba(60, 36, 16, 0.10);
+  --shadow-md: 0 4px 12px rgba(60, 36, 16, 0.14);
+  --shadow-lg: 0 16px 40px rgba(60, 36, 16, 0.20);
+
+  /* Timeline / canvas-specific */
+  --timeline-bg:      #E9DDC4;
+  --segment-default:  #B8A684;
+  --segment-selected: #8B4A8E;
+  --playhead:         #B53030;
+  --canvas-frame:     #1A140E;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Brand — higher chroma to compensate for low-lightness backgrounds */
+  --brand-primary:    #4A99AE;
+  --brand-primary-hi: #5DAFC4;
+  --brand-primary-lo: #387D90;
+  --accent-warm:      #E0A050;
+  --accent-warm-hi:   #EFB46B;
+  --accent-warm-lo:   #B8823E;
+  --accent-cool:      #8B86E8;
+  --accent-cool-hi:   #A29DEF;
+  --accent-cool-lo:   #6E69CC;
+
+  /* Surfaces (cool deep) */
+  --bg:        #0E1116;
+  --surface-1: #161A21;
+  --surface-2: #1F242D;
+  --surface-3: #232934;
+
+  /* Text */
+  --text:        #EFE9DD;        /* warm cream, never #FFF */
+  --text-muted:  #A29CAE;
+  --text-faint:  #6E6878;
+  --text-on-accent: #0E1116;
+  --text-on-warm:   #1B1410;
+
+  /* Borders */
+  --border:        #2A2F3A;
+  --border-strong: #3D4350;
+  --divider:       #20242C;
+
+  /* Functional */
+  --error:   #E36D6D;
+  --error-bg:#34191B;
+  --success: #5FBE7E;
+  --success-bg: #1A2E22;
+  --warn:    #E0A050;
+  --warn-bg: #2C2418;
+  --link:    #5DAFC4;
+
+  /* Focus */
+  --focus-ring:        #8B86E8;
+  --focus-ring-offset: var(--bg);
+
+  /* Shadows — dark cool-violet glow */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.40);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.50);
+  --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.60);
+
+  /* Timeline / canvas-specific */
+  --timeline-bg:      #161A21;
+  --segment-default:  #3D4350;
+  --segment-selected: #8B86E8;
+  --playhead:         #E36D6D;
+  --canvas-frame:     #050608;
+}
+
+/* =============================================================================
+   Base styles
+   =========================================================================== */
 
 @layer base {
-  /* Form inputs inherit the theme automatically */
-  input, textarea, select {
+  html {
     color-scheme: light dark;
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+    font-size: var(--text-fs-3);
+    line-height: 1.5;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display, var(--font-sans, system-ui));
+    line-height: 1.1;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  /* Form controls inherit theme */
+  input, textarea, select, button {
+    color: inherit;
+    font-family: inherit;
+  }
+
+  /* Mono for timecodes, IDs, file paths */
+  code, kbd, samp, pre, .font-mono {
+    font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, monospace);
+  }
+
+  /* Selection */
+  ::selection {
+    background: var(--accent-cool);
+    color: var(--text-on-accent);
+  }
+
+  /* Default focus-visible ring — components that compose primitives may override */
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Scrollbars (webkit) — respect theme */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--bg);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border: 3px solid var(--bg);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-faint);
+  }
+}
+
+/* =============================================================================
+   Reduced motion
+   =========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* =============================================================================
+   Skeleton pulse
+   =========================================================================== */
+
+@keyframes vl-skeleton-pulse {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+
+.vl-skeleton {
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  animation: vl-skeleton-pulse 1.6s ease-in-out infinite;
 }

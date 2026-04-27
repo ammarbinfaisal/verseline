@@ -56,10 +56,22 @@ export const StyleSchema = z.object({
 export type Style = z.infer<typeof StyleSchema>;
 
 // --- Placement ---
+//
+// Placements pin text on the canvas. Two coexistent positioning systems:
+//   1. `anchor` (legacy 9-point) + `margin_x`/`margin_y` pixel offsets
+//   2. `x`, `y` normalized 0..1 free-form coordinates (preferred when present)
+// When `x` and `y` are both defined, free-form takes precedence over anchor;
+// `anchor` then describes which corner of the *text box* sits at (x,y).
 
 export const PlacementSchema = z.object({
   id: z.string().min(1),
+  /** Display name for the user (anchor is still required for serialization). */
+  name: z.string().optional(),
   anchor: z.string(),
+  /** Free-form x in [0..1] of canvas width. When set, takes precedence over margin_x. */
+  x: z.number().min(0).max(1).optional(),
+  /** Free-form y in [0..1] of canvas height. When set, takes precedence over margin_y. */
+  y: z.number().min(0).max(1).optional(),
   margin_x: z.number().int().optional(),
   margin_y: z.number().int().optional(),
   max_width: z.number().int().optional(),
