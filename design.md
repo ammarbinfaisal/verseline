@@ -767,3 +767,62 @@ Each callout from v1 is closed (kept current) or deferred (filed as a future-V i
 | Server-synced prefs (theme + shortcuts) | §10.2 | **Promote → V2.6** | The user explicitly asked for cross-device sync. Built in this loop. |
 | Adopt Radix UI primitives | §11 | **Defer — V3 candidate** | Our primitives ship and work. A swap is justified only when we hit a Radix-specific accessibility win (focus management for combobox / popover patterns we don't have yet). |
 | Auto-warm-after-sunset theme | §2.3 | **Defer — V3 candidate** | A nice toy, no requested user value. The "prefer warm in light mode" toggle in V2.6 covers the daytime case. |
+
+---
+
+## V2 — What shipped
+
+The actual diff between v1 and v2. Maps directly to the §V2.1–§V2.8 plan above.
+
+### Backend
+
+- **`presets` table** — `userId` nullable for built-ins, `kind` enum-checked (style/placement/font), jsonb `payload`, `builtIn` boolean, indexes on `(user, kind)` and `(builtIn, kind)`, unique index on `(user, kind, payload->>'id')` to dedupe ids per scope.
+- **`user_prefs` table** — one row per user keyed by `userId` PK, FK cascade-deleted with `users`. Holds `theme`, `preferWarmInLight`, `shortcuts` jsonb override map, `updatedAt`.
+- **`/presets` route** — `GET /` (user + built-ins merged), `GET /builtin` (no auth), `POST /` (upsert keyed on payload-id), `PUT /:id`, `DELETE /:id`. Strict ownership scoping; built-in mutations return 403.
+- **`/me/prefs` route** — `GET` creates a default row on first call; `PUT` accepts a partial body with Zod-validated theme enum and shortcut map.
+- **`scripts/seed-presets.ts`** — idempotent seed for the v1 catalogue (5 placements, 4 styles, 2 font references). `bun run db:seed-presets`.
+
+### Shared
+
+- **`PresetKindSchema`, `PresetRecordSchema`, `validatePresetPayload`** — kind-dispatched parse against the matching project-level schema.
+
+### Frontend — store + API
+
+- **`api.presets.{list, listBuiltIn, upsert, delete}`** — all routes wired.
+- **`api.me.{getPrefs, putPrefs}`** — theme + shortcut sync.
+- **`library-store`** rewrite — caches `PresetRecord[]` in state, sync getters return filtered cache, async `loadPresets()` hydrates from `/presets`. One-shot localStorage→server migration runs on first load and sets `verseline.preset-library.migrated.v1`.
+- **`settings-store`** rewrite — every setter still writes through to localStorage (offline-fast) and now debounces (400ms) a `PUT /me/prefs`. `hydrateFromServer()` runs once after auth load: on first contact (no `verseline.settings.hydrated.v1` flag) it pushes local up so users keep their pre-sync prefs; on subsequent loads server wins. Failures don't surface — they fall back to whatever local already has.
+
+### Frontend — UI surfaces
+
+- **`PresetPicker`** — now consumes `PresetRecord[]` directly from the store. Sections built-in vs user-owned. Hides Remove on built-in rows. Triggers `loadPresets` on first open.
+- **Legacy surface migration (V2.4)** — every component touched: `TimestampInput`, `FontList/FontsTab/FontBrowser`, `BlockEditor`, `LibraryAssetCard/LibraryUploader/PexelsSearch`, `AssetUploader`, `StyleEditor`, `StyleTagAutocomplete`, `CanvasPreview`, `/library` page, the inline editor `SettingsPanel`. Acceptance grep returns zero hits for `bg-zinc-`, `text-zinc-`, `border-zinc-`, `indigo-`, `rounded-2xl` across `src/`.
+- **Dashboard layout** — calls `hydrateFromServer()` after `loadUser()` settles.
+- **Dead code removal** — `TimelinePanel.tsx`, `AnchorPicker.tsx`, `ProjectSettings.tsx` (all parallel implementations never imported anywhere).
+
+### Frontend — tests
+
+- **`e2e/presets-server.spec.ts`** — round-trip, cross-user isolation, built-in protection.
+- **`e2e/prefs-sync.spec.ts`** — theme + shortcut sync across browser contexts (waits 400ms debounce + verifies server payload + hydrates fresh context).
+- **Total**: 60 Playwright tests across 7 spec files (was 55 across 5 in v1).
+
+### Verification
+
+- `tsc --noEmit` clean on both `packages/frontend` and `packages/backend`.
+- `next build` ships all 12 routes (vs 11 in v1; `/settings` was added in v1's loop).
+- `bunx drizzle-kit generate` shows the two new tables (`presets`, `user_prefs`) and only those — no destructive diffs to existing tables. The local `drizzle/` output is gitignored per team convention; teammates run `bun run db:generate && bun run db:migrate` themselves to apply, then `bun run db:seed-presets` to populate built-ins.
+
+### Bundle impact
+
+| Route | Before V2 | After V2 |
+|---|---|---|
+| `/library` | 5.19 kB | 6.02 kB |
+| `/projects/[id]` | 19.7 kB | 20.6 kB |
+| `/settings` | 3.64 kB | 3.79 kB |
+| First-load JS shared | 102 kB | 102 kB |
+
+(All other routes unchanged.)
+
+### What remains for V3 (per §V2.5)
+
+- Placement keyframe animation, team library, server prefs polish (e.g., conflict resolution UI), Radix swap if a complex popover/combobox lands, auto-warm-after-sunset.
